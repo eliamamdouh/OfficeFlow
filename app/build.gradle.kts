@@ -50,21 +50,24 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.10.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
-    implementation("androidx.activity:activity-compose:1.7.0")
-    implementation(platform("androidx.compose:compose-bom:2023.08.00"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-    debugImplementation("androidx.compose.ui:ui-tooling")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
-    implementation("androidx.compose.material:material-icons-core")
-    implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.core:core-ktx:1.10.1") // Core Kotlin extensions
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1") // Lifecycle-aware components
+    implementation("androidx.activity:activity-compose:1.7.0") // Compose-based activities
+    implementation(platform("androidx.compose:compose-bom:2023.08.00")) // Compose BOM (Bill of Materials)
+    implementation("androidx.compose.ui:ui") // Compose UI library
+    implementation("androidx.compose.ui:ui-graphics") // Compose UI graphics library
+    implementation("androidx.compose.ui:ui-tooling-preview") // Compose UI tooling for preview
+    implementation("androidx.compose.material3:material3") // Compose Material3 components
+    implementation("androidx.navigation:navigation-fragment-ktx:2.7.7") // Navigation fragment KTX
+    implementation("androidx.navigation:navigation-ui-ktx:2.7.7") // Navigation UI KTX
+    testImplementation("junit:junit:4.13.2") // JUnit testing framework
+    androidTestImplementation("androidx.test.ext:junit:1.1.5") // JUnit Android testing support
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1") // Espresso UI testing framework
+    androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00")) // Compose BOM for Android tests
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4") // Compose UI testing with JUnit 4
+    debugImplementation("androidx.compose.ui:ui-tooling") // Compose UI tooling for debugging
+    debugImplementation("androidx.compose.ui:ui-test-manifest") // Compose UI test manifest
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("androidx.compose.material:material-icons-core") // Material Icons core library
+    implementation("androidx.compose.material:material-icons-extended") // Material Icons extended library
 }
