@@ -157,7 +157,7 @@ fun LoginScreen(navController: NavHostController) {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
 
-            val isLoginEnabled = username.isNotEmpty() && password.isNotEmpty()
+//            val isLoginEnabled = username.isNotEmpty() && password.isNotEmpty()
             Button(
                 onClick = { navController.navigate("home") },
 //                enabled = isLoginEnabled,
