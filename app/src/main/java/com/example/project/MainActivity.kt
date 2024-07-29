@@ -137,7 +137,7 @@ fun ChatScreen() {
                         ) {
                             Text(
                                 text = message.message,
-                                color = Color.Black,
+                                color = if (message.isBot) Color.Black else Color.White,
                                 fontSize = 20.sp, // Increased font size
                                 fontWeight = FontWeight.Normal,
                                 textAlign = TextAlign.Start
@@ -197,7 +197,6 @@ fun ChatScreen() {
         }
     }
 }
-
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
