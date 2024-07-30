@@ -238,9 +238,8 @@ fun HomeScreen() {
                 }
 
                 Text(
-                    text = annotatedString, // currentDate,
+                    text = annotatedString,
                     fontSize = 18.sp,
-//                    color = Color.Gray,
                     modifier = Modifier.padding(top = 2.dp)
                 )
             }
@@ -251,34 +250,40 @@ fun HomeScreen() {
         }
 
         item {
-            Text(
-                text = "Working from home/office schedule",
-                fontSize = 18.sp,
-                color = Color.Black,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-            Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.alpha(0.3f))
-        }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White, RoundedCornerShape(16.dp))
+                    .padding(16.dp)
+            ) {
+                Column {
+                    Text(
+                        text = "Working from home/office schedule",
+                        fontSize = 18.sp,
+                        color = Color.Black,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                    Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.alpha(0.3f))
 
-        item {
-            CalendarView()
-        }
+                    CalendarView()
 
-        item {
-            Divider(color = Color.Gray, thickness = 1.dp,
-                modifier = Modifier.padding(vertical = 8.dp)
-                    .alpha(0.3f))
-        }
+                    Divider(
+                        color = Color.Gray,
+                        thickness = 1.dp,
+                        modifier = Modifier
+                            .padding(vertical = 8.dp)
+                            .alpha(0.3f)
+                    )
 
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
-            )
-            {
-                LegendItem(color = Color(0xFF008080), label = "From Office")
-                LegendItem(color = Color(0xFF006400), label = "From Home")
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        LegendItem(color = Color(0xFF008080), label = "From Office")
+                        LegendItem(color = Color(0xFF006400), label = "From Home")
+                    }
+                }
             }
         }
 
@@ -287,54 +292,55 @@ fun HomeScreen() {
         }
 
         item {
-            Text(
-                text = "Schedule change requests",
-                fontSize = 18.sp,
-                color = Color.Black,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-        }
-
-        item {
-            DatePickerWithLabel(
-                label = "Select day",
-                selectedDate = selectedDay,
-                onDateSelected = { selectedDay = it }
-            )
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        item {
-            DatePickerWithLabel(
-                label = "Change to",
-                selectedDate = changeToDay,
-                onDateSelected = { changeToDay = it }
-            )
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        item {
-            val isSubmitEnabled = selectedDay != null && changeToDay != null
-
-            Button(
-                onClick = { /* Later */ },
-                enabled = isSubmitEnabled,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isSubmitEnabled) Color(0xFF006400) else Color.Gray
-                ),
-                modifier = Modifier.fillMaxWidth()
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White, RoundedCornerShape(16.dp))
+                    .padding(16.dp)
             ) {
-                Text(text = "Submit", color = Color.White)
+                Column {
+                    Text(
+                        text = "Schedule change requests",
+                        fontSize = 18.sp,
+                        color = Color.Black,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+
+                    DatePickerWithLabel(
+                        label = "Select day",
+                        selectedDate = selectedDay,
+                        onDateSelected = { selectedDay = it }
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    DatePickerWithLabel(
+                        label = "Change to",
+                        selectedDate = changeToDay,
+                        onDateSelected = { changeToDay = it }
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    val isSubmitEnabled = selectedDay != null && changeToDay != null
+
+                    Button(
+                        onClick = { /* Later */ },
+                        enabled = isSubmitEnabled,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isSubmitEnabled) Color(0xFF006400) else Color.Gray
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(text = "Submit", color = Color.White)
+                    }
+                }
             }
         }
     }
 }
+
+
 
 @Composable
 fun TodayStatusBox(day: LocalDate?) {
