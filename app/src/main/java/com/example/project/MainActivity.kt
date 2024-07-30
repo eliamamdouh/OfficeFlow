@@ -374,7 +374,9 @@ fun CalendarContent(
     onDateSelected: (LocalDate) -> Unit,
     showMonthNavigation: Boolean = false,
     onPreviousMonth: (() -> Unit)? = null,
-    onNextMonth: (() -> Unit)? = null
+    onNextMonth: (() -> Unit)? = null,
+    selectedDate: LocalDate? = null,
+    restrictDateSelection: Boolean = false
 ) {
     val daysOfWeek = listOf(
         DayOfWeek.SUNDAY, DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
@@ -477,12 +479,16 @@ fun CalendarContent(
                     val textAlpha = if (day?.month != currentMonth.month) 0.3f else 1f
                     val isToday = day == today
 
+                    val isDisabled = restrictDateSelection && day?.let {
+                        it.isBefore(today) || it == selectedDate || isWeekend
+                    } ?: false
+
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(35.dp)
                             .padding(4.dp)
-                            .clickable(enabled = day != null && day.month == currentMonth.month) {
+                            .clickable(enabled = !isDisabled && day != null && day.month == currentMonth.month) {
                                 day?.let { onDateSelected(it) }
                             }
                             .background(
@@ -491,7 +497,11 @@ fun CalendarContent(
                             )
                     ) {
                         if (day != null) {
-                            Text(text = day.dayOfMonth.toString(), color = textColor, modifier = Modifier.alpha(textAlpha))
+                            Text(
+                                text = day.dayOfMonth.toString(),
+                                color = textColor,
+                                modifier = Modifier.alpha(if (isDisabled) 0.3f else textAlpha)
+                            )
                         }
                     }
                 }
@@ -514,34 +524,15 @@ fun CalendarView() {
 }
 
 @Composable
-fun CalendarViewForDialog(currentMonth: YearMonth, onDateSelected: (LocalDate) -> Unit) {
+fun CalendarViewForDialog(currentMonth: YearMonth, onDateSelected: (LocalDate) -> Unit, selectedDate: LocalDate?) {
     CalendarContent(
         currentMonth = currentMonth,
         onDateSelected = onDateSelected,
-        showMonthNavigation = false
+        showMonthNavigation = false,
+        selectedDate = selectedDate,
+        restrictDateSelection = true
     )
 }
-
-
-@Composable
-fun LegendItem(color: Color, label: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(horizontal = 8.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(16.dp)
-                .background(color, shape = CircleShape)
-        )
-        Text(
-            text = label,
-            fontSize = 16.sp,
-            modifier = Modifier.padding(start = 8.dp)
-        )
-    }
-}
-
 @Composable
 fun DatePickerWithLabel(label: String, selectedDate: LocalDate?, onDateSelected: (LocalDate) -> Unit) {
     var isDialogOpen by remember { mutableStateOf(false) }
@@ -595,10 +586,30 @@ fun DatePickerWithLabel(label: String, selectedDate: LocalDate?, onDateSelected:
                             tempDate = it
                             onDateSelected(it)
                             isDialogOpen = false
-                        }
+                        },
+                        selectedDate = selectedDate
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+fun LegendItem(color: Color, label: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(horizontal = 8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(16.dp)
+                .background(color, shape = CircleShape)
+        )
+        Text(
+            text = label,
+            fontSize = 16.sp,
+            modifier = Modifier.padding(start = 8.dp)
+        )
     }
 }
