@@ -13,9 +13,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.CalendarToday
+//import androidx.compose.material.icons.filled.ArrowBack
+//import androidx.compose.material.icons.filled.ArrowForward
+//import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.*
@@ -45,7 +45,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+//import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.ui.draw.alpha
@@ -381,6 +381,8 @@ fun CalendarContent(
         DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY
     )
 
+    val today = LocalDate.now()
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -473,6 +475,7 @@ fun CalendarContent(
                         else -> Color.Black
                     }
                     val textAlpha = if (day?.month != currentMonth.month) 0.3f else 1f
+                    val isToday = day == today
 
                     Box(
                         contentAlignment = Alignment.Center,
@@ -482,6 +485,10 @@ fun CalendarContent(
                             .clickable(enabled = day != null && day.month == currentMonth.month) {
                                 day?.let { onDateSelected(it) }
                             }
+                            .background(
+                                color = if (isToday) Color.LightGray else Color.Transparent,
+                                shape = CircleShape
+                            )
                     ) {
                         if (day != null) {
                             Text(text = day.dayOfMonth.toString(), color = textColor, modifier = Modifier.alpha(textAlpha))
@@ -505,6 +512,16 @@ fun CalendarView() {
         onNextMonth = { currentMonth = currentMonth.plusMonths(1) }
     )
 }
+
+@Composable
+fun CalendarViewForDialog(currentMonth: YearMonth, onDateSelected: (LocalDate) -> Unit) {
+    CalendarContent(
+        currentMonth = currentMonth,
+        onDateSelected = onDateSelected,
+        showMonthNavigation = false
+    )
+}
+
 
 @Composable
 fun LegendItem(color: Color, label: String) {
@@ -585,17 +602,3 @@ fun DatePickerWithLabel(label: String, selectedDate: LocalDate?, onDateSelected:
         }
     }
 }
-
-@Composable
-fun CalendarViewForDialog(currentMonth: YearMonth, onDateSelected: (LocalDate) -> Unit) {
-    CalendarContent(
-        currentMonth = currentMonth,
-        onDateSelected = onDateSelected,
-        showMonthNavigation = false
-    )
-}
-
-
-
-
-
