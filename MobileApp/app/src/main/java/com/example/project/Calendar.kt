@@ -1,8 +1,6 @@
 package com.example.project
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -10,30 +8,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -47,23 +32,13 @@ import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 
-//class MainActivity : ComponentActivity() {
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//        setContent {
-//            ProjectTheme {
-//                val navController = rememberNavController()
-//                NavHost(navController = navController, startDestination = "login") {
-//                    composable("login") { LoginScreen(navController) }
-//                    composable("home") { HomeScreen() }
-//                }
-//            }
-//        }
-//    }
-//}
-
-
+val LightGrassGreen = Color(0xFF86BC24)
+//val DarkTeal = Color(0xFF008080)
+val DarkTeal2 = Color(0xFF036B80)
+//val DarkGrassGreen = Color(0xFF006400)
+val DarkGrassGreen2 = Color(0xFF2C8431)
 
 
 @Composable
@@ -81,13 +56,13 @@ fun HomeScreen() {
             val monthAndYear = parts[1]
 
             append(dayAndWeek)
-            addStyle(SpanStyle(color = Color.Gray), 0, dayAndWeek.length)
+            addStyle(SpanStyle(color = Color.Gray, fontSize = 14.sp), 0, dayAndWeek.length)
 
             append("\n")
 
             val monthYearStartIndex = dayAndWeek.length + 1 // +1 for the newline character
             append(monthAndYear)
-            addStyle(SpanStyle(color = Color.Black), monthYearStartIndex, monthYearStartIndex + monthAndYear.length)
+            addStyle(SpanStyle(color = Color.Black, fontSize = 14.sp), monthYearStartIndex, monthYearStartIndex + monthAndYear.length)
         }
     }
 
@@ -114,13 +89,13 @@ fun HomeScreen() {
                 ) {
                     Text(
                         text = "Welcome Back",
-                        fontSize = 20.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Gray
                     )
                     Text(
                         text = "Mohammed",
-                        fontSize = 28.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = 2.dp)
                     )
@@ -148,7 +123,8 @@ fun HomeScreen() {
                 Column {
                     Text(
                         text = "Working from home/office schedule",
-                        fontSize = 18.sp,
+                        fontFamily = FontFamily.SansSerif,
+                        fontSize = 14.sp,
                         color = Color.Black,
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
@@ -169,8 +145,8 @@ fun HomeScreen() {
                         horizontalArrangement = Arrangement.Start,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        LegendItem(color = Color(0xFF008080), label = "From Office")
-                        LegendItem(color = Color(0xFF006400), label = "From Home")
+                        LegendItem(color = DarkTeal2, label = "From Office")
+                        LegendItem(color = DarkGrassGreen2, label = "From Home")
                     }
                 }
             }
@@ -208,7 +184,6 @@ fun HomeScreen() {
                         selectedDate = changeToDay,
                         onDateSelected = { changeToDay = it }
                     )
-
                     Spacer(modifier = Modifier.height(16.dp))
 
                     val isSubmitEnabled = selectedDay != null && changeToDay != null
@@ -217,11 +192,11 @@ fun HomeScreen() {
                         onClick = { /* Later */ },
                         enabled = isSubmitEnabled,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isSubmitEnabled) Color(0xFF006400) else Color.Gray
+                            containerColor = if (isSubmitEnabled) DarkGrassGreen2 else Color.Gray
                         ),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(text = "Submit", color = Color.White)
+                        Text(text = "Submit", fontSize = 16.sp, color = Color.White)
                     }
                 }
             }
@@ -241,8 +216,8 @@ fun TodayStatusBox(day: LocalDate?) {
     }
 
     val backgroundColor = when (day?.dayOfWeek) {
-        DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY -> Color(0xFF008080)
-        DayOfWeek.THURSDAY, DayOfWeek.FRIDAY -> Color(0xFF006400)
+        DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY -> DarkTeal2
+        DayOfWeek.THURSDAY, DayOfWeek.FRIDAY -> DarkGrassGreen2
         DayOfWeek.SATURDAY, DayOfWeek.SUNDAY -> Color.Gray
         else -> Color.Transparent
     }
@@ -254,14 +229,20 @@ fun TodayStatusBox(day: LocalDate?) {
             .background(backgroundColor, RoundedCornerShape(8.dp))
             .padding(8.dp)
     ) {
-        Text(
-            text = message,
-            fontSize = 18.sp,
-            color = Color.White,
-            modifier = Modifier.padding(top = 10.dp)
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxHeight()
+        ) {
+            Text(
+                text = message,
+                fontSize = 14.sp,
+                color = Color.White,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
     }
 }
+
 
 @Composable
 fun CalendarContent(
@@ -294,13 +275,13 @@ fun CalendarContent(
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowLeft,
                         contentDescription = "Previous Month",
-                        tint = Color(0xFF006400)
+                        tint = LightGrassGreen
                     )
                 }
 
                 Text(
                     text = "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${currentMonth.year}",
-                    fontSize = 24.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(16.dp)
                 )
@@ -309,7 +290,7 @@ fun CalendarContent(
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowRight,
                         contentDescription = "Next Month",
-                        tint = Color(0xFF006400)
+                        tint = LightGrassGreen
                     )
                 }
             }
@@ -367,8 +348,8 @@ fun CalendarContent(
 
                     val textColor = when {
                         isWeekend -> Color.Gray
-                        isWorkFromHome -> Color(0xFF006400)
-                        isWorkFromOffice -> Color(0xFF008080)
+                        isWorkFromHome -> DarkGrassGreen2
+                        isWorkFromOffice -> DarkTeal2
                         else -> Color.Black
                     }
                     val textAlpha = if (day?.month != currentMonth.month) 0.3f else 1f
@@ -386,8 +367,18 @@ fun CalendarContent(
                             .clickable(enabled = !isDisabled && day != null && day.month == currentMonth.month) {
                                 day?.let { onDateSelected(it) }
                             }
+                            .border(
+                                width = if (isToday) 2.dp else 0.dp,
+                                color = when {
+                                    isToday && isWeekend -> Color.Gray
+                                    isToday && isWorkFromHome -> DarkGrassGreen2
+                                    isToday && isWorkFromOffice -> DarkTeal2
+                                    else -> Color.Transparent
+                                },
+                                shape = CircleShape
+                            )
                             .background(
-                                color = if (isToday) Color.LightGray else Color.Transparent,
+                                color = if (isToday) Color.Transparent else Color.Transparent,
                                 shape = CircleShape
                             )
                     ) {
@@ -430,81 +421,82 @@ fun CalendarViewForDialog(currentMonth: YearMonth, onDateSelected: (LocalDate) -
 }
 @Composable
 fun DatePickerWithLabel(label: String, selectedDate: LocalDate?, onDateSelected: (LocalDate) -> Unit) {
-    var isDialogOpen by remember { mutableStateOf(false) }
-    var tempDate by remember { mutableStateOf(LocalDate.now()) }
+        var isDialogOpen by remember { mutableStateOf(false) }
+        var tempDate by remember { mutableStateOf(LocalDate.now()) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White, RoundedCornerShape(8.dp))
-            .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp))
-            .clickable { isDialogOpen = true }
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White, RoundedCornerShape(8.dp))
+                .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp))
+                .clickable { isDialogOpen = true }
+                .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            Text(
-                text = selectedDate?.format(DateTimeFormatter.ofPattern("dd MMM yyyy")) ?: label,
-                color = Color.Gray
-            )
-            Image(
-                painter = painterResource(id = R.drawable.calendar),
-                contentDescription = null,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-    }
-
-    if (isDialogOpen) {
-        Dialog(onDismissRequest = { isDialogOpen = false }) {
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = Color.White,
-                modifier = Modifier.padding(16.dp)
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Text(
+                    text = selectedDate?.format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
+                        ?: label,
+                    color = Color.Gray
+                )
+                Image(
+                    painter = painterResource(id = R.drawable.calendar),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+
+        if (isDialogOpen) {
+            Dialog(onDismissRequest = { isDialogOpen = false }) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color.White,
+                    modifier = Modifier.padding(16.dp)
                 ) {
-                    Text(
-                        text = "Select Date",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                    CalendarViewForDialog(
-                        currentMonth = YearMonth.from(tempDate),
-                        onDateSelected = {
-                            tempDate = it
-                            onDateSelected(it)
-                            isDialogOpen = false
-                        },
-                        selectedDate = selectedDate
-                    )
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Select Date",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                        CalendarViewForDialog(
+                            currentMonth = YearMonth.from(tempDate),
+                            onDateSelected = {
+                                tempDate = it
+                                onDateSelected(it)
+                                isDialogOpen = false
+                            },
+                            selectedDate = selectedDate
+                        )
+                    }
                 }
             }
         }
     }
-}
 
-@Composable
-fun LegendItem(color: Color, label: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(horizontal = 8.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(16.dp)
-                .background(color, shape = CircleShape)
-        )
-        Text(
-            text = label,
-            fontSize = 16.sp,
-            modifier = Modifier.padding(start = 8.dp)
-        )
+    @Composable
+    fun LegendItem(color: Color, label: String) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 8.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(16.dp)
+                    .background(color, shape = CircleShape)
+            )
+            Text(
+                text = label,
+                fontSize = 16.sp,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
     }
-}
