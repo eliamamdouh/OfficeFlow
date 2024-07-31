@@ -1,25 +1,20 @@
+// app.js
 const express = require('express');
-const mongoose = require('mongoose');
-const userRoutes = require('./Routes/userRoutes');
+const { db } = require('./firebase-init'); // Import the Firebase init file to ensure the connection is established
 
 const app = express();
 const port = 3000;
 
-// Middleware to parse JSON bodies
 app.use(express.json());
 
-// Use user routes
-app.use('/api', userRoutes);
-
-// Connect to MongoDB
-mongoose.connect('mongodb+srv://sama:sama@cluster0.fp0hphc.mongodb.net/?retryWrites=true&w=majority&ssl=true'
-).then(() => {
-    console.log('Connected to MongoDB');
-}).catch(err => {
-    console.error('Error connecting to MongoDB', err);
+app.get('/', (req, res) => {
+  res.send('Hello World!');
 });
 
-// Start the server
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+const userRoutes = require('./Routes/userRoutes.js');
+app.use('/api/users', userRoutes);
+
+const PORT = process.env.PORT || port;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
