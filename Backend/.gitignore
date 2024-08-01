@@ -8,3 +8,4 @@ package.json
 package-lock.json
 yarn.lock
 firebase-init.json
+.env
