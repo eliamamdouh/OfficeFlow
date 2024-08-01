@@ -17,7 +17,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -26,13 +25,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
 
 
 @Composable
 fun LoginScreen(navController: NavHostController) {
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var emailError by remember { mutableStateOf<String?>(null) }
+
+    // Check if the email is valid and set the error message if not
+    val isEmailValid = email.contains("@deloitte.com")
+    val isFormValid = email.isNotBlank() && password.isNotBlank() && isEmailValid
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Background image
@@ -55,7 +63,6 @@ fun LoginScreen(navController: NavHostController) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.offset(y = 20.dp)
-
                 ) {
                     // Logo
                     Logo(
@@ -70,74 +77,91 @@ fun LoginScreen(navController: NavHostController) {
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.offset(0.dp, (-160).dp)
                     )
-                    Spacer(modifier = Modifier.height(16.dp))//remove
+                    Spacer(modifier = Modifier.height(16.dp)) //remove
                 }
             }
-
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.offset(y = (-140).dp)
                 // Adjust this offset to raise the column as needed
             ) {
-
                 TextField(
-                    value = username,
-                    onValueChange = { username = it },
-                    label = { Text(text = "Email Address",color = Color.Gray.copy(alpha = 0.7f)) },
+                    value = email,
+                    onValueChange = {
+                        email = it
+                        emailError = if (it.contains("@deloitte.com")) null else "Email must include @deloitte.com"
+                    },
+                    placeholder = {
+                        Text(
+                            text = "Email Address",
+                            color = Color.Gray.copy(alpha = 0.7f)
+                        )
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 10.dp)
                         .padding(horizontal = 15.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .height(45.dp),
+                        .clip(RoundedCornerShape(8.dp))
+                        .height(50.dp),
                     singleLine = true,
-                    textStyle = TextStyle(color = Color.White.copy(alpha = 0.7f))  // Adjust alpha value for transparency
+                    textStyle = TextStyle(
+                        fontSize = 16.sp,
+                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    isError = emailError != null
                 )
+
+                if (emailError != null) {
+                    Text(
+                        text = emailError!!,
+                        color = Color.Red,
+                        style = TextStyle(fontSize = 18.sp),
+                        //modifier = Modifier.padding(horizontal = 15.dp)
+                    )
+                }
 
                 TextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text(
-                        text = "Password",//STARSSS
-                        color = Color.Gray.copy(alpha = 0.7f), // Adjust alpha for transparency
-                    ) },
+                    placeholder = {
+                        Text(
+                            text = "Password",
+                            color = Color.Gray.copy(alpha = 0.7f)
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 10.dp)
+                        .padding(horizontal = 15.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .height(50.dp),
+                    singleLine = true,
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else AsteriskVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(
+                            onClick = { passwordVisible = !passwordVisible },
+                            enabled = password.isNotBlank()
+                        ) {
+                            val icon = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                            val tint = if (passwordVisible) Color(0xFF86BC24) else Color.Gray // Green when clicked
+                            Icon(imageVector = icon, contentDescription = null, tint = tint)
+                        }
+                    }
+                )
+
+                Button(
+                    onClick = { if (isFormValid) navController.navigate("page1") },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isFormValid) Color(0xFF86BC24) else Color(0xFFC7C7C7), // Gray color when disabled
+                        disabledContainerColor = Color(0xFFC7C7C7) // Ensure this is set for disabled state
+                    ),
+                    enabled = isFormValid,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 10.dp)
                         .padding(horizontal = 15.dp)
                         .clip(RoundedCornerShape(6.dp))
-                        .height(45.dp),
-                    singleLine = true,
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        val image =
-                            if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                        val description = if (passwordVisible) "Hide password" else "Show password"
-                        val iconColor = if (passwordVisible) Color(0xFFB0D173) else Color.Gray
-
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(
-                                imageVector = image,
-                                contentDescription = description,
-                                tint = iconColor
-                            )
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                )
-
-
-                Button(
-                    onClick = { navController.navigate("page1") },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF86BC24)
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 10.dp)
-                        .padding(horizontal = 15.dp)
-                        .clip(RoundedCornerShape(6.dp)),
                 ) {
                     Text(
                         text = "Login",
@@ -146,7 +170,6 @@ fun LoginScreen(navController: NavHostController) {
                     )
                 }
             }
-
         }
     }
 }
@@ -168,4 +191,11 @@ fun BackgroundImage() {
         contentScale = ContentScale.Crop,
         modifier = Modifier.fillMaxSize()
     )
+}
+
+class AsteriskVisualTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val transformedText = text.text.map { '*' }.joinToString("")
+        return TransformedText(AnnotatedString(transformedText), OffsetMapping.Identity)
+    }
 }
