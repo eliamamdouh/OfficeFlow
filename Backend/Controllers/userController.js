@@ -1,6 +1,6 @@
 // userController.js
 const { db } = require('../firebase-init');
-const { collection, doc, setDoc } = require('firebase/firestore');
+//const { collection, doc, setDoc } = require('firebase/firestore');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
@@ -116,6 +116,7 @@ const loginUser = async (req, res) => {
             process.env.JWT_SECRET_KEY, 
             
         );
+        
 
         res.status(200).json({ message: 'Login successful', token });
     } catch (error) {
