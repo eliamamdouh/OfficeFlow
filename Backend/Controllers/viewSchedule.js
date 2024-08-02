@@ -1,32 +1,32 @@
+const { STATUS_CODES } = require('http');
 const { db } = require('../firebase-init');
+const { StatusCodes } = require ("http-status-codes");
 
 const viewSchedule = async (req, res) => {
     try {
-        const { username } = req.body; // or req.params ???
+        const { username } = req.body; 
 
         if (!username) {
-            return res.status(400).json({ message: 'Username is required' });
+            return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Username is required' });
         }
 
-        // Query Firestore to find the user by username
+        
         const usersCollectionRef = db.collection('users');
         const userQuery = await usersCollectionRef.where('username', '==', username).get();
 
         if (userQuery.empty) {
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(StatusCodes.NOT_FOUND).json({ message: 'User not found' });
         }
 
         const userDoc = userQuery.docs[0];
         const userData = userDoc.data();
 
-        // Extract the schedule from the user data
         const schedule = userData.schedule;
 
-        // Return the schedule
-        res.status(200).json({ message: 'Schedule retrieved successfully', schedule });
+        res.status(StatusCodes.OK).json({ message: 'Schedule retrieved successfully', schedule });
     } catch (error) {
         console.error("Error viewing schedule:", error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Server error', error: error.message });
     }
 };
 

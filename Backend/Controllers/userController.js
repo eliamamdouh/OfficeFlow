@@ -1,24 +1,23 @@
-// userController.js
 const { db } = require('../firebase-init');
 const { collection, doc, setDoc } = require('firebase/firestore');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-
+const { StatusCodes } = require ("http-status-codes");
 
 const createUser = async (req, res) => {
     try {
         const {Fullname, username, password, email, managerName } = req.body;
 
         if (!username || !password || !email) {
-            return res.status(400).json({ message: 'Username, password, and email are required' });
+            return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Username, password, and email are required' });
         }
 
         const usersCollectionRef = db.collection('users');
         const existingUserQuery = await usersCollectionRef.where('email', '==', email).get();
 
         if (!existingUserQuery.empty) {
-            return res.status(400).json({ message: 'User already exists' });
+            return res.status(StatusCodes.BAD_REQUEST).json({ message: 'User already exists' });
         }
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -41,16 +40,22 @@ const createUser = async (req, res) => {
             schedule  
         });
 
-        res.status(201).json({ message: 'User created successfully', userId: userDocRef.id });
+        res.status(StatusCodes.CREATED).json({ message: 'User created successfully', userId: userDocRef.id });
     } catch (error) {
         console.error("Error creating user:", error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Server error', error: error.message });
     }
 };
 
 const generateAlternatingUserSchedule = () => {
-
+    
     const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    const currentDate = new Date();
+    
+    const dayOfWeek = currentDate.getDay();
+    const daysUntilMonday = (dayOfWeek === 0 ? 1 : 8) - dayOfWeek; 
+    let nextMonday = new Date(currentDate);
+    nextMonday.setDate(currentDate.getDate() + daysUntilMonday);
 
     let schedule = {};
 
@@ -68,10 +73,15 @@ const generateAlternatingUserSchedule = () => {
             officeDays = weekDays.filter(day => !homeDays.includes(day));
         }
 
-        schedule[`Week ${weekNumber}`] = weekDays.map(day => ({
-            day,
-            location: officeDays.includes(day) ? 'Office' : 'Home'
-        }));
+        schedule[`Week ${weekNumber}`] = weekDays.map((day, index) => {
+            let currentDayDate = new Date(nextMonday);
+            currentDayDate.setDate(nextMonday.getDate() + index + (weekNumber - 1) * 7);
+            return {
+                day,
+                date: currentDayDate.toISOString().split('T')[0], // YYYY-MM-DD
+                location: officeDays.includes(day) ? 'Office' : 'Home'
+            };
+        });
     }
 
     return schedule;
@@ -91,14 +101,14 @@ const loginUser = async (req, res) => {
         const { email, password } = req.body;
 
         if (!email || !password) {
-            return res.status(400).json({ message: 'Email and password are required' });
+            return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Email and password are required' });
         }
 
         const usersCollectionRef = db.collection('users');
         const userQuerySnapshot = await usersCollectionRef.where('email', '==', email).get();
 
         if (userQuerySnapshot.empty) {
-            return res.status(401).json({ message: 'Invalid email or password' });
+            return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'Invalid email or password' });
         }
 
         const userDoc = userQuerySnapshot.docs[0];
@@ -107,7 +117,7 @@ const loginUser = async (req, res) => {
         const isPasswordValid = await bcrypt.compare(password, userData.password);
 
         if (!isPasswordValid) {
-            return res.status(401).json({ message: 'Invalid email or password' });
+            return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'Invalid email or password' });
         }
 
         // Generate a JWT token
@@ -117,10 +127,10 @@ const loginUser = async (req, res) => {
             
         );
 
-        res.status(200).json({ message: 'Login successful', token });
+        res.status(StatusCodes.OK).json({ message: 'Login successful', token });
     } catch (error) {
         console.error("Error during login:", error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Server error', error: error.message });
     }
 };
 

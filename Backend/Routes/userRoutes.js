@@ -1,12 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { createUser,loginUser } = require('../Controllers/userController');
-const {getWorkingDays} = require('../Controllers/workingDays')
+const { viewSchedule } = require('../Controllers/viewSchedule');
 
 
 router.post('/create', createUser);
-router.post('/login',loginUser)
-router.get('/getWorkingDays',getWorkingDays)
-
+router.post('/login',loginUser);
+router.get('/schedule', viewSchedule);
 
 module.exports = router;
