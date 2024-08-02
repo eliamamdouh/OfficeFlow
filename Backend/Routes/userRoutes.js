@@ -5,8 +5,8 @@ const {submitRequest} = require('../Controllers/submitRequestContoller')
 
 
 router.post('/create', createUser);
-router.post('/login',loginUser)
-router.post('/submit-request', submitRequest)
-router.get('/:userId',getUserInfo)
+router.post('/login',loginUser);
+router.post('/submit-request', submitRequest);
+router.get('/:userId',getUserInfo);
 
 module.exports = router;
