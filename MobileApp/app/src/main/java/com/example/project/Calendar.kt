@@ -33,15 +33,20 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+
+
+
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+
 
 val LightGrassGreen = Color(0xFF86BC24)
 //val DarkTeal = Color(0xFF008080)
 val DarkTeal2 = Color(0xFF036B80)
 //val DarkGrassGreen = Color(0xFF006400)
 val DarkGrassGreen2 = Color(0xFF2C8431)
+
 
 
 
@@ -90,15 +95,18 @@ fun HomeScreen(userId: String) {
     }
 
     // Current date formatting
+
     val currentDate = remember {
         val today = LocalDate.now()
         val formatter = DateTimeFormatter.ofPattern("d EEE\nMMM yyyy")
         today.format(formatter)
     }
+
     var selectedDay by remember{ mutableStateOf<LocalDate?>(null) }
     var changeToDay by remember{ mutableStateOf<LocalDate?>(null)
     }
     // Annotated string for current date
+
     val annotatedString = remember {
         buildAnnotatedString {
             val parts = currentDate.split("\n")
@@ -116,14 +124,13 @@ fun HomeScreen(userId: String) {
         }
     }
 
-    // Main UI layout
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.Top
     ) {
-        // Header with user name and current date
         item {
             Row(
                 modifier = Modifier
@@ -132,6 +139,9 @@ fun HomeScreen(userId: String) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column(
+
+                   // modifier = Modifier,
+
                     verticalArrangement = Arrangement.Top,
                     horizontalAlignment = Alignment.Start
                 ) {
@@ -142,7 +152,9 @@ fun HomeScreen(userId: String) {
                         color = Color.Gray
                     )
                     Text(
+
                         text = userName,
+
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = 2.dp)
@@ -157,9 +169,10 @@ fun HomeScreen(userId: String) {
             }
         }
 
-        // Status box showing if the user is working from home or office
+
         item {
             TodayStatusBox(message = todayStatus)
+
         }
 
         item {
@@ -256,11 +269,13 @@ fun HomeScreen(userId: String) {
 
 
 @Composable
+
 fun TodayStatusBox(message: String) {
     val backgroundColor = when {
         message.contains("Home") -> DarkGrassGreen2
         message.contains("Office") -> DarkTeal2
         else -> Color.Gray
+
     }
 
     Box(

@@ -39,10 +39,12 @@ fun MainScreen() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("page0") { LoginScreen(navController) }
+
             composable("page1/{userId}") { backStackEntry ->
                 val userId = backStackEntry.arguments?.getString("userId") ?: ""
                 HomeScreen(userId = userId)
             }
+
             composable("page2") { ChatScreen() }
             composable("page3") { MyRequests() }
             composable("page4") { NotificationPage() }

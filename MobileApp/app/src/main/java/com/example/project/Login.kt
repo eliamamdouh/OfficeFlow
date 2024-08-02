@@ -1,6 +1,7 @@
 package com.example.project
 
 
+
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -32,6 +33,7 @@ import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 
 
+
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -44,7 +46,9 @@ fun LoginScreen(navController: NavHostController) {
     var emailError by remember { mutableStateOf<String?>(null) }
 
     // Check if the email is valid and set the error message if not
+
     val isEmailValid = email.contains("@gmail.com")
+
     val isFormValid = email.isNotBlank() && password.isNotBlank() && isEmailValid
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -95,7 +99,9 @@ fun LoginScreen(navController: NavHostController) {
                     value = email,
                     onValueChange = {
                         email = it
+
                         emailError = if (it.contains("@gmail.com")) null else "Email must include @gmail.com"
+
                     },
                     placeholder = {
                         Text(
@@ -156,6 +162,7 @@ fun LoginScreen(navController: NavHostController) {
                 )
 
                 Button(
+
                     onClick = {
                         if (isFormValid) {
                             // Create a LoginRequest object with email and password
@@ -190,12 +197,16 @@ fun LoginScreen(navController: NavHostController) {
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isFormValid) Color(0xFF86BC24) else Color(0xFFC7C7C7),
                         disabledContainerColor = Color(0xFFC7C7C7)
+
                     ),
                     enabled = isFormValid,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 10.dp)
                         .padding(horizontal = 15.dp)
+
+                        //.clip(RoundedCornerShape(6.dp))
+
                 ) {
                     Text(
                         text = "Login",
@@ -203,7 +214,6 @@ fun LoginScreen(navController: NavHostController) {
                         fontSize = 16.sp
                     )
                 }
-
             }
         }
     }
