@@ -34,6 +34,13 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 
+
+
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+
+
 val LightGrassGreen = Color(0xFF86BC24)
 //val DarkTeal = Color(0xFF008080)
 val DarkTeal2 = Color(0xFF036B80)
@@ -41,13 +48,64 @@ val DarkTeal2 = Color(0xFF036B80)
 val DarkGrassGreen2 = Color(0xFF2C8431)
 
 
+
+
 @Composable
-fun HomeScreen() {
+fun HomeScreen(userId: String) {
+    // State variables to hold user data
+    var userName by remember { mutableStateOf("User") }
+    var todayStatus by remember { mutableStateOf("Loading...") }
+
+    // Fetch user data on load
+    LaunchedEffect(userId) {
+        println(userId);
+        val call = RetrofitClient.apiService.getUserInfo(userId)
+        call.enqueue(object : Callback<UserInfoResponse> {
+            override fun onResponse(
+                call: Call<UserInfoResponse>,
+                response: Response<UserInfoResponse>
+            ) {
+                println("Raw response: ${response.raw()}")
+                if (response.isSuccessful) {
+                    val userInfo = response.body()
+                    println("Response body: $userInfo")
+                    if (userInfo != null) {
+                        // This runs on the main thread
+                        userName = userInfo.name ?: "Unknown"
+                        todayStatus = when (userInfo.todaySchedule) {
+                            "Home" -> "Today, you are working from Home!"
+                            "Office" -> "Today, you are working from Office!"
+                            else -> "Failed to load status"
+                        }
+                    } else {
+                        todayStatus = "Failed to load status"
+                    }
+                } else {
+                    todayStatus = "Failed to load status"
+                }
+            }
+
+
+            override fun onFailure(call: Call<UserInfoResponse>, t: Throwable) {
+                // Print the error message
+                println("Request failed: ${t.message}")
+                todayStatus = "Error: ${t.message}"
+            }
+        })
+    }
+
+    // Current date formatting
+
     val currentDate = remember {
         val today = LocalDate.now()
         val formatter = DateTimeFormatter.ofPattern("d EEE\nMMM yyyy")
         today.format(formatter)
     }
+
+    var selectedDay by remember{ mutableStateOf<LocalDate?>(null) }
+    var changeToDay by remember{ mutableStateOf<LocalDate?>(null)
+    }
+    // Annotated string for current date
 
     val annotatedString = remember {
         buildAnnotatedString {
@@ -66,8 +124,6 @@ fun HomeScreen() {
         }
     }
 
-    var selectedDay by remember { mutableStateOf<LocalDate?>(null) }
-    var changeToDay by remember { mutableStateOf<LocalDate?>(null) }
 
     LazyColumn(
         modifier = Modifier
@@ -83,7 +139,9 @@ fun HomeScreen() {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column(
-                    modifier = Modifier,
+
+                   // modifier = Modifier,
+
                     verticalArrangement = Arrangement.Top,
                     horizontalAlignment = Alignment.Start
                 ) {
@@ -94,7 +152,9 @@ fun HomeScreen() {
                         color = Color.Gray
                     )
                     Text(
-                        text = "Mohammed",
+
+                        text = userName,
+
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = 2.dp)
@@ -109,8 +169,10 @@ fun HomeScreen() {
             }
         }
 
+
         item {
-            TodayStatusBox(day = LocalDate.now())
+            TodayStatusBox(message = todayStatus)
+
         }
 
         item {
@@ -207,19 +269,13 @@ fun HomeScreen() {
 
 
 @Composable
-fun TodayStatusBox(day: LocalDate?) {
-    val message = when (day?.dayOfWeek) {
-        DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY -> "Today, you are working from Office!"
-        DayOfWeek.THURSDAY, DayOfWeek.FRIDAY -> "Today, you are working from Home!"
-        DayOfWeek.SATURDAY, DayOfWeek.SUNDAY -> "It's Weekend Time!"
-        else -> ""
-    }
 
-    val backgroundColor = when (day?.dayOfWeek) {
-        DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY -> DarkTeal2
-        DayOfWeek.THURSDAY, DayOfWeek.FRIDAY -> DarkGrassGreen2
-        DayOfWeek.SATURDAY, DayOfWeek.SUNDAY -> Color.Gray
-        else -> Color.Transparent
+fun TodayStatusBox(message: String) {
+    val backgroundColor = when {
+        message.contains("Home") -> DarkGrassGreen2
+        message.contains("Office") -> DarkTeal2
+        else -> Color.Gray
+
     }
 
     Box(
