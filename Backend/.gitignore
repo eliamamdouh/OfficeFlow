@@ -3,9 +3,8 @@ node_modules/
 
 # Ignore package.json file
 package.json
-
+Backend/firebase-init.json
 # Ignore package-lock.json or yarn.lock files
 package-lock.json
 yarn.lock
-firebase-init.json
 .env
