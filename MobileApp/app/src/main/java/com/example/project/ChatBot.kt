@@ -93,7 +93,7 @@ fun ChatScreen() {
         modifier = Modifier
             .fillMaxSize()
             .background(lighterGray) // Grey page background
-            .padding(start = 0.dp, top = 20.dp, bottom = 26.dp) // Padding around the rounded box
+            .padding(start = 0.dp, top = 15.dp, bottom = 26.dp) // Padding around the rounded box
     ) {
         // Rounded box container
         Box(
@@ -122,7 +122,7 @@ fun ChatScreen() {
                 // Chat messages and input field
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth()// Ensure space for the input field
+                        .fillMaxWidth() // Ensure space for the input field
                 ) {
                     // Scrollable chat messages
                     Box(
@@ -165,6 +165,7 @@ fun ChatScreen() {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(start = 16.dp, end = 56.dp, top = 8.dp, bottom = 8.dp),
+                            singleLine = true,
                             keyboardOptions = KeyboardOptions.Default.copy(
                                 imeAction = ImeAction.Send,
                                 keyboardType = KeyboardType.Text
@@ -186,11 +187,16 @@ fun ChatScreen() {
                         }
                         IconButton(
                             onClick = {
-                                handleUserInput(userInput)
+                                if (userInput.isNotEmpty()) {
+                                    handleUserInput(userInput)
+                                }
                             },
                             modifier = Modifier
                                 .size(34.dp)
-                                .background(slightlyDarkerGreen, shape = RoundedCornerShape(50))
+                                .background(
+                                    if (userInput.isEmpty()) Color.Gray else slightlyDarkerGreen,
+                                    shape = RoundedCornerShape(50)
+                                )
                                 .align(Alignment.CenterEnd)
                                 .padding(0.dp)
                         ) {
