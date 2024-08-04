@@ -149,6 +149,7 @@ const loginUser = async (req, res) => {
             message: 'Login successful',
             userId: userId, 
             token : token,
+
         });
         console.log(token)
     } catch (error) {
