@@ -1,6 +1,6 @@
 // userController.js
+
 const { db } = require('../firebase-init');
-//const { collection, doc, setDoc } = require('firebase/firestore');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
@@ -49,29 +49,51 @@ const createUser = async (req, res) => {
 };
 
 const generateAlternatingUserSchedule = () => {
+    const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth(); // 0-based, so 7 = August
 
-    const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    const daysInMonth = new Date(year, month + 1, 0).getDate(); // Get the number of days in the current month
 
     let schedule = {};
+    let weekNumber = 0;
+    let officeDays = [];
+    let homeDays = [];
 
-    for (let i = 0; i < 4; i++) {
-        const weekNumber = i + 1;
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const weekday = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
 
-        let officeDays, homeDays;
-        if (weekNumber % 2 !== 0) {
-            // Odd weeks: 3 days in the office, 2 days at home
-            officeDays = shuffleArray([...weekDays]).slice(0, 3);
-            homeDays = weekDays.filter(day => !officeDays.includes(day));
-        } else {
-            // Even weeks: 2 days in the office, 3 days at home
-            homeDays = shuffleArray([...weekDays]).slice(0, 3);
-            officeDays = weekDays.filter(day => !homeDays.includes(day));
+        // Skip weekends (Saturday and Sunday)
+        if (weekday === 0 || weekday === 1) { // Skip Sunday and Monday
+            continue;
         }
 
-        schedule[`Week ${weekNumber}`] = weekDays.map(day => ({
-            day,
-            location: officeDays.includes(day) ? 'Office' : 'Home'
-        }));
+        // Start a new week on Tuesday
+        if (weekday === 2) {
+            weekNumber++; // Increment week number at the start of a new week
+
+            if (weekNumber % 2 !== 0) {
+                // Odd weeks: 3 days in the office, 2 days at home
+                officeDays = shuffleArray([2, 3, 4, 5, 6]).slice(0, 3);
+                homeDays = [2, 3, 4, 5, 6].filter(day => !officeDays.includes(day));
+            } else {
+                // Even weeks: 2 days in the office, 3 days at home
+                homeDays = shuffleArray([2, 3, 4, 5, 6]).slice(0, 3);
+                officeDays = [2, 3, 4, 5, 6].filter(day => !homeDays.includes(day));
+            }
+        }
+
+        const formattedDate = date.toISOString().split('T')[0]; // Format date as YYYY-MM-DD
+
+        if (!schedule[`Week ${weekNumber}`]) {
+            schedule[`Week ${weekNumber}`] = [];
+        }
+
+        schedule[`Week ${weekNumber}`].push({
+            day: formattedDate,
+            location: officeDays.includes(weekday) ? 'Office' : 'Home'
+        });
     }
 
     return schedule;
@@ -84,6 +106,11 @@ const shuffleArray = (array) => {
     }
     return array;
 };
+
+
+
+
+
 
 
 const loginUser = async (req, res) => {
@@ -109,6 +136,7 @@ const loginUser = async (req, res) => {
         if (!isPasswordValid) {
             return res.status(401).json({ message: 'Invalid email or password' });
         }
+        const userId = userDoc.id;
 
         // Generate a JWT token
         const token = jwt.sign(
@@ -116,11 +144,49 @@ const loginUser = async (req, res) => {
             process.env.JWT_SECRET_KEY, 
             
         );
-        
 
-        res.status(200).json({ message: 'Login successful', token });
+        res.status(200).json({
+            message: 'Login successful',
+            userId: userId, 
+            token : token,
+        });
+        console.log(token)
     } catch (error) {
         console.error("Error during login:", error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+const getUserInfo = async (req, res) => {
+    try {
+        const userId = req.params.userId;
+
+        const userDoc = await db.collection('users').doc(userId).get();
+
+        if (!userDoc.exists) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const userData = userDoc.data();
+        const currentDate = new Date().toISOString().split('T')[0];
+
+        let todaySchedule = null;
+        Object.keys(userData.schedule).forEach(week => {
+            const weekSchedule = userData.schedule[week];
+            weekSchedule.forEach(day => {
+                if (day.day === currentDate) {
+                    todaySchedule = day.location;
+                }
+            });
+        });
+
+        res.status(200).json({
+            name: userData.username,
+            todaySchedule: todaySchedule
+        });
+
+    } catch (error) {
+        console.error('Error getting user info:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
@@ -128,4 +194,4 @@ const loginUser = async (req, res) => {
 
 
 
-module.exports = { createUser ,loginUser};
+module.exports = { createUser ,loginUser,getUserInfo };
