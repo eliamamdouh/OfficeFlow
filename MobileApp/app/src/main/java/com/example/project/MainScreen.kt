@@ -70,5 +70,5 @@ suspend fun fetchUserRoleFromApi(): String {
 
     // Simulated delay for API call
     kotlinx.coroutines.delay(1000)
-    return "manager" // or "manager"
+    return "employee" // or "manager"
 }
