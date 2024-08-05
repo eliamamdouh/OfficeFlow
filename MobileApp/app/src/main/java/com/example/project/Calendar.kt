@@ -1,6 +1,5 @@
 package com.example.project
 
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -357,7 +356,8 @@ fun CalendarContent(
     onPreviousMonth: (() -> Unit)? = null,
     onNextMonth: (() -> Unit)? = null,
     selectedDate: LocalDate? = null,
-    restrictDateSelection: Boolean = false
+    restrictDateSelection: Boolean = false,
+    isDialog: Boolean = false
 ) {
     val daysOfWeek = listOf(
         DayOfWeek.SUNDAY, DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
@@ -365,6 +365,9 @@ fun CalendarContent(
     )
 
     val today = LocalDate.now()
+    val nextMonth = YearMonth.now().plusMonths(1)
+    val isCurrentMonth = currentMonth == YearMonth.now()
+    val isNextMonth = currentMonth == nextMonth
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -376,12 +379,14 @@ fun CalendarContent(
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { onPreviousMonth?.invoke() }) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowLeft,
-                        contentDescription = "Previous Month",
-                        tint = LightGrassGreen
-                    )
+                if (!isDialog || (isDialog && !isCurrentMonth)) {
+                    IconButton(onClick = { onPreviousMonth?.invoke() }) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowLeft,
+                            contentDescription = "Previous Month",
+                            tint = LightGrassGreen
+                        )
+                    }
                 }
 
                 Text(
@@ -391,12 +396,14 @@ fun CalendarContent(
                     modifier = Modifier.padding(16.dp)
                 )
 
-                IconButton(onClick = { onNextMonth?.invoke() }) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowRight,
-                        contentDescription = "Next Month",
-                        tint = LightGrassGreen
-                    )
+                if (!isDialog || (isDialog && !isNextMonth)) {
+                    IconButton(onClick = { onNextMonth?.invoke() }) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowRight,
+                            contentDescription = "Next Month",
+                            tint = LightGrassGreen
+                        )
+                    }
                 }
             }
         } else {
@@ -500,7 +507,6 @@ fun CalendarContent(
         }
     }
 }
-
 @Composable
 fun CalendarView() {
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
@@ -516,92 +522,107 @@ fun CalendarView() {
 
 @Composable
 fun CalendarViewForDialog(currentMonth: YearMonth, onDateSelected: (LocalDate) -> Unit, selectedDate: LocalDate?) {
+    val nextMonth = YearMonth.now().plusMonths(1)
+    var displayedMonth by remember { mutableStateOf(currentMonth) }
+
     CalendarContent(
-        currentMonth = currentMonth,
+        currentMonth = displayedMonth,
         onDateSelected = onDateSelected,
-        showMonthNavigation = false,
+        showMonthNavigation = true,
+        onPreviousMonth = {
+            if (displayedMonth.isAfter(YearMonth.now())) {
+                displayedMonth = displayedMonth.minusMonths(1)
+            }
+        },
+        onNextMonth = {
+            if (displayedMonth.isBefore(nextMonth)) {
+                displayedMonth = displayedMonth.plusMonths(1)
+            }
+        },
         selectedDate = selectedDate,
-        restrictDateSelection = true
+        restrictDateSelection = true,
+        isDialog = true
     )
 }
 @Composable
 fun DatePickerWithLabel(label: String, selectedDate: LocalDate?, onDateSelected: (LocalDate) -> Unit) {
-        var isDialogOpen by remember { mutableStateOf(false) }
-        var tempDate by remember { mutableStateOf(LocalDate.now()) }
+    var isDialogOpen by remember { mutableStateOf(false) }
+    var tempDate by remember { mutableStateOf(LocalDate.now()) }
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White, RoundedCornerShape(8.dp))
-                .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp))
-                .clickable { isDialogOpen = true }
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White, RoundedCornerShape(8.dp))
+            .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp))
+            .clickable { isDialogOpen = true }
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = selectedDate?.format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
-                        ?: label,
-                    color = Color.Gray
-                )
-                Image(
-                    painter = painterResource(id = R.drawable.calendar),
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+            Text(
+                text = selectedDate?.format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
+                    ?: label,
+                color = Color.Gray
+            )
+            Image(
+                painter = painterResource(id = R.drawable.calendar),
+                contentDescription = null,
+                modifier = Modifier.size(24.dp)
+            )
         }
+    }
 
-        if (isDialogOpen) {
-            Dialog(onDismissRequest = { isDialogOpen = false }) {
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = Color.White,
-                    modifier = Modifier.padding(16.dp)
+    if (isDialogOpen) {
+        Dialog(onDismissRequest = { isDialogOpen = false }) {
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = Color.White,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Select Date",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        )
-                        CalendarViewForDialog(
-                            currentMonth = YearMonth.from(tempDate),
-                            onDateSelected = {
-                                tempDate = it
-                                onDateSelected(it)
-                                isDialogOpen = false
-                            },
-                            selectedDate = selectedDate
-                        )
-                    }
+                    Text(
+                        text = "Select Date",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    CalendarViewForDialog(
+                        currentMonth = YearMonth.from(tempDate),
+                        onDateSelected = {
+                            tempDate = it
+                            onDateSelected(it)
+                            isDialogOpen = false
+                        },
+                        selectedDate = selectedDate
+                    )
                 }
             }
         }
     }
+}
 
-    @Composable
-    fun LegendItem(color: Color, label: String) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 8.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(16.dp)
-                    .background(color, shape = CircleShape)
-            )
-            Text(
-                text = label,
-                fontSize = 16.sp,
-                modifier = Modifier.padding(start = 8.dp)
-            )
-        }
+@Composable
+fun LegendItem(color: Color, label: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(horizontal = 8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(16.dp)
+                .background(color, shape = CircleShape)
+        )
+        Text(
+            text = label,
+            fontSize = 16.sp,
+            modifier = Modifier.padding(start = 8.dp)
+        )
     }
+}
+
