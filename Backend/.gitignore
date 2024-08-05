@@ -1,10 +1,12 @@
+[3:49 PM] Abdelaal, Sama
 # Ignore node_modules directory
 node_modules/
-
+ 
 # Ignore package.json file
 package.json
 Backend/firebase-init.json
 # Ignore package-lock.json or yarn.lock files
 package-lock.json
 yarn.lock
-Backend/firebase-init.json
+firebase-init.json
+ 
