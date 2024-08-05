@@ -69,5 +69,9 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     implementation ("androidx.compose.material:material-icons-extended:<compose_version>")
 
+    implementation("io.coil-kt:coil-compose:2.0.0")
+    implementation ("io.coil-kt:coil:2.0.0") // Make sure this is the latest version
+    implementation ("io.coil-kt:coil-gif:2.0.0") // Add GIF support explicitly
+
 
 }

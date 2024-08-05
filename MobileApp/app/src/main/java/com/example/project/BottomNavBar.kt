@@ -41,7 +41,7 @@ fun BottomNavBar(navController: NavHostController) {
                     .padding(vertical = 16.dp, horizontal = 16.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
-            ) {
+            ) {// for loop instead calling function 4x
                 NavBarIcon(
                     iconId = R.drawable.graynotes,
                     greenIconId = R.drawable.greennotes,

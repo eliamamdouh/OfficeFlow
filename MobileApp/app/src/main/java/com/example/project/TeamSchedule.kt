@@ -1,9 +1,8 @@
-package com.example.managercalender
+package com.example.project
 //FIX PACKAGE
+
+
 import android.annotation.SuppressLint
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -15,9 +14,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -43,23 +40,6 @@ import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
 
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            MaterialTheme {
-                Surface {
-                    ScheduleScreen()
-                }
-            }
-        }
-    }
-}
-
-// Colors
-val LightGrassGreen = Color(0xFF86BC24)
-val DarkTeal2 = Color(0xFF036B80)
-val DarkGrassGreen2 = Color(0xFF2C8431)
 
 @Composable
 fun ScheduleScreen() {
@@ -128,7 +108,7 @@ fun ScheduleScreen() {
                                         .alpha(0.3f)
                                 )
 
-                                CalendarContent(
+                                CalendarContentMgr(
                                     currentMonth = currentMonth,
                                     onDateSelected = {},
                                     showMonthNavigation = true,
@@ -149,8 +129,8 @@ fun ScheduleScreen() {
                                     horizontalArrangement = Arrangement.Start,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    LegendItem(color = DarkTeal2, label = "From Office")
-                                    LegendItem(color = DarkGrassGreen2, label = "From Home")
+                                    LegendItemMgr(color = DarkTeal2, label = "From Office")
+                                    LegendItemMgr(color = DarkGrassGreen2, label = "From Home")
                                 }
 
                                 // Button below the calendar and legend items
@@ -288,46 +268,46 @@ fun DropdownList(
     }
 }
 
+//@Composable
+//fun TodayStatusBox(day: LocalDate?) {
+//    val message = when (day?.dayOfWeek) {
+//        DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY -> "Today, you are working from Office!"
+//        DayOfWeek.THURSDAY, DayOfWeek.FRIDAY -> "Today, you are working from Home!"
+//        DayOfWeek.SATURDAY, DayOfWeek.SUNDAY -> "It's Weekend Time!"
+//        else -> ""
+//    }
+//
+//    val backgroundColor = when (day?.dayOfWeek) {
+//        DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY -> DarkTeal2
+//        DayOfWeek.THURSDAY, DayOfWeek.FRIDAY -> DarkGrassGreen2
+//        DayOfWeek.SATURDAY, DayOfWeek.SUNDAY -> Color.Gray
+//        else -> Color.Transparent
+//    }
+//
+//    Box(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .padding(vertical = 8.dp)
+//            .background(backgroundColor, RoundedCornerShape(8.dp))
+//            .padding(8.dp)
+//    ) {
+//        Row(
+//            verticalAlignment = Alignment.CenterVertically,
+//            modifier = Modifier.fillMaxHeight()
+//        ) {
+//            Text(
+//                text = message,
+//                fontSize = 14.sp,
+//                color = Color.White,
+//                modifier = Modifier.padding(start = 8.dp)
+//            )
+//        }
+//    }
+//}
+
+
 @Composable
-fun TodayStatusBox(day: LocalDate?) {
-    val message = when (day?.dayOfWeek) {
-        DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY -> "Today, you are working from Office!"
-        DayOfWeek.THURSDAY, DayOfWeek.FRIDAY -> "Today, you are working from Home!"
-        DayOfWeek.SATURDAY, DayOfWeek.SUNDAY -> "It's Weekend Time!"
-        else -> ""
-    }
-
-    val backgroundColor = when (day?.dayOfWeek) {
-        DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY -> DarkTeal2
-        DayOfWeek.THURSDAY, DayOfWeek.FRIDAY -> DarkGrassGreen2
-        DayOfWeek.SATURDAY, DayOfWeek.SUNDAY -> Color.Gray
-        else -> Color.Transparent
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .background(backgroundColor, RoundedCornerShape(8.dp))
-            .padding(8.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxHeight()
-        ) {
-            Text(
-                text = message,
-                fontSize = 14.sp,
-                color = Color.White,
-                modifier = Modifier.padding(start = 8.dp)
-            )
-        }
-    }
-}
-
-
-@Composable
-fun CalendarContent(
+fun CalendarContentMgr(
     currentMonth: YearMonth,
     onDateSelected: (LocalDate) -> Unit,
     showMonthNavigation: Boolean = false,
@@ -478,33 +458,33 @@ fun CalendarContent(
     }
 }
 
+//@Composable
+//fun CalendarView() {
+//    var currentMonth by remember { mutableStateOf(YearMonth.now()) }
+//
+//    CalendarContentMgr(
+//        currentMonth = currentMonth,
+//        onDateSelected = {},
+//        showMonthNavigation = true,
+//        onPreviousMonth = { currentMonth = currentMonth.minusMonths(1) },
+//        onNextMonth = { currentMonth = currentMonth.plusMonths(1) }
+//    )
+//}
+//
+//@Composable
+//fun CalendarViewForDialog(currentMonth: YearMonth, onDateSelected: (LocalDate) -> Unit, selectedDate: LocalDate?) {
+//    CalendarContentMgr(
+//        currentMonth = currentMonth,
+//        onDateSelected = onDateSelected,
+//        showMonthNavigation = false,
+//        selectedDate = selectedDate,
+//        restrictDateSelection = true
+//    )
+//}
+
+
 @Composable
-fun CalendarView() {
-    var currentMonth by remember { mutableStateOf(YearMonth.now()) }
-
-    CalendarContent(
-        currentMonth = currentMonth,
-        onDateSelected = {},
-        showMonthNavigation = true,
-        onPreviousMonth = { currentMonth = currentMonth.minusMonths(1) },
-        onNextMonth = { currentMonth = currentMonth.plusMonths(1) }
-    )
-}
-
-@Composable
-fun CalendarViewForDialog(currentMonth: YearMonth, onDateSelected: (LocalDate) -> Unit, selectedDate: LocalDate?) {
-    CalendarContent(
-        currentMonth = currentMonth,
-        onDateSelected = onDateSelected,
-        showMonthNavigation = false,
-        selectedDate = selectedDate,
-        restrictDateSelection = true
-    )
-}
-
-
-@Composable
-fun LegendItem(color: Color, label: String) {
+fun LegendItemMgr(color: Color, label: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start,

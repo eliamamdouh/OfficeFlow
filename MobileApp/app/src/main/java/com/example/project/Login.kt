@@ -1,7 +1,11 @@
 package com.example.project
 
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -13,13 +17,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,6 +35,82 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
+import coil.compose.rememberImagePainter
+import coil.decode.GifDecoder
+import coil.request.ImageRequest
+import kotlinx.coroutines.delay
+
+
+@Composable
+fun SplashScreen(navController: NavHostController) {
+    var startAnimation by remember { mutableStateOf(false) }
+    val gifOpacity by animateFloatAsState(
+        targetValue = if (startAnimation) 0f else 1f,
+        animationSpec = tween(durationMillis = 1000)
+    )
+
+    LaunchedEffect(Unit) {
+        delay(1000) // Short delay before starting the animation
+        startAnimation = true
+        delay(1000) // Delay before navigating to login screen
+        navController.navigate("page0")
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        BackgroundImage()
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            GifImage(drawableResId = R.drawable.loading, opacity = gifOpacity)
+
+            Spacer(modifier = Modifier.height(16.dp))
+            AnimatedLogo(startAnimation)
+        }
+    }
+}
+
+@Composable
+fun GifImage(drawableResId: Int, opacity: Float) {
+    val context = LocalContext.current
+    val painter = rememberImagePainter(
+        ImageRequest.Builder(context)
+            .data(drawableResId)
+            .decoderFactory(GifDecoder.Factory())
+            .build()
+    )
+
+    Image(
+        painter = painter,
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        modifier = Modifier
+            .size(200.dp)
+            .border(4.dp, Color.Black)
+            .graphicsLayer(alpha = opacity) // Apply opacity to the GIF
+    )
+}
+
+@Composable
+fun AnimatedLogo(startAnimation: Boolean) {
+    val offsetY by animateDpAsState(
+        targetValue = if (startAnimation) (-307).dp else -95.dp,
+        animationSpec = tween(durationMillis = 1000),
+        label = "LogoAnimation"
+    )
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.offset(y = offsetY)
+    ) {
+        Logo(modifier = Modifier.size(250.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+    }
+}
 
 
 @Composable

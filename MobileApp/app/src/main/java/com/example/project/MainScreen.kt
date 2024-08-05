@@ -10,7 +10,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.managercalender.ScheduleScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -34,20 +33,23 @@ fun MainScreen() {
 
     Scaffold(
         bottomBar = {
-            if (currentRoute != "page0") {
-                when (userRole) {
-                    "employee" -> BottomNavBar(navController)
-                    "manager" -> ManagerNavBar(navController)
-                    else -> {} // You can handle other cases or leave it empty
+            if (currentRoute != "splash") {
+                if (currentRoute != "page0") {
+                    when (userRole) {
+                        "employee" -> BottomNavBar(navController)
+                        "manager" -> ManagerNavBar(navController)
+                        else -> {} // You can handle other cases or leave it empty
+                    }
                 }
             }
         }
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "page0",
+            startDestination = "splash",
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable("splash") { SplashScreen(navController) }
             composable("page0") { LoginScreen(navController) }
             composable("page1") { HomeScreen() }
             composable("page2") { ChatScreen() }
