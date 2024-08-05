@@ -1,6 +1,6 @@
 // app.js
 const express = require('express');
-//const { db } = require('./firebase-init'); // Import the Firebase init file to ensure the connection is established
+const { db } = require('./firebase-init'); // Import the Firebase init file to ensure the connection is established
 
 const app = express();
 const DEFAULT_PORT = 3000;
