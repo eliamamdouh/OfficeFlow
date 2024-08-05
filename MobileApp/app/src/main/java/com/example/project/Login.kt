@@ -17,26 +17,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TransformedText
-
-
-
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import com.example.project.PreferencesManager
+
+
+
 
 @Composable
 fun LoginScreen(navController: NavHostController) {
@@ -50,6 +50,8 @@ fun LoginScreen(navController: NavHostController) {
     val isEmailValid = email.contains("@gmail.com")
 
     val isFormValid = email.isNotBlank() && password.isNotBlank() && isEmailValid
+
+    val context = LocalContext.current
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Background image
@@ -162,7 +164,6 @@ fun LoginScreen(navController: NavHostController) {
                 )
 
                 Button(
-
                     onClick = {
                         if (isFormValid) {
                             // Create a LoginRequest object with email and password
@@ -176,8 +177,13 @@ fun LoginScreen(navController: NavHostController) {
                                         if (loginResponse != null && loginResponse.userId.isNotEmpty()) {
                                             Log.d("LoginButton", "Login successful: ${loginResponse.userId}")
 
-                                            // Navigate to HomeScreen and pass the userId
-                                            navController.navigate("page1/${loginResponse.userId}") {
+                                            // Save the userId in SharedPreferences
+                                            PreferencesManager.saveUserIdToPreferences(context, loginResponse.userId)
+                                            PreferencesManager.saveTokenToPreferences(context, loginResponse.token)
+
+                                            // Navigate to HomeScreen
+                                            // removes the login screen from the back stack to prevent the user from returning to it
+                                            navController.navigate("page1") {
                                                 popUpTo("page0") { inclusive = true }
                                             }
                                         } else {
@@ -187,7 +193,6 @@ fun LoginScreen(navController: NavHostController) {
                                         Log.e("LoginButton", "Login failed: ${response.message()}")
                                     }
                                 }
-
                                 override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
                                     Log.e("LoginButton", "API call failed: ${t.message}")
                                 }
@@ -197,16 +202,12 @@ fun LoginScreen(navController: NavHostController) {
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isFormValid) Color(0xFF86BC24) else Color(0xFFC7C7C7),
                         disabledContainerColor = Color(0xFFC7C7C7)
-
                     ),
                     enabled = isFormValid,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 10.dp)
                         .padding(horizontal = 15.dp)
-
-                        //.clip(RoundedCornerShape(6.dp))
-
                 ) {
                     Text(
                         text = "Login",
