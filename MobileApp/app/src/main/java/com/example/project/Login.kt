@@ -38,6 +38,10 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
+import androidx.compose.ui.platform.LocalContext
+import android.content.Context
+import com.example.project.PreferencesManager
+
 @Composable
 fun LoginScreen(navController: NavHostController) {
     var passwordVisible by remember { mutableStateOf(false) }
@@ -50,6 +54,8 @@ fun LoginScreen(navController: NavHostController) {
     val isEmailValid = email.contains("@gmail.com")
 
     val isFormValid = email.isNotBlank() && password.isNotBlank() && isEmailValid
+
+    val context = LocalContext.current
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Background image
@@ -162,7 +168,6 @@ fun LoginScreen(navController: NavHostController) {
                 )
 
                 Button(
-
                     onClick = {
                         if (isFormValid) {
                             // Create a LoginRequest object with email and password
@@ -176,8 +181,13 @@ fun LoginScreen(navController: NavHostController) {
                                         if (loginResponse != null && loginResponse.userId.isNotEmpty()) {
                                             Log.d("LoginButton", "Login successful: ${loginResponse.userId}")
 
-                                            // Navigate to HomeScreen and pass the userId
-                                            navController.navigate("page1/${loginResponse.userId}") {
+                                            // Save the userId in SharedPreferences
+                                            PreferencesManager.saveUserIdToPreferences(context, loginResponse.userId)
+                                            PreferencesManager.saveTokenToPreferences(context, loginResponse.token)
+
+                                            // Navigate to HomeScreen
+                                            // removes the login screen from the back stack to prevent the user from returning to it
+                                            navController.navigate("page1") {
                                                 popUpTo("page0") { inclusive = true }
                                             }
                                         } else {
@@ -187,7 +197,6 @@ fun LoginScreen(navController: NavHostController) {
                                         Log.e("LoginButton", "Login failed: ${response.message()}")
                                     }
                                 }
-
                                 override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
                                     Log.e("LoginButton", "API call failed: ${t.message}")
                                 }
@@ -197,16 +206,12 @@ fun LoginScreen(navController: NavHostController) {
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isFormValid) Color(0xFF86BC24) else Color(0xFFC7C7C7),
                         disabledContainerColor = Color(0xFFC7C7C7)
-
                     ),
                     enabled = isFormValid,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 10.dp)
                         .padding(horizontal = 15.dp)
-
-                        //.clip(RoundedCornerShape(6.dp))
-
                 ) {
                     Text(
                         text = "Login",

@@ -33,6 +33,10 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import android.content.Context
+import android.util.Log
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 
 
 
@@ -51,14 +55,16 @@ val DarkGrassGreen2 = Color(0xFF2C8431)
 
 
 @Composable
-fun HomeScreen(userId: String) {
+fun HomeScreen(context: Context) {
     // State variables to hold user data
     var userName by remember { mutableStateOf("User") }
     var todayStatus by remember { mutableStateOf("Loading...") }
-
+    val userId: String?  = remember(context) { PreferencesManager.getUserIdFromPreferences(context) }
+    val token = PreferencesManager.getTokenFromPreferences(context)
     // Fetch user data on load
     LaunchedEffect(userId) {
-        println(userId);
+        println(userId)
+        userId?.let {
         val call = RetrofitClient.apiService.getUserInfo(userId)
         call.enqueue(object : Callback<UserInfoResponse> {
             override fun onResponse(
@@ -92,7 +98,7 @@ fun HomeScreen(userId: String) {
                 todayStatus = "Error: ${t.message}"
             }
         })
-    }
+    }}
 
     // Current date formatting
 
@@ -250,16 +256,59 @@ fun HomeScreen(userId: String) {
 
                     val isSubmitEnabled = selectedDay != null && changeToDay != null
 
-                    Button(
-                        onClick = { /* Later */ },
-                        enabled = isSubmitEnabled,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isSubmitEnabled) DarkGrassGreen2 else Color.Gray
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(text = "Submit", fontSize = 16.sp, color = Color.White)
-                    }
+
+                            Button(
+                                onClick = {
+                                    if (isSubmitEnabled) {
+                                        // Create request object
+                                        val request = SubmitRequest(selectedDay.toString(), changeToDay.toString())
+
+                                        if (token != null) {
+                                            // Make the API call using Retrofit
+                                            RetrofitClient.apiService.submitRequest("Bearer $token", request).enqueue(object : Callback<SubmitRequestResponse> {
+                                                override fun onResponse(call: Call<SubmitRequestResponse>, response: Response<SubmitRequestResponse>) {
+                                                    if (response.isSuccessful) {
+                                                        val submitResponse = response.body()
+                                                        if (submitResponse != null) {
+                                                            // Handle successful submission
+                                                            Toast.makeText(context,submitResponse.message, Toast.LENGTH_LONG).show()
+                                                            Log.d("SubmitRequest", "Request submitted: ${submitResponse.requestId}")
+                                                        } else {
+                                                            // Handle null response body
+                                                            Toast.makeText(context, "Failed to submit request", Toast.LENGTH_LONG).show()
+                                                            Log.e("SubmitRequest", "Submit response was null")
+                                                        }
+                                                    } else {
+                                                        // Handle failed response
+                                                        val errorMessage = response.errorBody()?.string() ?: "Failed to submit request"
+                                                        Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+                                                        Log.e("SubmitRequest", "Submit failed: ${response.message()}")
+                                                    }
+                                                }
+
+                                                override fun onFailure(call: Call<SubmitRequestResponse>, t: Throwable) {
+                                                    // Handle API call failure
+                                                    Toast.makeText(context, "Failed to submit request: ${t.message}", Toast.LENGTH_LONG).show()
+                                                    Log.e("SubmitRequest", "API call failed: ${t.message}")
+                                                }
+                                            })
+                                        } else {
+                                            // Handle missing token
+                                            Toast.makeText(context, "Token is missing from SharedPreferences", Toast.LENGTH_LONG).show()
+                                            Log.e("SubmitRequest", "Token is missing from SharedPreferences")
+                                        }
+                                    }
+                                },
+                                enabled = isSubmitEnabled,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isSubmitEnabled) DarkGrassGreen2 else Color.Gray
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(text = "Submit", fontSize = 16.sp, color = Color.White)
+                            }
+
+
                 }
             }
         }

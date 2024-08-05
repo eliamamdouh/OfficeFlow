@@ -18,6 +18,8 @@ import com.example.project.LoginScreen
 import com.example.project.MyRequests
 import com.example.project.NotificationPage
 
+import androidx.compose.ui.platform.LocalContext
+
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -25,6 +27,7 @@ fun MainScreen() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    val context = LocalContext.current
 
     Scaffold(
         bottomBar = {
@@ -40,10 +43,7 @@ fun MainScreen() {
         ) {
             composable("page0") { LoginScreen(navController) }
 
-            composable("page1/{userId}") { backStackEntry ->
-                val userId = backStackEntry.arguments?.getString("userId") ?: ""
-                HomeScreen(userId = userId)
-            }
+            composable("page1") {HomeScreen(context) }
 
             composable("page2") { ChatScreen() }
             composable("page3") { MyRequests() }
