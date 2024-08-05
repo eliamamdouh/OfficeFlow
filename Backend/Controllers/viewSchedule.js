@@ -1,4 +1,3 @@
-const { STATUS_CODES } = require('http');
 const { db } = require('../firebase-init');
 const { StatusCodes } = require ("http-status-codes");
 
