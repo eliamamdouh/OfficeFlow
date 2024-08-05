@@ -1,8 +1,6 @@
 package com.example.project
 
 
-
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,13 +28,21 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+
+
+
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+
+import androidx.compose.ui.platform.LocalContext
+import android.content.Context
 import com.example.project.PreferencesManager
-
-
-
 
 @Composable
 fun LoginScreen(navController: NavHostController) {
@@ -46,12 +52,8 @@ fun LoginScreen(navController: NavHostController) {
     var emailError by remember { mutableStateOf<String?>(null) }
 
     // Check if the email is valid and set the error message if not
-
-    val isEmailValid = email.contains("@gmail.com")
-
+    val isEmailValid = email.contains("@deloitte.com")
     val isFormValid = email.isNotBlank() && password.isNotBlank() && isEmailValid
-
-    val context = LocalContext.current
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Background image
@@ -101,9 +103,7 @@ fun LoginScreen(navController: NavHostController) {
                     value = email,
                     onValueChange = {
                         email = it
-
-                        emailError = if (it.contains("@gmail.com")) null else "Email must include @gmail.com"
-
+                        emailError = if (it.contains("@deloitte.com")) null else "Email must include @deloitte.com"
                     },
                     placeholder = {
                         Text(
@@ -164,50 +164,17 @@ fun LoginScreen(navController: NavHostController) {
                 )
 
                 Button(
-                    onClick = {
-                        if (isFormValid) {
-                            // Create a LoginRequest object with email and password
-                            val request = LoginRequest(email, password)
-
-                            // Make the API call using Retrofit
-                            RetrofitClient.apiService.loginUser(request).enqueue(object : Callback<LoginResponse> {
-                                override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
-                                    if (response.isSuccessful) {
-                                        val loginResponse = response.body()
-                                        if (loginResponse != null && loginResponse.userId.isNotEmpty()) {
-                                            Log.d("LoginButton", "Login successful: ${loginResponse.userId}")
-
-                                            // Save the userId in SharedPreferences
-                                            PreferencesManager.saveUserIdToPreferences(context, loginResponse.userId)
-                                            PreferencesManager.saveTokenToPreferences(context, loginResponse.token)
-
-                                            // Navigate to HomeScreen
-                                            // removes the login screen from the back stack to prevent the user from returning to it
-                                            navController.navigate("page1") {
-                                                popUpTo("page0") { inclusive = true }
-                                            }
-                                        } else {
-                                            Log.e("LoginButton", "Login response was null or userId was missing")
-                                        }
-                                    } else {
-                                        Log.e("LoginButton", "Login failed: ${response.message()}")
-                                    }
-                                }
-                                override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
-                                    Log.e("LoginButton", "API call failed: ${t.message}")
-                                }
-                            })
-                        }
-                    },
+                    onClick = { if (isFormValid) navController.navigate("page1") },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isFormValid) Color(0xFF86BC24) else Color(0xFFC7C7C7),
-                        disabledContainerColor = Color(0xFFC7C7C7)
+                        containerColor = if (isFormValid) Color(0xFF86BC24) else Color(0xFFC7C7C7), // Gray color when disabled
+                        disabledContainerColor = Color(0xFFC7C7C7) // Ensure this is set for disabled state
                     ),
                     enabled = isFormValid,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 10.dp)
                         .padding(horizontal = 15.dp)
+                        .clip(RoundedCornerShape(6.dp))
                 ) {
                     Text(
                         text = "Login",

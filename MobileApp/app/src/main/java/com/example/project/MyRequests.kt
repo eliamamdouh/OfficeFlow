@@ -4,14 +4,15 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -21,6 +22,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 
 @Composable
 fun MyRequests() {
@@ -28,54 +30,92 @@ fun MyRequests() {
         mutableStateOf(listOf(
             Request("8m ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci", RequestStatus.PENDING),
             Request("10 days ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci", RequestStatus.APPROVED),
+            Request("15 days ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci", RequestStatus.DENIED),
+            Request("8m ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci", RequestStatus.PENDING),
+            Request("10 days ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci", RequestStatus.APPROVED),
             Request("15 days ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci", RequestStatus.DENIED)
         ))
+    }
+
+    val scrollState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    var showScrollToTop by remember { mutableStateOf(false) }
+
+    LaunchedEffect(scrollState.firstVisibleItemIndex) {
+        showScrollToTop = scrollState.firstVisibleItemIndex > 0
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF8F8F8))//(0xFFF8F8F8)
+            .background(Color(0xFFF8F8F8))
             .fillMaxWidth(),
         contentAlignment = Alignment.TopCenter
     ) {
-        Column(
+        LazyColumn(
+            state = scrollState,
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color.White, RoundedCornerShape(35.dp))
                 .padding(16.dp)
         ) {
-            Text(
-                text = "My Requests",
-                fontSize = 35.sp,
-                color = Color.Black,
-                modifier = Modifier
-                    .padding(bottom = 8.dp)
-                    .align(Alignment.CenterHorizontally)
-            )
-            Divider(
-                color = Color.Gray.copy(alpha = 0.5f),
-                thickness = 1.dp,
-                modifier = Modifier
-                    .padding(bottom = 16.dp)
-                    .alpha(0.5f)
-            )
-            requests.forEachIndexed { index, request ->
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "My Requests",
+                        fontSize = 35.sp,
+                        color = Color.Black,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+                Divider(
+                    color = Color.Gray.copy(alpha = 0.5f),
+                    thickness = 1.dp,
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .alpha(0.5f)
+                )
+            }
+
+            items(requests) { request ->
                 RequestItem(
                     request = request,
                     onCancelRequest = {
                         requests = requests.filter { it != request }
                     }
                 )
-                if (index < requests.size - 1) {
-                    Divider(
-                        modifier = Modifier
-                            .padding(vertical = 8.dp)
-                            .alpha(0.5f),
-                        thickness = 1.dp,
-                        color = Color.Gray.copy(alpha = 0.5f)
-                    )
-                }
+                Divider(
+                    modifier = Modifier
+                        .padding(vertical = 8.dp)
+                        .alpha(0.5f),
+                    thickness = 1.dp,
+                    color = Color.Gray.copy(alpha = 0.5f)
+                )
+            }
+        }
+
+        if (showScrollToTop) {
+            IconButton(
+                onClick = {
+                    coroutineScope.launch {
+                        scrollState.scrollToItem(0)
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .size(80.dp)
+                    .padding(16.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.arrowupgray), // Replace with your icon resource ID
+                    contentDescription = "Scroll to Top",
+                    modifier = Modifier
+                        .size(40.dp)
+                        .alpha(0.6f)
+                )
             }
         }
     }
@@ -95,8 +135,9 @@ fun RequestItem(
             text = request.timeAgo,
             fontSize = 16.sp,
             color = Color.Gray,
-            modifier = Modifier.padding(bottom = 4.dp)
-                .alpha(0.5f)////////engy
+            modifier = Modifier
+                .padding(bottom = 4.dp)
+                .alpha(0.5f)
         )
         Text(
             text = request.description,

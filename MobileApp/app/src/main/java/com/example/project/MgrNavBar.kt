@@ -19,7 +19,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 
 @Composable
-fun BottomNavBar(navController: NavHostController) {
+fun ManagerNavBar(navController: NavHostController) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     //ask if it should be passed as a string.
@@ -41,26 +41,32 @@ fun BottomNavBar(navController: NavHostController) {
                     .padding(vertical = 16.dp, horizontal = 16.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
-            ) {// for loop instead calling function 4x
-                NavBarIcon(
+            ) {
+                ManagerNavBarIcon(
                     iconId = R.drawable.graynotes,
                     greenIconId = R.drawable.greennotes,
                     isSelected = currentRoute == "page1",
                     onClick = { navController.navigate("page1") }
                 )
-                NavBarIcon(
+                ManagerNavBarIcon(
                     iconId = R.drawable.graycomment,
                     greenIconId = R.drawable.greencomment,
                     isSelected = currentRoute == "page2",
                     onClick = { navController.navigate("page2") }
                 )
-                NavBarIcon(
+                ManagerNavBarIcon(
+                    iconId = R.drawable.mgrgray,
+                    greenIconId = R.drawable.mgrgreen,
+                    isSelected = currentRoute == "page6",//pageeleia
+                    onClick = { navController.navigate("page6") }
+                )
+                ManagerNavBarIcon(
                     iconId = R.drawable.graymessagealertsquare,
                     greenIconId = R.drawable.greenmessagealertsquare,
-                    isSelected = currentRoute == "page3",
-                    onClick = { navController.navigate("page3") }
+                    isSelected = currentRoute == "page5",
+                    onClick = { navController.navigate("page5") }
                 )
-                NavBarIcon(
+                ManagerNavBarIcon(
                     iconId = R.drawable.graybell,
                     greenIconId = R.drawable.greenbell,
                     isSelected = currentRoute == "page4",
@@ -72,7 +78,7 @@ fun BottomNavBar(navController: NavHostController) {
 }
 
 @Composable
-fun NavBarIcon(
+fun ManagerNavBarIcon(
     iconId: Int,
     greenIconId: Int,
     isSelected: Boolean,

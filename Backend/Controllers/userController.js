@@ -1,24 +1,22 @@
-// userController.js
-
 const { db } = require('../firebase-init');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-
+const { StatusCodes } = require ("http-status-codes");
 
 const createUser = async (req, res) => {
     try {
         const {Fullname, username, password, email, managerName } = req.body;
 
         if (!username || !password || !email) {
-            return res.status(400).json({ message: 'Username, password, and email are required' });
+            return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Username, password, and email are required' });
         }
 
         const usersCollectionRef = db.collection('users');
         const existingUserQuery = await usersCollectionRef.where('email', '==', email).get();
 
         if (!existingUserQuery.empty) {
-            return res.status(400).json({ message: 'User already exists' });
+            return res.status(StatusCodes.BAD_REQUEST).json({ message: 'User already exists' });
         }
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -41,15 +39,21 @@ const createUser = async (req, res) => {
             schedule  
         });
 
-        res.status(201).json({ message: 'User created successfully', userId: userDocRef.id });
+        res.status(StatusCodes.CREATED).json({ message: 'User created successfully', userId: userDocRef.id });
     } catch (error) {
         console.error("Error creating user:", error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Server error', error: error.message });
     }
 };
 
 const generateAlternatingUserSchedule = () => {
+    
     const currentDate = new Date();
+    
+    const dayOfWeek = currentDate.getDay();
+    const daysUntilMonday = (dayOfWeek === 0 ? 1 : 8) - dayOfWeek; 
+    let nextMonday = new Date(currentDate);
+    nextMonday.setDate(currentDate.getDate() + daysUntilMonday);
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth(); // 0-based, so 7 = August
 
@@ -118,14 +122,14 @@ const loginUser = async (req, res) => {
         const { email, password } = req.body;
 
         if (!email || !password) {
-            return res.status(400).json({ message: 'Email and password are required' });
+            return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Email and password are required' });
         }
 
         const usersCollectionRef = db.collection('users');
         const userQuerySnapshot = await usersCollectionRef.where('email', '==', email).get();
 
         if (userQuerySnapshot.empty) {
-            return res.status(401).json({ message: 'Invalid email or password' });
+            return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'Invalid email or password' });
         }
 
         const userDoc = userQuerySnapshot.docs[0];
@@ -134,7 +138,7 @@ const loginUser = async (req, res) => {
         const isPasswordValid = await bcrypt.compare(password, userData.password);
 
         if (!isPasswordValid) {
-            return res.status(401).json({ message: 'Invalid email or password' });
+            return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'Invalid email or password' });
         }
         const userId = userDoc.id;
 
@@ -145,7 +149,7 @@ const loginUser = async (req, res) => {
             
         );
 
-        res.status(200).json({
+        res.status(StatusCodes.OK).json({
             message: 'Login successful',
             userId: userId, 
             token : token,
@@ -154,7 +158,7 @@ const loginUser = async (req, res) => {
         console.log(token)
     } catch (error) {
         console.error("Error during login:", error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Server error', error: error.message });
     }
 };
 
