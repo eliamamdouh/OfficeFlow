@@ -1,6 +1,7 @@
 package com.example.project
 
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -54,6 +55,7 @@ val DarkGrassGreen2 = Color(0xFF2C8431)
 
 
 
+@SuppressLint("SuspiciousIndentation")
 @Composable
 fun HomeScreen(context: Context) {
     // State variables to hold user data
@@ -357,7 +359,8 @@ fun CalendarContent(
     onPreviousMonth: (() -> Unit)? = null,
     onNextMonth: (() -> Unit)? = null,
     selectedDate: LocalDate? = null,
-    restrictDateSelection: Boolean = false
+    restrictDateSelection: Boolean = false,
+    isDialog: Boolean = false
 ) {
     val daysOfWeek = listOf(
         DayOfWeek.SUNDAY, DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
@@ -365,6 +368,9 @@ fun CalendarContent(
     )
 
     val today = LocalDate.now()
+    val nextMonth = YearMonth.now().plusMonths(1)
+    val isCurrentMonth = currentMonth == YearMonth.now()
+    val isNextMonth = currentMonth == nextMonth
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -376,12 +382,14 @@ fun CalendarContent(
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { onPreviousMonth?.invoke() }) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowLeft,
-                        contentDescription = "Previous Month",
-                        tint = LightGrassGreen
-                    )
+                if (!isDialog || (isDialog && !isCurrentMonth)) {
+                    IconButton(onClick = { onPreviousMonth?.invoke() }) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowLeft,
+                            contentDescription = "Previous Month",
+                            tint = LightGrassGreen
+                        )
+                    }
                 }
 
                 Text(
@@ -391,12 +399,14 @@ fun CalendarContent(
                     modifier = Modifier.padding(16.dp)
                 )
 
-                IconButton(onClick = { onNextMonth?.invoke() }) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowRight,
-                        contentDescription = "Next Month",
-                        tint = LightGrassGreen
-                    )
+                if (!isDialog || (isDialog && !isNextMonth)) {
+                    IconButton(onClick = { onNextMonth?.invoke() }) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowRight,
+                            contentDescription = "Next Month",
+                            tint = LightGrassGreen
+                        )
+                    }
                 }
             }
         } else {
@@ -516,14 +526,29 @@ fun CalendarView() {
 
 @Composable
 fun CalendarViewForDialog(currentMonth: YearMonth, onDateSelected: (LocalDate) -> Unit, selectedDate: LocalDate?) {
+    val nextMonth = YearMonth.now().plusMonths(1)
+    var displayedMonth by remember { mutableStateOf(currentMonth) }
+
     CalendarContent(
-        currentMonth = currentMonth,
+        currentMonth = displayedMonth,
         onDateSelected = onDateSelected,
-        showMonthNavigation = false,
+        showMonthNavigation = true,
+        onPreviousMonth = {
+            if (displayedMonth.isAfter(YearMonth.now())) {
+                displayedMonth = displayedMonth.minusMonths(1)
+            }
+        },
+        onNextMonth = {
+            if (displayedMonth.isBefore(nextMonth)) {
+                displayedMonth = displayedMonth.plusMonths(1)
+            }
+        },
         selectedDate = selectedDate,
-        restrictDateSelection = true
+        restrictDateSelection = true,
+        isDialog = true
     )
 }
+
 @Composable
 fun DatePickerWithLabel(label: String, selectedDate: LocalDate?, onDateSelected: (LocalDate) -> Unit) {
         var isDialogOpen by remember { mutableStateOf(false) }
