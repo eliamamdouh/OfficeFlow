@@ -3,6 +3,18 @@ const { db } = require('../firebase-init');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
+const getLocationForDate = (schedule, date) => {
+    let location = null;
+    Object.keys(schedule).forEach(week => {
+        schedule[week].forEach(day => {
+            if (day.day === date) {
+                location = day.location;
+            }
+        });
+    });
+    return location;
+};
+
 const submitRequest = async (req, res) => {
     try {
         const { authorization } = req.headers;
@@ -11,6 +23,8 @@ const submitRequest = async (req, res) => {
         if (!authorization ) {
             return res.status(400).json({ message: 'Authorization header is missing' });
         }
+        console.log("Headers received:", req.headers);
+
         if (!newDate || !dayToChange) {
             return res.status(400).json({ message: 'New date, and day to change are required' });
         }
@@ -31,11 +45,23 @@ const submitRequest = async (req, res) => {
         if (!userDoc.exists) {
             return res.status(404).json({ message: 'User not found' });
         }
+
+         if (newDate === dayToChange) {
+            return res.status(400).json({ message: 'The new date and the day to change cannot be the same' });
+        }
         const userData = userDoc.data();
+        const schedule = userData.schedule;
+
+        const locationForDayToChange = getLocationForDate(schedule, dayToChange);
+        const locationForNewDate = getLocationForDate(schedule, newDate);
+
+        if (locationForDayToChange === locationForNewDate) {
+            return res.status(400).json({ message: 'The selected days must be from different locations (one office, one home)' });
+        }
 
         // Create a new request
         const requestsCollectionRef = db.collection('Requests');
-        const requestDocRef = requestsCollectionRef.doc(); // Auto-generate a document ID
+        const requestDocRef = requestsCollectionRef.doc(); 
 
         await requestDocRef.set({
             userId,
@@ -52,5 +78,7 @@ const submitRequest = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
+
 
 module.exports = { submitRequest };
