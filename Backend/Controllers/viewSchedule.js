@@ -18,6 +18,7 @@ const viewSchedule = async (req, res) => {
             return res.status(StatusCodes.NOT_FOUND).json({ message: 'User not found' });
         }
 
+        // Retrieve the user's schedule
         const userDoc = userQuery.docs[0];
         const userData = userDoc.data();
 
