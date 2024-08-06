@@ -32,6 +32,15 @@ data class SubmitRequestResponse(
     val requestId: String
 )
 
+data class ScheduleResponse(
+    val schedule: Map<String, List<ScheduleDay>>
+)
+
+data class ScheduleDay(
+    val day: String,
+    val location: String
+)
+
 
 interface ApiService {
     @POST("users/login")
@@ -44,4 +53,7 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body request: SubmitRequest
     ): Call<SubmitRequestResponse>
+
+    @GET("users/schedule")
+    fun viewSchedule(@Query("username") username: String): Call<ScheduleResponse>
 }

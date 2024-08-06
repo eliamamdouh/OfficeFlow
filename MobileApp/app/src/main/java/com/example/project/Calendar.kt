@@ -36,8 +36,9 @@ import androidx.compose.ui.text.font.FontFamily
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-
+import androidx.compose.ui.text.style.TextAlign
 
 
 import retrofit2.Call
@@ -66,40 +67,40 @@ fun HomeScreen(context: Context) {
     LaunchedEffect(userId) {
         println(userId)
         userId?.let {
-        val call = RetrofitClient.apiService.getUserInfo(userId)
-        call.enqueue(object : Callback<UserInfoResponse> {
-            override fun onResponse(
-                call: Call<UserInfoResponse>,
-                response: Response<UserInfoResponse>
-            ) {
-                println("Raw response: ${response.raw()}")
-                if (response.isSuccessful) {
-                    val userInfo = response.body()
-                    println("Response body: $userInfo")
-                    if (userInfo != null) {
-                        // This runs on the main thread
-                        userName = userInfo.name ?: "Unknown"
-                        todayStatus = when (userInfo.todaySchedule) {
-                            "Home" -> "Today, you are working from Home!"
-                            "Office" -> "Today, you are working from Office!"
-                            else -> "Failed to load status"
+            val call = RetrofitClient.apiService.getUserInfo(userId)
+            call.enqueue(object : Callback<UserInfoResponse> {
+                override fun onResponse(
+                    call: Call<UserInfoResponse>,
+                    response: Response<UserInfoResponse>
+                ) {
+                    println("Raw response: ${response.raw()}")
+                    if (response.isSuccessful) {
+                        val userInfo = response.body()
+                        println("Response body: $userInfo")
+                        if (userInfo != null) {
+                            // This runs on the main thread
+                            userName = userInfo.name ?: "Unknown"
+                            todayStatus = when (userInfo.todaySchedule) {
+                                "Home" -> "Today, you are working from Home!"
+                                "Office" -> "Today, you are working from Office!"
+                                else -> "Failed to load status"
+                            }
+                        } else {
+                            todayStatus = "Failed to load status"
                         }
                     } else {
                         todayStatus = "Failed to load status"
                     }
-                } else {
-                    todayStatus = "Failed to load status"
                 }
-            }
 
 
-            override fun onFailure(call: Call<UserInfoResponse>, t: Throwable) {
-                // Print the error message
-                println("Request failed: ${t.message}")
-                todayStatus = "Error: ${t.message}"
-            }
-        })
-    }}
+                override fun onFailure(call: Call<UserInfoResponse>, t: Throwable) {
+                    // Print the error message
+                    println("Request failed: ${t.message}")
+                    todayStatus = "Error: ${t.message}"
+                }
+            })
+        }}
 
     // Current date formatting
 
@@ -147,7 +148,7 @@ fun HomeScreen(context: Context) {
             ) {
                 Column(
 
-                   // modifier = Modifier,
+                    // modifier = Modifier,
 
                     verticalArrangement = Arrangement.Top,
                     horizontalAlignment = Alignment.Start
@@ -199,7 +200,10 @@ fun HomeScreen(context: Context) {
                     )
                     Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.alpha(0.3f))
 
-                    CalendarView()
+                    //CalendarView()
+                    userId?.let {
+                        CalendarView(context, it)
+                    }
 
                     Divider(
                         color = Color.Gray,
@@ -240,7 +244,14 @@ fun HomeScreen(context: Context) {
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
 
+//                    DatePickerWithLabel(
+//                        label = "Select day",
+//                        selectedDate = selectedDay,
+//                        onDateSelected = { selectedDay = it }
+//                    )
                     DatePickerWithLabel(
+                        context = context,
+                        username = userName,
                         label = "Select day",
                         selectedDate = selectedDay,
                         onDateSelected = { selectedDay = it }
@@ -248,7 +259,14 @@ fun HomeScreen(context: Context) {
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+//                    DatePickerWithLabel(
+//                        label = "Change to",
+//                        selectedDate = changeToDay,
+//                        onDateSelected = { changeToDay = it }
+//                    )
                     DatePickerWithLabel(
+                        context = context,
+                        username = userName,
                         label = "Change to",
                         selectedDate = changeToDay,
                         onDateSelected = { changeToDay = it }
@@ -258,56 +276,56 @@ fun HomeScreen(context: Context) {
                     val isSubmitEnabled = selectedDay != null && changeToDay != null
 
 
-                            Button(
-                                onClick = {
-                                    if (isSubmitEnabled) {
-                                        // Create request object
-                                        val request = SubmitRequest(selectedDay.toString(), changeToDay.toString())
+                    Button(
+                        onClick = {
+                            if (isSubmitEnabled) {
+                                // Create request object
+                                val request = SubmitRequest(selectedDay.toString(), changeToDay.toString())
 
-                                        if (token != null) {
-                                            // Make the API call using Retrofit
-                                            RetrofitClient.apiService.submitRequest("Bearer $token", request).enqueue(object : Callback<SubmitRequestResponse> {
-                                                override fun onResponse(call: Call<SubmitRequestResponse>, response: Response<SubmitRequestResponse>) {
-                                                    if (response.isSuccessful) {
-                                                        val submitResponse = response.body()
-                                                        if (submitResponse != null) {
-                                                            // Handle successful submission
-                                                            Toast.makeText(context,submitResponse.message, Toast.LENGTH_LONG).show()
-                                                            Log.d("SubmitRequest", "Request submitted: ${submitResponse.requestId}")
-                                                        } else {
-                                                            // Handle null response body
-                                                            Toast.makeText(context, "Failed to submit request", Toast.LENGTH_LONG).show()
-                                                            Log.e("SubmitRequest", "Submit response was null")
-                                                        }
-                                                    } else {
-                                                        // Handle failed response
-                                                        val errorMessage = response.errorBody()?.string() ?: "Failed to submit request"
-                                                        Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
-                                                        Log.e("SubmitRequest", "Submit failed: ${response.message()}")
-                                                    }
+                                if (token != null) {
+                                    // Make the API call using Retrofit
+                                    RetrofitClient.apiService.submitRequest("Bearer $token", request).enqueue(object : Callback<SubmitRequestResponse> {
+                                        override fun onResponse(call: Call<SubmitRequestResponse>, response: Response<SubmitRequestResponse>) {
+                                            if (response.isSuccessful) {
+                                                val submitResponse = response.body()
+                                                if (submitResponse != null) {
+                                                    // Handle successful submission
+                                                    Toast.makeText(context,submitResponse.message, Toast.LENGTH_LONG).show()
+                                                    Log.d("SubmitRequest", "Request submitted: ${submitResponse.requestId}")
+                                                } else {
+                                                    // Handle null response body
+                                                    Toast.makeText(context, "Failed to submit request", Toast.LENGTH_LONG).show()
+                                                    Log.e("SubmitRequest", "Submit response was null")
                                                 }
-
-                                                override fun onFailure(call: Call<SubmitRequestResponse>, t: Throwable) {
-                                                    // Handle API call failure
-                                                    Toast.makeText(context, "Failed to submit request: ${t.message}", Toast.LENGTH_LONG).show()
-                                                    Log.e("SubmitRequest", "API call failed: ${t.message}")
-                                                }
-                                            })
-                                        } else {
-                                            // Handle missing token
-                                            Toast.makeText(context, "Token is missing from SharedPreferences", Toast.LENGTH_LONG).show()
-                                            Log.e("SubmitRequest", "Token is missing from SharedPreferences")
+                                            } else {
+                                                // Handle failed response
+                                                val errorMessage = response.errorBody()?.string() ?: "Failed to submit request"
+                                                Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+                                                Log.e("SubmitRequest", "Submit failed: ${response.message()}")
+                                            }
                                         }
-                                    }
-                                },
-                                enabled = isSubmitEnabled,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isSubmitEnabled) DarkGrassGreen2 else Color.Gray
-                                ),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(text = "Submit", fontSize = 16.sp, color = Color.White)
+
+                                        override fun onFailure(call: Call<SubmitRequestResponse>, t: Throwable) {
+                                            // Handle API call failure
+                                            Toast.makeText(context, "Failed to submit request: ${t.message}", Toast.LENGTH_LONG).show()
+                                            Log.e("SubmitRequest", "API call failed: ${t.message}")
+                                        }
+                                    })
+                                } else {
+                                    // Handle missing token
+                                    Toast.makeText(context, "Token is missing from SharedPreferences", Toast.LENGTH_LONG).show()
+                                    Log.e("SubmitRequest", "Token is missing from SharedPreferences")
+                                }
                             }
+                        },
+                        enabled = isSubmitEnabled,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isSubmitEnabled) DarkGrassGreen2 else Color.Gray
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(text = "Submit", fontSize = 16.sp, color = Color.White)
+                    }
 
 
                 }
@@ -352,8 +370,9 @@ fun TodayStatusBox(message: String) {
 
 @Composable
 fun CalendarContent(
-    currentMonth: YearMonth,
-    onDateSelected: (LocalDate) -> Unit,
+    context: Context,
+    username: String,
+    onDateSelected: (LocalDate) -> Unit = {},
     showMonthNavigation: Boolean = false,
     onPreviousMonth: (() -> Unit)? = null,
     onNextMonth: (() -> Unit)? = null,
@@ -361,9 +380,34 @@ fun CalendarContent(
     restrictDateSelection: Boolean = false,
     isDialog: Boolean = false
 ) {
+    var schedule by remember { mutableStateOf<Map<String, List<ScheduleDay>>?>(null) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Fetch schedule data
+    LaunchedEffect(username) {
+        val call = RetrofitClient.apiService.viewSchedule(username)
+        call.enqueue(object : Callback<ScheduleResponse> {
+            override fun onResponse(call: Call<ScheduleResponse>, response: Response<ScheduleResponse>) {
+                if (response.isSuccessful) {
+                    schedule = response.body()?.schedule
+                    println("Schedule fetched successfully: $schedule")
+                } else {
+                    errorMessage = "Error fetching schedule: ${response.errorBody()?.string()}"
+                    println(errorMessage)
+                }
+            }
+
+            override fun onFailure(call: Call<ScheduleResponse>, t: Throwable) {
+                errorMessage = "Failed to fetch schedule: ${t.message}"
+                println(errorMessage)
+            }
+        })
+    }
+
+    val currentMonth = YearMonth.now()
     val daysOfWeek = listOf(
-        DayOfWeek.SUNDAY, DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
-        DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY
+        DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY,
+        DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY
     )
 
     val today = LocalDate.now()
@@ -408,101 +452,84 @@ fun CalendarContent(
                     }
                 }
             }
-        } else {
-            Text(
-                text = "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${currentMonth.year}",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(16.dp)
-            )
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround
-        ) {
-            daysOfWeek.forEach { day ->
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            daysOfWeek.forEach { dayOfWeek ->
                 Text(
-                    text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
+                    text = dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(8.dp)
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .weight(1f),
+                    textAlign = TextAlign.Center
                 )
             }
         }
 
         val firstDayOfMonth = currentMonth.atDay(1)
         val lastDayOfMonth = currentMonth.atEndOfMonth()
-        val daysInMonth = (1..lastDayOfMonth.dayOfMonth).map { firstDayOfMonth.plusDays((it - 1).toLong()) }
+        val firstDayOfWeek = firstDayOfMonth.dayOfWeek.value
+        val offset = if (firstDayOfWeek == 7) 0 else firstDayOfWeek - 1  // Adjust for Monday start
+        val totalDaysInMonth = lastDayOfMonth.dayOfMonth
 
-        val previousMonthDays = (1..firstDayOfMonth.dayOfWeek.value % 7).map {
-            firstDayOfMonth.minusDays(it.toLong())
-        }.reversed()
+        // Build the calendar grid with the schedule data
+        val weeksInMonth = (totalDaysInMonth + offset - 1) / 7 + 1
+        for (week in 0 until weeksInMonth) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                for (day in 1..7) {
+                    val dayOfMonth = week * 7 + day - offset
+                    val date = if (dayOfMonth in 1..totalDaysInMonth) currentMonth.atDay(dayOfMonth) else null
 
-        val totalDays = previousMonthDays.size + daysInMonth.size
-        val remainingDays = 7 - totalDays % 7
+                    val isWeekend = date?.dayOfWeek == DayOfWeek.SATURDAY || date?.dayOfWeek == DayOfWeek.SUNDAY
+                    val isWorkFromHome = schedule?.values?.flatten()?.any { it.day == date.toString() && it.location == "Home" } == true
+                    val isWorkFromOffice = schedule?.values?.flatten()?.any { it.day == date.toString() && it.location == "Office" } == true
 
-        val nextMonthDays = if (remainingDays < 7) (1..remainingDays).map {
-            lastDayOfMonth.plusDays(it.toLong())
-        } else emptyList()
-
-        val daysWithBlanks = mutableListOf<LocalDate?>()
-        daysWithBlanks.addAll(previousMonthDays)
-        daysWithBlanks.addAll(daysInMonth)
-        daysWithBlanks.addAll(nextMonthDays)
-
-        daysWithBlanks.chunked(7).forEach { week ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceAround
-            ) {
-                week.forEach { day ->
-                    val isWeekend = day?.dayOfWeek == DayOfWeek.SATURDAY || day?.dayOfWeek == DayOfWeek.SUNDAY
-                    val isWorkFromOffice = day?.dayOfWeek == DayOfWeek.MONDAY || day?.dayOfWeek == DayOfWeek.TUESDAY || day?.dayOfWeek == DayOfWeek.WEDNESDAY
-                    val isWorkFromHome = day?.dayOfWeek == DayOfWeek.THURSDAY || day?.dayOfWeek == DayOfWeek.FRIDAY
+                    // Debug print to check schedule data
+                    if (date != null) {
+                        println("Date: $date, Home: $isWorkFromHome, Office: $isWorkFromOffice, Schedule: ${schedule?.get(date.toString())}")
+                    }
 
                     val textColor = when {
-                        isWeekend -> Color.Gray
                         isWorkFromHome -> DarkGrassGreen2
                         isWorkFromOffice -> DarkTeal2
+                        isWeekend -> Color.Gray
                         else -> Color.Black
                     }
-                    val textAlpha = if (day?.month != currentMonth.month) 0.3f else 1f
-                    val isToday = day == today
-
-                    val isDisabled = restrictDateSelection && day?.let {
-                        it.isBefore(today) || it == selectedDate || isWeekend
-                    } ?: false
 
                     Box(
-                        contentAlignment = Alignment.Center,
                         modifier = Modifier
-                            .size(35.dp)
+                            .weight(1f)
                             .padding(4.dp)
-                            .clickable(enabled = !isDisabled && day != null && day.month == currentMonth.month) {
-                                day?.let { onDateSelected(it) }
-                            }
-                            .border(
-                                width = if (isToday) 2.dp else 0.dp,
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(
                                 color = when {
-                                    isToday && isWeekend -> Color.Gray
-                                    isToday && isWorkFromHome -> DarkGrassGreen2
-                                    isToday && isWorkFromOffice -> DarkTeal2
+                                    date == null -> Color.Transparent
+                                    date == selectedDate -> LightGrassGreen
+                                    else -> Color.Transparent
+                                }
+                            )
+                            .border(
+                                width = if (date == today) 2.dp else 0.dp,
+                                color = when {
+                                    date == today && isWorkFromOffice -> DarkTeal2
+                                    date == today && isWorkFromHome -> DarkGrassGreen2
+                                    date == today && isWeekend -> Color.Gray
                                     else -> Color.Transparent
                                 },
                                 shape = CircleShape
                             )
-                            .background(
-                                color = if (isToday) Color.Transparent else Color.Transparent,
-                                shape = CircleShape
-                            )
+                            .clickable { if (date != null) onDateSelected(date) },
+                        contentAlignment = Alignment.Center
                     ) {
-                        if (day != null) {
-                            Text(
-                                text = day.dayOfMonth.toString(),
-                                color = textColor,
-                                modifier = Modifier.alpha(if (isDisabled) 0.3f else textAlpha)
-                            )
-                        }
+                        Text(
+                            text = date?.dayOfMonth?.toString() ?: "",
+                            fontSize = 14.sp,
+                            color = textColor,
+                            fontWeight = if (date == selectedDate) FontWeight.Bold else FontWeight.Normal,
+                        )
                     }
                 }
             }
@@ -510,11 +537,12 @@ fun CalendarContent(
     }
 }
 @Composable
-fun CalendarView() {
+fun CalendarView(context: Context, username: String) {
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
 
     CalendarContent(
-        currentMonth = currentMonth,
+        context = context,
+        username = username,
         onDateSelected = {},
         showMonthNavigation = true,
         onPreviousMonth = { currentMonth = currentMonth.minusMonths(1) },
@@ -523,12 +551,19 @@ fun CalendarView() {
 }
 
 @Composable
-fun CalendarViewForDialog(currentMonth: YearMonth, onDateSelected: (LocalDate) -> Unit, selectedDate: LocalDate?) {
+fun CalendarViewForDialog(
+    context: Context,
+    username: String,
+    currentMonth: YearMonth,
+    onDateSelected: (LocalDate) -> Unit,
+    selectedDate: LocalDate?
+) {
     val nextMonth = YearMonth.now().plusMonths(1)
     var displayedMonth by remember { mutableStateOf(currentMonth) }
 
     CalendarContent(
-        currentMonth = displayedMonth,
+        context = context,
+        username = username,
         onDateSelected = onDateSelected,
         showMonthNavigation = true,
         onPreviousMonth = {
@@ -546,8 +581,16 @@ fun CalendarViewForDialog(currentMonth: YearMonth, onDateSelected: (LocalDate) -
         isDialog = true
     )
 }
+
+
 @Composable
-fun DatePickerWithLabel(label: String, selectedDate: LocalDate?, onDateSelected: (LocalDate) -> Unit) {
+fun DatePickerWithLabel(
+    context: Context,
+    username: String,
+    label: String,
+    selectedDate: LocalDate?,
+    onDateSelected: (LocalDate) -> Unit
+) {
     var isDialogOpen by remember { mutableStateOf(false) }
     var tempDate by remember { mutableStateOf(LocalDate.now()) }
 
@@ -565,8 +608,7 @@ fun DatePickerWithLabel(label: String, selectedDate: LocalDate?, onDateSelected:
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = selectedDate?.format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
-                    ?: label,
+                text = selectedDate?.format(DateTimeFormatter.ofPattern("dd MMM yyyy")) ?: label,
                 color = Color.Gray
             )
             Image(
@@ -595,6 +637,8 @@ fun DatePickerWithLabel(label: String, selectedDate: LocalDate?, onDateSelected:
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
                     CalendarViewForDialog(
+                        context = context,
+                        username = username,
                         currentMonth = YearMonth.from(tempDate),
                         onDateSelected = {
                             tempDate = it
@@ -608,6 +652,7 @@ fun DatePickerWithLabel(label: String, selectedDate: LocalDate?, onDateSelected:
         }
     }
 }
+
 
 @Composable
 fun LegendItem(color: Color, label: String) {
@@ -627,4 +672,3 @@ fun LegendItem(color: Color, label: String) {
         )
     }
 }
-
