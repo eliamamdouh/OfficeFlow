@@ -380,12 +380,13 @@ fun CalendarContent(
     restrictDateSelection: Boolean = false,
     isDialog: Boolean = false
 ) {
+    val userName by remember { mutableStateOf("User") }
     var schedule by remember { mutableStateOf<Map<String, List<ScheduleDay>>?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     // Fetch schedule data
-    LaunchedEffect(username) {
-        val call = RetrofitClient.apiService.viewSchedule(username)
+    LaunchedEffect(userName) {
+        val call = RetrofitClient.apiService.viewSchedule(userName)
         call.enqueue(object : Callback<ScheduleResponse> {
             override fun onResponse(call: Call<ScheduleResponse>, response: Response<ScheduleResponse>) {
                 if (response.isSuccessful) {
