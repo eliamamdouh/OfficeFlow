@@ -10,7 +10,7 @@ const viewSchedule = async (req, res) => {
         }
 
         
-        const usersCollectionRef = db.collection('users');
+        const usersCollectionRef = db.collection('Users');
         const userQuery = await usersCollectionRef.where('username', '==', username).get();
 
         if (userQuery.empty) {

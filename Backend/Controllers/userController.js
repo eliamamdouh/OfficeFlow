@@ -6,18 +6,19 @@ const { StatusCodes } = require ("http-status-codes");
 
 const createUser = async (req, res) => {
     try {
-        const {Fullname, username, password, email, managerName } = req.body;
+        const { Fullname, username, password, email, managerName, role } = req.body;
 
         if (!username || !password || !email) {
             return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Username, password, and email are required' });
         }
 
-        const usersCollectionRef = db.collection('users');
+        const usersCollectionRef = db.collection('Users');
         const existingUserQuery = await usersCollectionRef.where('email', '==', email).get();
 
         if (!existingUserQuery.empty) {
             return res.status(StatusCodes.BAD_REQUEST).json({ message: 'User already exists' });
         }
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const userDocRef = usersCollectionRef.doc(); // Auto-generate a document ID
@@ -28,16 +29,23 @@ const createUser = async (req, res) => {
         // Generate a schedule for the user
         const schedule = generateAlternatingUserSchedule();
 
-        await userDocRef.set({
+        const userData = {
             Fullname,
             username,
             email,
-            managerName,
+            role,
             password: hashedPassword, 
             createdAt,
             updatedAt,
             schedule  
-        });
+        };
+
+        // Only add managerName if it's provided
+        if (managerName) {
+            userData.managerName = managerName;
+        }
+
+        await userDocRef.set(userData);
 
         res.status(StatusCodes.CREATED).json({ message: 'User created successfully', userId: userDocRef.id });
     } catch (error) {
@@ -45,6 +53,7 @@ const createUser = async (req, res) => {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Server error', error: error.message });
     }
 };
+
 
 const generateAlternatingUserSchedule = () => {
     
@@ -117,56 +126,59 @@ const shuffleArray = (array) => {
 
 
 
-const loginUser = async (req, res) => {
+const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
         if (!email || !password) {
-            return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Email and password are required' });
+            return res.status(400).json({ message: 'Email and password are required' });
         }
 
-        const usersCollectionRef = db.collection('users');
-        const userQuerySnapshot = await usersCollectionRef.where('email', '==', email).get();
+        let usersCollectionRef = db.collection('Users');
+        let userQuerySnapshot = await usersCollectionRef.where('email', '==', email).get();
+
 
         if (userQuerySnapshot.empty) {
-            return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'Invalid email or password' });
+            return res.status(401).json({ message: 'Invalid email or password' });
         }
-
+        
         const userDoc = userQuerySnapshot.docs[0];
         const userData = userDoc.data();
-
+        
         const isPasswordValid = await bcrypt.compare(password, userData.password);
 
         if (!isPasswordValid) {
-            return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'Invalid email or password' });
+            return res.status(401).json({ message: 'Invalid password' });
         }
+
         const userId = userDoc.id;
+        const role = userData.role;
 
         // Generate a JWT token
         const token = jwt.sign(
-            { userId: userDoc.id, username: userData.username, email: userData.email },
-            process.env.JWT_SECRET_KEY, 
-            
+            { userId: userId, username: userData.username, email: userData.email, role: role },
+            process.env.JWT_SECRET_KEY,
         );
-
-        res.status(StatusCodes.OK).json({
-            message: 'Login successful',
-            userId: userId, 
-            token : token,
-
-        });
         console.log(token)
+        res.status(200).json({
+            message: 'Login successful',
+            userId: userId,
+            role: role, 
+            token: token,
+        });
+        console.log(token);
     } catch (error) {
         console.error("Error during login:", error);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
 
 const getUserInfo = async (req, res) => {
     try {
         const userId = req.params.userId;
 
-        const userDoc = await db.collection('users').doc(userId).get();
+        const userDoc = await db.collection('Users').doc(userId).get();
 
         if (!userDoc.exists) {
             return res.status(404).json({ message: 'User not found' });
@@ -199,4 +211,4 @@ const getUserInfo = async (req, res) => {
 
 
 
-module.exports = { createUser ,loginUser,getUserInfo };
+module.exports = { createUser ,login,getUserInfo };

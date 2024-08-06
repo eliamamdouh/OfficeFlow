@@ -2,6 +2,7 @@ package com.example.project
 
 import ManagerRequests
 import android.annotation.SuppressLint
+import android.window.SplashScreen
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
@@ -24,22 +25,24 @@ fun MainScreen() {
 
     var userRole by remember { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
-
+    val context = LocalContext.current
     LaunchedEffect(Unit) {
         coroutineScope.launch(Dispatchers.IO) {
             // Replace this with your actual API call
-            val roleFromApi = fetchUserRoleFromApi()
+            val roleFromApi = PreferencesManager.getUserRoleFromPreferences(context)
+            println(roleFromApi)
             userRole = roleFromApi
+            println(userRole)
         }
     }
-    val context = LocalContext.current
+
 
     Scaffold(
         bottomBar = {
             if (currentRoute != "splash") {
                 if (currentRoute != "page0") {
                     when (userRole) {
-                        "employee" -> BottomNavBar(navController)
+                        "user" -> BottomNavBar(navController)
                         "manager" -> ManagerNavBar(navController)
                         else -> {} // You can handle other cases or leave it empty
                     }
@@ -67,13 +70,3 @@ fun MainScreen() {
 }
 
 // Dummy function to simulate fetching user role from API
-suspend fun fetchUserRoleFromApi(): String {
-    // Replace with actual API call logic
-    // For example:
-    // val response = apiService.getUserRole()
-    // return response.role
-
-    // Simulated delay for API call
-    kotlinx.coroutines.delay(1000)
-    return "employee" // or "manager"
-}

@@ -40,7 +40,7 @@ const submitRequest = async (req, res) => {
         const userId = decoded.userId;
 
         // Fetch the user data from the database
-        const usersCollectionRef = db.collection('users');
+        const usersCollectionRef = db.collection('Users');
         const userDoc = await usersCollectionRef.doc(userId).get();
         if (!userDoc.exists) {
             return res.status(404).json({ message: 'User not found' });

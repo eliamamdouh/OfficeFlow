@@ -1,5 +1,6 @@
 package com.example.project
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -53,6 +54,7 @@ val DarkGrassGreen2 = Color(0xFF2C8431)
 
 
 
+@SuppressLint("SuspiciousIndentation")
 @Composable
 fun HomeScreen(context: Context) {
     // State variables to hold user data
