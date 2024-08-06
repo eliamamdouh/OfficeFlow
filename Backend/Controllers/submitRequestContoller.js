@@ -1,8 +1,7 @@
-// requestController.js
 const { db } = require('../firebase-init');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-
+ 
 const getLocationForDate = (schedule, date) => {
     let location = null;
     Object.keys(schedule).forEach(week => {
@@ -18,15 +17,15 @@ const getLocationForDate = (schedule, date) => {
 const submitRequest = async (req, res) => {
     try {
         const { authorization } = req.headers;
-        const { newDate, dayToChange } = req.body;
+        const { newDate, dayToChange, reason } = req.body;
 
-        if (!authorization ) {
+        if (!authorization) {
             return res.status(400).json({ message: 'Authorization header is missing' });
         }
         console.log("Headers received:", req.headers);
 
-        if (!newDate || !dayToChange) {
-            return res.status(400).json({ message: 'New date, and day to change are required' });
+        if (!newDate || !dayToChange || !reason) {
+            return res.status(400).json({ message: 'New date, day to change, and reason are required' });
         }
 
         // Extract the JWT token
@@ -40,15 +39,16 @@ const submitRequest = async (req, res) => {
         const userId = decoded.userId;
 
         // Fetch the user data from the database
-        const usersCollectionRef = db.collection('users');
+        const usersCollectionRef = db.collection('Users');
         const userDoc = await usersCollectionRef.doc(userId).get();
         if (!userDoc.exists) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-         if (newDate === dayToChange) {
+        if (newDate === dayToChange) {
             return res.status(400).json({ message: 'The new date and the day to change cannot be the same' });
         }
+
         const userData = userDoc.data();
         const schedule = userData.schedule;
 
@@ -61,13 +61,14 @@ const submitRequest = async (req, res) => {
 
         // Create a new request
         const requestsCollectionRef = db.collection('Requests');
-        const requestDocRef = requestsCollectionRef.doc(); 
+        const requestDocRef = requestsCollectionRef.doc();
 
         await requestDocRef.set({
             userId,
             managerName: userData.managerName,
             dayToChange,
             newDate,
+            reason, // Save the reason in the database
             status: 'Pending',
             requestDate: new Date().toISOString(),
         });
@@ -78,7 +79,5 @@ const submitRequest = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
-
-
 
 module.exports = { submitRequest };
