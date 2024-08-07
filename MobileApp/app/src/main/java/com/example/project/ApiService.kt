@@ -55,5 +55,6 @@ interface ApiService {
     ): Call<SubmitRequestResponse>
 
     @GET("users/schedule")
-    fun viewSchedule(@Query("username") username: String): Call<ScheduleResponse>
+//    fun viewSchedule(@Query("username") username: String): Call<ScheduleResponse>
+    fun viewSchedule(@Query("userId") userId: String): Call<ScheduleResponse>
 }

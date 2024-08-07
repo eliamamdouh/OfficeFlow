@@ -200,9 +200,8 @@ fun HomeScreen(context: Context) {
                     )
                     Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.alpha(0.3f))
 
-                    //CalendarView()
-                    userId?.let {
-                        CalendarView(context, it)
+                    if (userId != null) {
+                        CalendarView(context, userId)
                     }
 
                     Divider(
@@ -244,33 +243,28 @@ fun HomeScreen(context: Context) {
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
 
-//                    DatePickerWithLabel(
-//                        label = "Select day",
-//                        selectedDate = selectedDay,
-//                        onDateSelected = { selectedDay = it }
-//                    )
-                    DatePickerWithLabel(
-                        context = context,
-                        username = userName,
-                        label = "Select day",
-                        selectedDate = selectedDay,
-                        onDateSelected = { selectedDay = it }
-                    )
+                    if (userId != null) {
+                        DatePickerWithLabel(
+                            context = context,
+                            userId = userId,
+                            label = "Select day",
+                            selectedDate = selectedDay,
+                            onDateSelected = { selectedDay = it }
+                        )
+                    }
+
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-//                    DatePickerWithLabel(
-//                        label = "Change to",
-//                        selectedDate = changeToDay,
-//                        onDateSelected = { changeToDay = it }
-//                    )
-                    DatePickerWithLabel(
-                        context = context,
-                        username = userName,
-                        label = "Change to",
-                        selectedDate = changeToDay,
-                        onDateSelected = { changeToDay = it }
-                    )
+                    if (userId != null) {
+                        DatePickerWithLabel(
+                            context = context,
+                            userId = userId,
+                            label = "Change to",
+                            selectedDate = changeToDay,
+                            onDateSelected = { changeToDay = it }
+                        )
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
 
                     val isSubmitEnabled = selectedDay != null && changeToDay != null
@@ -337,7 +331,6 @@ fun HomeScreen(context: Context) {
 
 
 @Composable
-
 fun TodayStatusBox(message: String) {
     val backgroundColor = when {
         message.contains("Home") -> DarkGrassGreen2
@@ -371,7 +364,7 @@ fun TodayStatusBox(message: String) {
 @Composable
 fun CalendarContent(
     context: Context,
-    username: String,
+    userId: String,
     onDateSelected: (LocalDate) -> Unit = {},
     showMonthNavigation: Boolean = false,
     onPreviousMonth: (() -> Unit)? = null,
@@ -380,13 +373,12 @@ fun CalendarContent(
     restrictDateSelection: Boolean = false,
     isDialog: Boolean = false
 ) {
-    val userName by remember { mutableStateOf("User") }
     var schedule by remember { mutableStateOf<Map<String, List<ScheduleDay>>?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     // Fetch schedule data
-    LaunchedEffect(userName) {
-        val call = RetrofitClient.apiService.viewSchedule(userName)
+    LaunchedEffect(userId) {
+        val call = RetrofitClient.apiService.viewSchedule(userId)
         call.enqueue(object : Callback<ScheduleResponse> {
             override fun onResponse(call: Call<ScheduleResponse>, response: Response<ScheduleResponse>) {
                 if (response.isSuccessful) {
@@ -537,24 +529,27 @@ fun CalendarContent(
         }
     }
 }
-@Composable
-fun CalendarView(context: Context, username: String) {
-    var currentMonth by remember { mutableStateOf(YearMonth.now()) }
 
-    CalendarContent(
-        context = context,
-        username = username,
-        onDateSelected = {},
-        showMonthNavigation = true,
-        onPreviousMonth = { currentMonth = currentMonth.minusMonths(1) },
-        onNextMonth = { currentMonth = currentMonth.plusMonths(1) }
-    )
+@Composable
+fun CalendarView(context: Context, userId: String?) {
+    userId?.let {
+        var currentMonth by remember { mutableStateOf(YearMonth.now()) }
+
+        CalendarContent(
+            context = context,
+            userId = it,
+            onDateSelected = {},
+            showMonthNavigation = true,
+            onPreviousMonth = { currentMonth = currentMonth.minusMonths(1) },
+            onNextMonth = { currentMonth = currentMonth.plusMonths(1) }
+        )
+    }
 }
 
 @Composable
 fun CalendarViewForDialog(
     context: Context,
-    username: String,
+    userId: String,
     currentMonth: YearMonth,
     onDateSelected: (LocalDate) -> Unit,
     selectedDate: LocalDate?
@@ -564,7 +559,7 @@ fun CalendarViewForDialog(
 
     CalendarContent(
         context = context,
-        username = username,
+        userId = userId,
         onDateSelected = onDateSelected,
         showMonthNavigation = true,
         onPreviousMonth = {
@@ -582,12 +577,10 @@ fun CalendarViewForDialog(
         isDialog = true
     )
 }
-
-
 @Composable
 fun DatePickerWithLabel(
     context: Context,
-    username: String,
+    userId: String,
     label: String,
     selectedDate: LocalDate?,
     onDateSelected: (LocalDate) -> Unit
@@ -639,7 +632,7 @@ fun DatePickerWithLabel(
                     )
                     CalendarViewForDialog(
                         context = context,
-                        username = username,
+                        userId = userId,
                         currentMonth = YearMonth.from(tempDate),
                         onDateSelected = {
                             tempDate = it
@@ -653,6 +646,7 @@ fun DatePickerWithLabel(
         }
     }
 }
+
 
 
 @Composable
