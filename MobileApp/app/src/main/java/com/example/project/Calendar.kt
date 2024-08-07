@@ -257,12 +257,14 @@ fun HomeScreen(context: Context) {
                             .border(1.dp, Color(0xFFBDBDBD), RoundedCornerShape(8.dp)), // Align border radius with background radius
                         singleLine = true,
                         textStyle = androidx.compose.ui.text.TextStyle(color = Color.Black),
-                        colors = TextFieldDefaults.textFieldColors(
-                            containerColor = Color.White,
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            disabledContainerColor = Color.White,
+                            cursorColor = Color.Black, // Optionally set the cursor color to black
                             focusedIndicatorColor = Color.Transparent, // Remove the underline when focused
                             unfocusedIndicatorColor = Color.Transparent, // Remove the underline when not focused
                             disabledIndicatorColor = Color.Transparent, // Remove the underline when disabled
-                            cursorColor = Color.Black // Optionally set the cursor color to black
                         )
                     )
 
