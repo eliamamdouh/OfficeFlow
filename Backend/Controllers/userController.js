@@ -6,7 +6,7 @@ const { StatusCodes } = require ("http-status-codes");
 
 const createUser = async (req, res) => {
     try {
-        const { Fullname, username, password, email, managerName, role } = req.body;
+        const { Fullname, username, password, email, role } = req.body;
 
         if (!username || !password || !email) {
             return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Username, password, and email are required' });
@@ -25,25 +25,21 @@ const createUser = async (req, res) => {
 
         const createdAt = new Date().toISOString();
         const updatedAt = createdAt;
-
-        // Generate a schedule for the user
-        const schedule = generateAlternatingUserSchedule();
+        const projectId = Math.floor(Math.random() * 10) + 1;
+        const schedule = await generateScheduleForProject(projectId);
 
         const userData = {
             Fullname,
             username,
             email,
             role,
-            password: hashedPassword, 
+            password: hashedPassword,
             createdAt,
             updatedAt,
-            schedule  
+            schedule,
+            projectId
         };
 
-        // Only add managerName if it's provided
-        if (managerName) {
-            userData.managerName = managerName;
-        }
 
         await userDocRef.set(userData);
 
@@ -54,18 +50,15 @@ const createUser = async (req, res) => {
     }
 };
 
+const generateScheduleForProject = async (projectId) => {
+    const seed = projectId; // Use projectId as a seed for deterministic scheduling
+    return await generateAlternatingUserSchedule(seed);
+};
 
-const generateAlternatingUserSchedule = () => {
-    
+const generateAlternatingUserSchedule = async (seed) => {
     const currentDate = new Date();
-    
-    const dayOfWeek = currentDate.getDay();
-    const daysUntilMonday = (dayOfWeek === 0 ? 1 : 8) - dayOfWeek; 
-    let nextMonday = new Date(currentDate);
-    nextMonday.setDate(currentDate.getDate() + daysUntilMonday);
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth(); // 0-based, so 7 = August
-
     const daysInMonth = new Date(year, month + 1, 0).getDate(); // Get the number of days in the current month
 
     let schedule = {};
@@ -88,11 +81,11 @@ const generateAlternatingUserSchedule = () => {
 
             if (weekNumber % 2 !== 0) {
                 // Odd weeks: 3 days in the office, 2 days at home
-                officeDays = shuffleArray([2, 3, 4, 5, 6]).slice(0, 3);
+                officeDays = seededShuffleArray([2, 3, 4, 5, 6], seed).slice(0, 3);
                 homeDays = [2, 3, 4, 5, 6].filter(day => !officeDays.includes(day));
             } else {
                 // Even weeks: 2 days in the office, 3 days at home
-                homeDays = shuffleArray([2, 3, 4, 5, 6]).slice(0, 3);
+                homeDays = seededShuffleArray([2, 3, 4, 5, 6], seed).slice(0, 3);
                 officeDays = [2, 3, 4, 5, 6].filter(day => !homeDays.includes(day));
             }
         }
@@ -103,24 +96,93 @@ const generateAlternatingUserSchedule = () => {
             schedule[`Week ${weekNumber}`] = [];
         }
 
+        const isOfficeCapacityAvailable = await checkOfficeCapacity(formattedDate);
+        const location = isOfficeCapacityAvailable && officeDays.includes(weekday) ? 'Office' : 'Home';
+
+        if (location === 'Office') {
+            await incrementOfficeCapacity(formattedDate);
+        }
+
         schedule[`Week ${weekNumber}`].push({
             day: formattedDate,
-            location: officeDays.includes(weekday) ? 'Office' : 'Home'
+            location: location
         });
     }
 
     return schedule;
 };
 
-const shuffleArray = (array) => {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
+// Helper function to shuffle an array deterministically using a seed
+const seededShuffleArray = (array, seed) => {
+    let currentIndex = array.length, randomIndex;
+
+    // While there remain elements to shuffle...
+    while (currentIndex !== 0) {
+        // Generate a pseudo-random number using the seed
+        randomIndex = Math.floor(seedRandom(seed) * currentIndex);
+        currentIndex--;
+
+        // Swap it with the current element.
+        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
     }
+
     return array;
 };
 
+// Pseudo-random number generator using a seed
+const seedRandom = (seed) => {
+    const x = Math.sin(seed++) * 10000;
+    return x - Math.floor(x);
+};
 
+// Function to check if the office capacity for a specific day is below 300
+const checkOfficeCapacity = async (date) => {
+    const capacityDocRef = db.collection('OfficeCapacity').doc(date);
+    const capacityDoc = await capacityDocRef.get();
+
+    if (!capacityDoc.exists) {
+        return true; // No users scheduled yet, capacity is available
+    }
+
+    const capacityData = capacityDoc.data();
+    return capacityData.count < 300; // Return true if capacity is below 300
+};
+
+// Function to increment the office capacity count for a specific day
+const incrementOfficeCapacity = async (date) => {
+    const capacityDocRef = db.collection('OfficeCapacity').doc(date);
+    await db.runTransaction(async (transaction) => {
+        const capacityDoc = await transaction.get(capacityDocRef);
+
+        if (!capacityDoc.exists) {
+            transaction.set(capacityDocRef, { count: 1 });
+        } else {
+            const newCount = capacityDoc.data().count + 1;
+            transaction.update(capacityDocRef, { count: newCount });
+        }
+    });
+};
+const generateUsers = async (numUsers) => {
+    for (let i = 0; i < numUsers; i++) {
+        const req = {
+            body: {
+                Fullname: `User${i + 1}`,
+                username: `user${i + 1}`,
+                password: `password@123`,
+                email: `user${i + 1}@example.com`,
+                role: 'user',
+            }
+        };
+        const res = {
+            status: (statusCode) => ({
+                json: (data) => console.log(`Status: ${statusCode}`, data)
+            })
+        };
+        await createUser(req, res);
+    }
+};
+
+// generateUsers(300); // Adjust the number as needed
 
 
 
@@ -166,7 +228,7 @@ const login = async (req, res) => {
             role: role, 
             token: token,
         });
-        console.log(token);
+        console.log(role);
     } catch (error) {
         console.error("Error during login:", error);
         res.status(500).json({ message: 'Server error', error: error.message });

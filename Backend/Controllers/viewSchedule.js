@@ -3,24 +3,21 @@ const { StatusCodes } = require ("http-status-codes");
 
 const viewSchedule = async (req, res) => {
     try {
-        const { username } = req.body; 
+        const { userID } = req.body; 
 
-        if (!username) {
-            return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Username is required' });
+        if (!userID) {
+            return res.status(StatusCodes.BAD_REQUEST).json({ message: 'User ID is required' });
         }
 
-        
         const usersCollectionRef = db.collection('Users');
-        const userQuery = await usersCollectionRef.where('username', '==', username).get();
+        const userDoc = await usersCollectionRef.doc(userID).get();
 
-        if (userQuery.empty) {
+        if (!userDoc.exists) {
             return res.status(StatusCodes.NOT_FOUND).json({ message: 'User not found' });
         }
 
         // Retrieve the user's schedule
-        const userDoc = userQuery.docs[0];
         const userData = userDoc.data();
-
         const schedule = userData.schedule;
 
         res.status(StatusCodes.OK).json({ message: 'Schedule retrieved successfully', schedule });
@@ -29,5 +26,6 @@ const viewSchedule = async (req, res) => {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Server error', error: error.message });
     }
 };
+
 
 module.exports = { viewSchedule };

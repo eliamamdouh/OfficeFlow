@@ -1,6 +1,7 @@
 package com.example.project
 
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Body
 import retrofit2.http.Header
@@ -31,6 +32,15 @@ data class SubmitRequestResponse(
     val requestId: String
 )
 
+data class ScheduleResponse(
+    val message: String,
+    val schedule: Map<String, List<ScheduleItem>>
+)
+
+data class ScheduleItem(
+    val location: String,
+    val day: String
+)
 
 interface ApiService {
     @POST("users/login")
@@ -43,4 +53,7 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body request: SubmitRequest
     ): Call<SubmitRequestResponse>
+
+    @POST("viewSchedule")
+    suspend fun getSchedule(@Body requestBody: Map<String, String>): Response<ScheduleResponse>
 }

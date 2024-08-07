@@ -42,8 +42,8 @@ fun MainScreen() {
             if (currentRoute != "splash") {
                 if (currentRoute != "page0") {
                     when (userRole) {
-                        "user" -> BottomNavBar(navController)
-                        "manager" -> ManagerNavBar(navController)
+                        "Employee" -> BottomNavBar(navController)
+                        "Manager" -> ManagerNavBar(navController)
                         else -> {} // You can handle other cases or leave it empty
                     }
                 }
