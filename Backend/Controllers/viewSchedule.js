@@ -1,26 +1,22 @@
 const { db } = require('../firebase-init');
-const { StatusCodes } = require ("http-status-codes");
+const { StatusCodes } = require("http-status-codes");
 
 const viewSchedule = async (req, res) => {
     try {
-        const { username } = req.body; 
+        const { userId } = req.query;
 
-        if (!username) {
-            return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Username is required' });
+        if (!userId) {
+            return res.status(StatusCodes.BAD_REQUEST).json({ message: 'User ID is required' });
         }
 
-        
         const usersCollectionRef = db.collection('Users');
-        const userQuery = await usersCollectionRef.where('username', '==', username).get();
+        const userDoc = await usersCollectionRef.doc(userId).get();
 
-        if (userQuery.empty) {
+        if (!userDoc.exists) {
             return res.status(StatusCodes.NOT_FOUND).json({ message: 'User not found' });
         }
 
-        // Retrieve the user's schedule
-        const userDoc = userQuery.docs[0];
         const userData = userDoc.data();
-
         const schedule = userData.schedule;
 
         res.status(StatusCodes.OK).json({ message: 'Schedule retrieved successfully', schedule });
