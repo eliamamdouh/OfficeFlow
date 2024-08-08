@@ -1,7 +1,7 @@
 const { db } = require('../firebase-init');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
- 
+
 const getLocationForDate = (schedule, date) => {
     let location = null;
     Object.keys(schedule).forEach(week => {
@@ -45,11 +45,13 @@ const submitRequest = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        const userData = userDoc.data();
+        console.log("User data retrieved:", userData);
+
         if (newDate === dayToChange) {
             return res.status(400).json({ message: 'The new date and the day to change cannot be the same' });
         }
 
-        const userData = userDoc.data();
         const schedule = userData.schedule;
 
         const locationForDayToChange = getLocationForDate(schedule, dayToChange);
@@ -59,19 +61,35 @@ const submitRequest = async (req, res) => {
             return res.status(400).json({ message: 'The selected days must be from different locations (one office, one home)' });
         }
 
+        // Ensure the managerName is present, otherwise handle the missing value
+        const managerName = userData.managerName || 'Unknown Manager';
+
         // Create a new request
         const requestsCollectionRef = db.collection('Requests');
         const requestDocRef = requestsCollectionRef.doc();
 
-        await requestDocRef.set({
+        // Ensure the data object is properly formatted and contains valid values
+        const requestData = {
             userId,
-            managerName: userData.managerName,
+            managerName,
             dayToChange,
             newDate,
             reason, // Save the reason in the database
             status: 'Pending',
             requestDate: new Date().toISOString(),
-        });
+        };
+
+        // Check for any undefined or null values in requestData
+        for (const key in requestData) {
+            if (requestData[key] === undefined || requestData[key] === null) {
+                console.error(`Invalid data for ${key}:`, requestData[key]);
+                return res.status(400).json({ message: `Invalid data for ${key}` });
+            }
+        }
+
+        console.log("Request data being saved:", requestData);
+
+        await requestDocRef.set(requestData);
 
         res.status(201).json({ message: 'Request submitted successfully', requestId: requestDocRef.id });
     } catch (error) {
