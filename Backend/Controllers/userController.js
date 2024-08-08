@@ -180,54 +180,48 @@ const generateUsers = async (numUsers) => {
 
 // generateUsers(1); // Adjust the number as needed
 
-
-
-
-
 const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
         if (!email || !password) {
-            return res.status(400).json({ message: 'Email and password are required' });
+            return res.status(StatusCodes.BAD_REQUEST).json({ errorMessage: 'Email and password are required' });
         }
 
         let usersCollectionRef = db.collection('Users');
         let userQuerySnapshot = await usersCollectionRef.where('email', '==', email).get();
 
-
         if (userQuerySnapshot.empty) {
-            return res.status(401).json({ message: 'Invalid email or password' });
+            return res.status(StatusCodes.UNAUTHORIZED).json({ errorMessage: 'Login failed: User not found' });
         }
-        
+
         const userDoc = userQuerySnapshot.docs[0];
         const userData = userDoc.data();
         
         const isPasswordValid = await bcrypt.compare(password, userData.password);
 
         if (!isPasswordValid) {
-            return res.status(401).json({ message: 'Invalid password' });
+            return res.status(StatusCodes.UNAUTHORIZED).json({ errorMessage: 'Login failed: Password does not match' });
         }
 
         const userId = userDoc.id;
         const role = userData.role;
 
-        // Generate a JWT token
         const token = jwt.sign(
             { userId: userId, username: userData.username, email: userData.email, role: role },
             process.env.JWT_SECRET_KEY,
+            { expiresIn: '1h' }
         );
-        console.log(token)
-        res.status(200).json({
+
+        res.status(StatusCodes.OK).json({
             message: 'Login successful',
             userId: userId,
             role: role, 
             token: token,
         });
-        console.log(role);
     } catch (error) {
         console.error("Error during login:", error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ errorMessage: 'Server error', details: error.message });
     }
 };
 
