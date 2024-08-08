@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { StatusCodes } = require ("http-status-codes");
+const { use } = require('../Routes/userRoutes');
 
 const createUser = async (req, res) => {
     try {
@@ -279,7 +280,7 @@ const countUsers = async () => {
 };
 
 // Example usage
-countUsers();
+// countUsers();
 
 const countUsersByRole = async () => {
     try {
@@ -304,7 +305,57 @@ const countUsersByRole = async () => {
 };
 
 // Example usage
-countUsersByRole();
+// countUsersByRole();
 
+const getTeamMembers = async (req, res) => {
+    try {
+        const { managerId } = req.body;
+        console.log(managerId)
+        const userDoc = await db.collection('Users').doc(managerId).get();
 
-module.exports = { createUser ,login,getUserInfo };
+        if (!userDoc.exists) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const userData = userDoc.data();
+        const projectId = userData.projectId;
+        console.log(projectId)
+
+        // Get all users with the same projectId
+        const usersSnapshot = await db.collection('Users').where('projectId', '==', projectId).get();
+
+        if (usersSnapshot.empty) {
+            return res.status(404).json({ message: 'No team members found for this project' });
+        }
+
+        // Prepare a list to store team members and their schedules
+        let teamMembers = [];
+
+        // Iterate over each user and fetch their schedules
+        for (let userDoc of usersSnapshot.docs) {
+            const userData = userDoc.data();
+            const scheduleSnapshot = await db.collection('Schedules').where('userId', '==', userDoc.id).get();
+
+            let schedules = [];
+            scheduleSnapshot.forEach(scheduleDoc => {
+                schedules.push(scheduleDoc.data());
+            });
+
+            teamMembers.push({
+                userId: userDoc.id,
+                name: userData.name,
+                role: userData.role,
+                schedules: schedules,
+            });
+        }
+
+        return res.status(200).json({ teamMembers });
+
+    } catch (error) {
+        console.error('Error fetching team members:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+};
+ 
+
+module.exports = { createUser ,login,getUserInfo, getTeamMembers};

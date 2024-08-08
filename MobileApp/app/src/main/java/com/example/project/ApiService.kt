@@ -1,12 +1,12 @@
 package com.example.project
 
 import retrofit2.Call
-import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 data class LoginRequest(val email: String?, val password: String?)
 data class LoginResponse(
@@ -33,14 +33,14 @@ data class SubmitRequestResponse(
 )
 
 data class ScheduleResponse(
-    val message: String,
-    val schedule: Map<String, List<ScheduleItem>>
+    val schedule: Map<String, List<ScheduleDay>>
 )
 
-data class ScheduleItem(
-    val location: String,
-    val day: String
+data class ScheduleDay(
+    val day: String,
+    val location: String
 )
+
 
 interface ApiService {
     @POST("users/login")
@@ -54,7 +54,7 @@ interface ApiService {
         @Body request: SubmitRequest
     ): Call<SubmitRequestResponse>
 
-    @POST("viewSchedule")
-    suspend fun getSchedule(@Body requestBody: Map<String, String>): Response<ScheduleResponse>
+    @GET("users/schedule")
+//    fun viewSchedule(@Query("username") username: String): Call<ScheduleResponse>
+    fun viewSchedule(@Query("userId") userId: String): Call<ScheduleResponse>
 }
-
