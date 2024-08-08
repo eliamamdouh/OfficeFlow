@@ -310,7 +310,9 @@ const countUsersByRole = async () => {
 const getTeamMembers = async (req, res) => {
     try {
         const { managerId } = req.body;
-        console.log(managerId)
+        console.log(managerId);
+        
+        // Retrieve the manager's document based on managerId
         const userDoc = await db.collection('Users').doc(managerId).get();
 
         if (!userDoc.exists) {
@@ -319,7 +321,7 @@ const getTeamMembers = async (req, res) => {
 
         const userData = userDoc.data();
         const projectId = userData.projectId;
-        console.log(projectId)
+        console.log(projectId);
 
         // Get all users with the same projectId
         const usersSnapshot = await db.collection('Users').where('projectId', '==', projectId).get();
@@ -331,23 +333,17 @@ const getTeamMembers = async (req, res) => {
         // Prepare a list to store team members and their schedules
         let teamMembers = [];
 
-        // Iterate over each user and fetch their schedules
-        for (let userDoc of usersSnapshot.docs) {
+        // Iterate over each user and fetch their data including schedules
+        usersSnapshot.forEach(userDoc => {
             const userData = userDoc.data();
-            const scheduleSnapshot = await db.collection('Schedules').where('userId', '==', userDoc.id).get();
-
-            let schedules = [];
-            scheduleSnapshot.forEach(scheduleDoc => {
-                schedules.push(scheduleDoc.data());
-            });
 
             teamMembers.push({
                 userId: userDoc.id,
                 name: userData.name,
                 role: userData.role,
-                schedules: schedules,
+                schedules: userData.schedule , // Assuming schedules are stored in an array within userData
             });
-        }
+        });
 
         return res.status(200).json({ teamMembers });
 
@@ -356,6 +352,7 @@ const getTeamMembers = async (req, res) => {
         return res.status(500).json({ message: 'Internal server error' });
     }
 };
+
  
 
 module.exports = { createUser ,login,getUserInfo, getTeamMembers};
