@@ -25,7 +25,7 @@ const createUser = async (req, res) => {
 
         const createdAt = new Date().toISOString();
         const updatedAt = createdAt;
-        const projectId = Math.floor(Math.random() * 10) + 1;
+        const projectId = 10;
         const schedule = await generateScheduleForProject(projectId);
 
         const userData = {
@@ -112,43 +112,38 @@ const generateAlternatingUserSchedule = async (seed) => {
     return schedule;
 };
 
-// Helper function to shuffle an array deterministically using a seed
 const seededShuffleArray = (array, seed) => {
     let currentIndex = array.length, randomIndex;
 
-    // While there remain elements to shuffle...
     while (currentIndex !== 0) {
-        // Generate a pseudo-random number using the seed
+
         randomIndex = Math.floor(seedRandom(seed) * currentIndex);
         currentIndex--;
 
-        // Swap it with the current element.
         [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
     }
 
     return array;
 };
 
-// Pseudo-random number generator using a seed
 const seedRandom = (seed) => {
     const x = Math.sin(seed++) * 10000;
     return x - Math.floor(x);
 };
 
-// Function to check if the office capacity for a specific day is below 300
+
 const checkOfficeCapacity = async (date) => {
     const capacityDocRef = db.collection('OfficeCapacity').doc(date);
     const capacityDoc = await capacityDocRef.get();
 
     if (!capacityDoc.exists) {
-        return true; // No users scheduled yet, capacity is available
+        return true;
     }
 
     const capacityData = capacityDoc.data();
-    return capacityData.count < 300; // Return true if capacity is below 300
+    return capacityData.count < 300;
 };
 
-// Function to increment the office capacity count for a specific day
 const incrementOfficeCapacity = async (date) => {
     const capacityDocRef = db.collection('OfficeCapacity').doc(date);
     await db.runTransaction(async (transaction) => {
@@ -166,11 +161,11 @@ const generateUsers = async (numUsers) => {
     for (let i = 0; i < numUsers; i++) {
         const req = {
             body: {
-                Fullname: `User${i + 1}`,
-                username: `user${i + 1}`,
+                Fullname: `Manager10`,
+                username: `Manager10`,
                 password: `password@123`,
-                email: `user${i + 1}@example.com`,
-                role: 'user',
+                email: `Manager10@Deloitte.com`,
+                role: 'Manager',
             }
         };
         const res = {
@@ -182,7 +177,7 @@ const generateUsers = async (numUsers) => {
     }
 };
 
-// generateUsers(300); // Adjust the number as needed
+// generateUsers(1); // Adjust the number as needed
 
 
 
@@ -270,7 +265,46 @@ const getUserInfo = async (req, res) => {
     }
 };
 
+const countUsers = async () => {
+    try {
+        const usersCollectionRef = db.collection('Users');
+        const snapshot = await usersCollectionRef.get();
+        const userCount = snapshot.size; // The size property gives the number of documents in the collection
+        console.log(`Number of users: ${userCount}`);
+        return userCount;
+    } catch (error) {
+        console.error("Error counting users:", error);
+        throw error;
+    }
+};
 
+// Example usage
+countUsers();
+
+const countUsersByRole = async () => {
+    try {
+        const usersCollectionRef = db.collection('Users');
+
+        // Count users with role 'Employee'
+        const employeeQuerySnapshot = await usersCollectionRef.where('role', '==', 'Employee').get();
+        const employeeCount = employeeQuerySnapshot.size;
+
+        // Count users with role 'Manager'
+        const managerQuerySnapshot = await usersCollectionRef.where('role', '==', 'Manager').get();
+        const managerCount = managerQuerySnapshot.size;
+
+        console.log(`Number of Employees: ${employeeCount}`);
+        console.log(`Number of Managers: ${managerCount}`);
+
+        return { employeeCount, managerCount };
+    } catch (error) {
+        console.error("Error counting users by role:", error);
+        throw error;
+    }
+};
+
+// Example usage
+countUsersByRole();
 
 
 module.exports = { createUser ,login,getUserInfo };

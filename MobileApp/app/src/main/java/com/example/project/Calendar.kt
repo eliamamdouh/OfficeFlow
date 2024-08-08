@@ -377,8 +377,7 @@ fun CalendarContent(
     onNextMonth: (() -> Unit)? = null,
     selectedDate: LocalDate? = null,
     restrictDateSelection: Boolean = false,
-    isDialog: Boolean = false,
-    schedule: Map<LocalDate, Boolean> = emptyMap() // Added schedule parameter
+    isDialog: Boolean = false
 ) {
     val daysOfWeek = listOf(
         DayOfWeek.SUNDAY, DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
@@ -411,12 +410,7 @@ fun CalendarContent(
                 }
 
                 Text(
-                    text = "${
-                        currentMonth.month.getDisplayName(
-                            TextStyle.FULL,
-                            Locale.getDefault()
-                        )
-                    } ${currentMonth.year}",
+                    text = "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${currentMonth.year}",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(16.dp)
@@ -434,12 +428,7 @@ fun CalendarContent(
             }
         } else {
             Text(
-                text = "${
-                    currentMonth.month.getDisplayName(
-                        TextStyle.FULL,
-                        Locale.getDefault()
-                    )
-                } ${currentMonth.year}",
+                text = "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${currentMonth.year}",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(16.dp)
@@ -461,8 +450,7 @@ fun CalendarContent(
 
         val firstDayOfMonth = currentMonth.atDay(1)
         val lastDayOfMonth = currentMonth.atEndOfMonth()
-        val daysInMonth =
-            (1..lastDayOfMonth.dayOfMonth).map { firstDayOfMonth.plusDays((it - 1).toLong()) }
+        val daysInMonth = (1..lastDayOfMonth.dayOfMonth).map { firstDayOfMonth.plusDays((it - 1).toLong()) }
 
         val previousMonthDays = (1..firstDayOfMonth.dayOfWeek.value % 7).map {
             firstDayOfMonth.minusDays(it.toLong())
@@ -486,10 +474,9 @@ fun CalendarContent(
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
                 week.forEach { day ->
-                    val isWeekend =
-                        day?.dayOfWeek == DayOfWeek.SATURDAY || day?.dayOfWeek == DayOfWeek.SUNDAY
-                    val isWorkFromOffice = schedule[day] == true
-                    val isWorkFromHome = schedule[day] == false
+                    val isWeekend = day?.dayOfWeek == DayOfWeek.SATURDAY || day?.dayOfWeek == DayOfWeek.SUNDAY
+                    val isWorkFromOffice = day?.dayOfWeek == DayOfWeek.MONDAY || day?.dayOfWeek == DayOfWeek.TUESDAY || day?.dayOfWeek == DayOfWeek.WEDNESDAY
+                    val isWorkFromHome = day?.dayOfWeek == DayOfWeek.THURSDAY || day?.dayOfWeek == DayOfWeek.FRIDAY
 
                     val textColor = when {
                         isWeekend -> Color.Gray
