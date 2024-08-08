@@ -20,12 +20,12 @@ const submitRequest = async (req, res) => {
         const { newDate, dayToChange, reason } = req.body;
 
         if (!authorization) {
-            return res.status(400).json({ message: 'Authorization header is missing' });
+            return res.status(400).json( 'Authorization header is missing');
         }
         console.log("Headers received:", req.headers);
 
         if (!newDate || !dayToChange || !reason) {
-            return res.status(400).json({ message: 'New date, day to change, and reason are required' });
+            return res.status(400).json('New date, day to change, and reason are required' );
         }
 
         // Extract the JWT token
@@ -49,7 +49,7 @@ const submitRequest = async (req, res) => {
         console.log("User data retrieved:", userData);
 
         if (newDate === dayToChange) {
-            return res.status(400).json({ message: 'The new date and the day to change cannot be the same' });
+            return res.status(400).json('The new date and the day to change cannot be the same' );
         }
 
         const schedule = userData.schedule;
@@ -58,11 +58,36 @@ const submitRequest = async (req, res) => {
         const locationForNewDate = getLocationForDate(schedule, newDate);
 
         if (locationForDayToChange === locationForNewDate) {
-            return res.status(400).json({ message: 'The selected days must be from different locations (one office, one home)' });
+            return res.status(400).json( 'The selected days must be from different locations (one office, one home)');
         }
 
         // Ensure the managerName is present, otherwise handle the missing value
-        const managerName = userData.managerName || 'Unknown Manager';
+       // const managerName = userData.managerName || 'Unknown Manager';
+                // Ensure the managerName is present, otherwise handle the missing value
+
+                const projID = userData.projectId
+                // console.log("engyy:" + projID)
+       
+                //  const managerName = await db.collection('Users').where('projectId', '==', projID).where('role', '==', 'manager').get();
+                //  console.log("engy manager name: "+managerName)
+                const ManagerSnapshot = await db.collection('Users').where('projectId', '==', projID).where('role', '==', 'Manager').get();
+
+                let managerName = null;
+
+                if (!ManagerSnapshot.empty) {
+                    const managerDoc = ManagerSnapshot.docs[0]; // Get the first (and presumably only) document
+                    managerName = managerDoc.data().Fullname; // Assuming 'name' is the field for the manager's name
+                    console.log("engy manager name: " + managerName);
+
+                    // Now you can save managerName to Firestore
+                    // await db.collection('SomeCollection').add({
+                    //     managerName: managerName,
+                    //     // other fields...
+                    // });
+                } else {
+                    console.log("No manager found for the given project.");
+                }
+
 
         // Create a new request
         const requestsCollectionRef = db.collection('Requests');

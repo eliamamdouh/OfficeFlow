@@ -6,6 +6,7 @@ import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 data class LoginRequest(val email: String?, val password: String?)
 data class LoginResponse(
@@ -40,6 +41,20 @@ data class ScheduleDay(
     val location: String
 )
 
+data class Request(
+    val id: String, // Assuming there's an ID field in your response
+    val timeAgo: String,
+    val description: String,
+    val status: RequestStatus
+)
+
+enum class RequestStatus {
+    PENDING,
+    APPROVED,
+    DENIED
+}
+
+
 
 interface ApiService {
     @POST("users/login")
@@ -56,4 +71,9 @@ interface ApiService {
     @GET("users/schedule")
 //    fun viewSchedule(@Query("username") username: String): Call<ScheduleResponse>
     fun viewSchedule(@Query("userId") userId: String): Call<ScheduleResponse>
+
+    @GET("users/view-requests")
+    fun viewRequests(
+        @Header("Authorization") token: String
+    ): Call<List<Request>>
 }

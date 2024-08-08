@@ -6,6 +6,7 @@ const app = express();
 const DEFAULT_PORT = 3000;
 const DEFAULT_HOST = '0.0.0.0';
 const userRoutes = require('./Routes/userRoutes.js');
+const {viewRequests}= require('./Controllers/viewRequestsController.js');
 
 app.use(express.json());
 
@@ -15,7 +16,7 @@ app.get('/', (req, res) => {
 
 
 app.use('/api/users', userRoutes);
-
+app.get('/view-requests', viewRequests);
 
 const PORT = process.env.PORT || DEFAULT_PORT;
 const HOST = process.env.HOST || DEFAULT_HOST;
