@@ -52,17 +52,17 @@ val DarkTeal2 = Color(0xFF036B80)
 //val DarkGrassGreen = Color(0xFF006400)
 val DarkGrassGreen2 = Color(0xFF2C8431)
 
-
-
-
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("SuspiciousIndentation")
 @Composable
 fun HomeScreen(context: Context) {
     // State variables to hold user data
     var userName by remember { mutableStateOf("User") }
     var todayStatus by remember { mutableStateOf("Loading...") }
-    val userId: String?  = remember(context) { PreferencesManager.getUserIdFromPreferences(context) }
+    val userId: String? = remember(context) { PreferencesManager.getUserIdFromPreferences(context) }
     val token = PreferencesManager.getTokenFromPreferences(context)
+    var reason by remember { mutableStateOf("") }  // Initialize reason variable
+
     // Fetch user data on load
     LaunchedEffect(userId) {
         println(userId)
@@ -93,7 +93,6 @@ fun HomeScreen(context: Context) {
                     }
                 }
 
-
                 override fun onFailure(call: Call<UserInfoResponse>, t: Throwable) {
                     // Print the error message
                     println("Request failed: ${t.message}")
@@ -103,18 +102,16 @@ fun HomeScreen(context: Context) {
         }}
 
     // Current date formatting
-
     val currentDate = remember {
         val today = LocalDate.now()
         val formatter = DateTimeFormatter.ofPattern("d EEE\nMMM yyyy")
         today.format(formatter)
     }
 
-    var selectedDay by remember{ mutableStateOf<LocalDate?>(null) }
-    var changeToDay by remember{ mutableStateOf<LocalDate?>(null)
-    }
-    // Annotated string for current date
+    var selectedDay by remember { mutableStateOf<LocalDate?>(null) }
+    var changeToDay by remember { mutableStateOf<LocalDate?>(null) }
 
+    // Annotated string for current date
     val annotatedString = remember {
         buildAnnotatedString {
             val parts = currentDate.split("\n")
@@ -131,7 +128,6 @@ fun HomeScreen(context: Context) {
             addStyle(SpanStyle(color = Color.Black, fontSize = 14.sp), monthYearStartIndex, monthYearStartIndex + monthAndYear.length)
         }
     }
-
 
     LazyColumn(
         modifier = Modifier
@@ -160,9 +156,7 @@ fun HomeScreen(context: Context) {
                         color = Color.Gray
                     )
                     Text(
-
                         text = userName,
-
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = 2.dp)
@@ -177,10 +171,8 @@ fun HomeScreen(context: Context) {
             }
         }
 
-
         item {
             TodayStatusBox(message = todayStatus)
-
         }
 
         item {
@@ -224,16 +216,13 @@ fun HomeScreen(context: Context) {
             }
         }
 
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-        }
 
         item {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color.White, RoundedCornerShape(16.dp))
-                    .padding(16.dp)
+                    .padding(9.dp)
             ) {
                 Column {
                     Text(
@@ -269,12 +258,42 @@ fun HomeScreen(context: Context) {
 
                     val isSubmitEnabled = selectedDay != null && changeToDay != null
 
+                    var reason by remember { mutableStateOf("") }
+
+                    TextField(
+                        value = reason,
+                        onValueChange = { reason = it },
+                        placeholder = { Text("Reason for change...", color = Color(0xFFBDBDBD)) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 0.dp) // Add horizontal padding
+                            .height(54.dp) // Smaller height
+                            .background(Color.White, RoundedCornerShape(8.dp))
+                            .border(1.dp, Color(0xFFBDBDBD), RoundedCornerShape(8.dp)), // Align border radius with background radius
+                        singleLine = true,
+                        textStyle = androidx.compose.ui.text.TextStyle(color = Color.Black),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            disabledContainerColor = Color.White,
+                            cursorColor = Color.Black, // Optionally set the cursor color to black
+                            focusedIndicatorColor = Color.Transparent, // Remove the underline when focused
+                            unfocusedIndicatorColor = Color.Transparent, // Remove the underline when not focused
+                            disabledIndicatorColor = Color.Transparent, // Remove the underline when disabled
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
                         onClick = {
                             if (isSubmitEnabled) {
-                                // Create request object
-                                val request = SubmitRequest(selectedDay.toString(), changeToDay.toString())
+                                // Create request object with reason
+                                val request = SubmitRequest(
+                                    selectedDay.toString(),
+                                    changeToDay.toString(),
+                                    reason // Add reason here
+                                )
 
                                 if (token != null) {
                                     // Make the API call using Retrofit
@@ -284,8 +303,13 @@ fun HomeScreen(context: Context) {
                                                 val submitResponse = response.body()
                                                 if (submitResponse != null) {
                                                     // Handle successful submission
-                                                    Toast.makeText(context,submitResponse.message, Toast.LENGTH_LONG).show()
+                                                    Toast.makeText(context, submitResponse.message, Toast.LENGTH_LONG).show()
                                                     Log.d("SubmitRequest", "Request submitted: ${submitResponse.requestId}")
+
+                                                    // Clear the input fields
+                                                    selectedDay = null
+                                                    changeToDay = null
+                                                    reason = ""
                                                 } else {
                                                     // Handle null response body
                                                     Toast.makeText(context, "Failed to submit request", Toast.LENGTH_LONG).show()
@@ -327,6 +351,7 @@ fun HomeScreen(context: Context) {
         }
     }
 }
+
 
 
 
