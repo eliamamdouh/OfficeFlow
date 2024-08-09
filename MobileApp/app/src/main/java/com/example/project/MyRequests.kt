@@ -1,5 +1,7 @@
 package com.example.project
 
+import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,21 +27,38 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 
 @Composable
-fun MyRequests() {
-    var requests by remember {
-        mutableStateOf(listOf(
-            Request("8m ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci", RequestStatus.PENDING),
-            Request("10 days ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci", RequestStatus.APPROVED),
-            Request("15 days ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci", RequestStatus.DENIED),
-            Request("8m ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci", RequestStatus.PENDING),
-            Request("10 days ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci", RequestStatus.APPROVED),
-            Request("15 days ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci", RequestStatus.DENIED)
-        ))
-    }
+fun MyRequests(context: Context) {
+
+    var requests by remember { mutableStateOf<List<Request>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val scrollState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     var showScrollToTop by remember { mutableStateOf(false) }
+
+    val token = remember(context) { PreferencesManager.getTokenFromPreferences(context) }
+
+    LaunchedEffect(token) {
+        if (token != null) {
+            try {
+                val response = RetrofitClient.apiService.viewRequests("Bearer $token").execute()
+                if (response.isSuccessful) {
+                    requests = response.body() ?: emptyList()
+                    Log.d("req:","$requests")
+                } else {
+                    errorMessage = "Failed to load requests"
+                }
+            } catch (e: Exception) {
+                errorMessage = "Error: ${e.message}"
+            } finally {
+                isLoading = false
+            }
+        } else {
+            errorMessage = "Token not found"
+            isLoading = false
+        }
+    }
 
     LaunchedEffect(scrollState.firstVisibleItemIndex) {
         showScrollToTop = scrollState.firstVisibleItemIndex > 0
@@ -202,14 +221,4 @@ fun RequestItem(
     }
 }
 
-data class Request(
-    val timeAgo: String,
-    val description: String,
-    val status: RequestStatus
-)
 
-enum class RequestStatus {
-    PENDING,
-    APPROVED,
-    DENIED
-}
