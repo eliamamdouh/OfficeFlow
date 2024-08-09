@@ -35,11 +35,10 @@ const viewRequests = async (req, res) => {
         userRequestsQuery.forEach(doc => {
             userRequests.push({ id: doc.id, ...doc.data() });
         });
- 
-        res.status(StatusCodes.OK).json(userRequests);
+        return res.status(StatusCodes.OK).json(userRequests);
     } catch (error) {
         console.error("Error retrieving user requests:", error);
-        console.log("dhdbss")
+        //console.log("dhdbss")
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Server error', error: error.message });
     }
 };
