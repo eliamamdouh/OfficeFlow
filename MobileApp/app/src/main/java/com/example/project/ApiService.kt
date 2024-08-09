@@ -72,8 +72,3 @@ interface ApiService {
 //    fun viewSchedule(@Query("username") username: String): Call<ScheduleResponse>
     fun viewSchedule(@Query("userId") userId: String): Call<ScheduleResponse>
 
-    @GET("users/view-requests")
-    fun viewRequests(
-        @Header("Authorization") token: String
-    ): Call<List<Request>>
-}

@@ -384,8 +384,6 @@ fun TodayStatusBox(message: String) {
         }
     }
 }
-
-
 @Composable
 fun CalendarContent(
     context: Context,
@@ -424,8 +422,8 @@ fun CalendarContent(
 
     val currentMonth = YearMonth.now()
     val daysOfWeek = listOf(
-        DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY,
-        DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY
+        DayOfWeek.SUNDAY, DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
+        DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY
     )
 
     val today = LocalDate.now()
@@ -489,7 +487,7 @@ fun CalendarContent(
         val firstDayOfMonth = currentMonth.atDay(1)
         val lastDayOfMonth = currentMonth.atEndOfMonth()
         val firstDayOfWeek = firstDayOfMonth.dayOfWeek.value
-        val offset = if (firstDayOfWeek == 7) 0 else firstDayOfWeek - 1  // Adjust for Monday start
+        val offset = if (firstDayOfWeek == 7) 6 else firstDayOfWeek % 7  // Adjust for Sunday start
         val totalDaysInMonth = lastDayOfMonth.dayOfMonth
 
         // Build the calendar grid with the schedule data
@@ -516,6 +514,13 @@ fun CalendarContent(
                         else -> Color.Black
                     }
 
+                    val textAlpha = if (date?.month != currentMonth.month) 0.3f else 1f
+                    val isToday = date == today
+
+                    val isDisabled = restrictDateSelection && date?.let {
+                        it.isBefore(today) || it == selectedDate || isWeekend
+                    } ?: false
+
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -530,31 +535,33 @@ fun CalendarContent(
                                 }
                             )
                             .border(
-                                width = if (date == today) 2.dp else 0.dp,
+                                width = if (isToday) 2.dp else 0.dp,
                                 color = when {
-                                    date == today && isWorkFromOffice -> DarkTeal2
-                                    date == today && isWorkFromHome -> DarkGrassGreen2
-                                    date == today && isWeekend -> Color.Gray
+                                    isToday && isWorkFromOffice -> DarkTeal2
+                                    isToday && isWorkFromHome -> DarkGrassGreen2
+                                    isToday && isWeekend -> Color.Gray
                                     else -> Color.Transparent
                                 },
                                 shape = CircleShape
                             )
-                            .clickable { if (date != null) onDateSelected(date) },
+                            .clickable(enabled = !isDisabled && date != null && date.month == currentMonth.month) {
+                                date?.let { onDateSelected(it) }
+                            },
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = date?.dayOfMonth?.toString() ?: "",
-                            fontSize = 14.sp,
-                            color = textColor,
-                            fontWeight = if (date == selectedDate) FontWeight.Bold else FontWeight.Normal,
-                        )
+                        if (date != null) {
+                            Text(
+                                text = date.dayOfMonth.toString(),
+                                color = textColor,
+                                modifier = Modifier.alpha(if (isDisabled) 0.3f else textAlpha)
+                            )
+                        }
                     }
                 }
             }
         }
     }
 }
-
 @Composable
 fun CalendarView(context: Context, userId: String?) {
     userId?.let {
@@ -570,7 +577,6 @@ fun CalendarView(context: Context, userId: String?) {
         )
     }
 }
-
 @Composable
 fun CalendarViewForDialog(
     context: Context,

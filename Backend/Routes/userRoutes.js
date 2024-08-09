@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createUser,login,getUserInfo } = require('../Controllers/userController');
+const { createUser,login,getUserInfo,getTeamMembers } = require('../Controllers/userController');
 const {submitRequest} = require('../Controllers/submitRequestContoller')
 const { viewSchedule } = require('../Controllers/viewSchedule');
 

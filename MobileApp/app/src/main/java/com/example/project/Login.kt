@@ -124,13 +124,10 @@ fun LoginScreen(navController: NavHostController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var emailError by remember { mutableStateOf<String?>(null) }
-
-    // Check if the email is valid and set the error message if not
+    var loginError by remember { mutableStateOf<String?>(null) } // State variable to hold login error message
 
     val isEmailValid = email.contains("@Deloitte.com")
-
     val isFormValid = email.isNotBlank() && password.isNotBlank() && isEmailValid
-
     val context = LocalContext.current
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -168,22 +165,20 @@ fun LoginScreen(navController: NavHostController) {
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.offset(0.dp, (-160).dp)
                     )
-                    Spacer(modifier = Modifier.height(16.dp)) //remove
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.offset(y = (-140).dp)
-                // Adjust this offset to raise the column as needed
             ) {
                 TextField(
                     value = email,
                     onValueChange = {
                         email = it
-
                         emailError = if (it.contains("@Deloitte.com")) null else "Email must include @Deloitte.com"
-
+                        loginError = null // Reset login error when user modifies email
                     },
                     placeholder = {
                         Text(
@@ -210,13 +205,15 @@ fun LoginScreen(navController: NavHostController) {
                         text = emailError!!,
                         color = Color.Red,
                         style = TextStyle(fontSize = 18.sp),
-                        //modifier = Modifier.padding(horizontal = 15.dp)
                     )
                 }
 
                 TextField(
                     value = password,
-                    onValueChange = { password = it },
+                    onValueChange = {
+                        password = it
+                        loginError = null // Reset login error when user modifies password
+                    },
                     placeholder = {
                         Text(
                             text = "Password",
@@ -237,45 +234,50 @@ fun LoginScreen(navController: NavHostController) {
                             enabled = password.isNotBlank()
                         ) {
                             val icon = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                            val tint = if (passwordVisible) Color(0xFF86BC24) else Color.Gray // Green when clicked
+                            val tint = if (passwordVisible) Color(0xFF86BC24) else Color.Gray
                             Icon(imageVector = icon, contentDescription = null, tint = tint)
                         }
                     }
                 )
 
+                if (loginError != null) {
+                    Text(
+                        text = loginError!!,
+                        color = Color.Red,
+                        style = TextStyle(fontSize = 18.sp),
+                        modifier = Modifier.padding(vertical = 10.dp)
+                    )
+                }
+
                 Button(
                     onClick = {
                         if (isFormValid) {
-                            // Create a LoginRequest object with email and password
                             val request = LoginRequest(email, password)
-
-                            // Make the API call using Retrofit
                             RetrofitClient.apiService.loginUser(request).enqueue(object : Callback<LoginResponse> {
                                 override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
                                     if (response.isSuccessful) {
                                         val loginResponse = response.body()
                                         if (loginResponse != null && loginResponse.userId.isNotEmpty()) {
-                                            Log.d("LoginButton", "Login successful: ${loginResponse.userId}")
-                                            println(loginResponse.role)
-                                            // Save the userId in SharedPreferences
                                             PreferencesManager.saveUserIdToPreferences(context, loginResponse.userId)
                                             PreferencesManager.saveTokenToPreferences(context, loginResponse.token)
                                             PreferencesManager.saveRoleToPreferences(context, loginResponse.role)
-
-                                            // Navigate to HomeScreen
-                                            // removes the login screen from the back stack to prevent the user from returning to it
                                             navController.navigate("page1") {
                                                 popUpTo("page0") { inclusive = true }
                                             }
                                         } else {
-                                            Log.e("LoginButton", "Login response was null or userId was missing")
+                                            loginError = "Unexpected response from the server"
                                         }
                                     } else {
-                                        Log.e("LoginButton", "Login failed: ${response.message()}")
+                                        if (response.code() == 401) {
+                                            loginError = "Invalid email or password"
+                                        } else {
+                                            loginError = "Login failed: ${response.message()}"
+                                        }
                                     }
                                 }
+
                                 override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
-                                    Log.e("LoginButton", "API call failed: ${t.message}")
+                                    loginError = "API call failed: ${t.message}"
                                 }
                             })
                         }
@@ -300,6 +302,7 @@ fun LoginScreen(navController: NavHostController) {
         }
     }
 }
+
 
 @Composable
 fun Logo(modifier: Modifier = Modifier) {
