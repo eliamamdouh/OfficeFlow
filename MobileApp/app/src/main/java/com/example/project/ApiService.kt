@@ -52,9 +52,7 @@ enum class RequestStatus {
     APPROVED,
     DENIED
 }
-data class RequestsResponse(
-    val requests: List<Request>
-)
+
 
 
 
@@ -77,4 +75,13 @@ interface ApiService {
 
     @GET("users/view-requests")
     fun viewRequests(@Header("Authorization") token: String): Call<List<Request>>
-    }
+
+    @POST("users/cancel-request")
+    fun cancelRequest(
+        @Header("Authorization") token: String,
+        @Body requestId: RequestId
+    ): Call<CancelRequestResponse>
+}
+
+data class RequestId(val requestId: String)
+data class CancelRequestResponse(val message: String)

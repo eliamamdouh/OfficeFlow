@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -76,7 +77,7 @@ fun MyRequests(context: Context) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF8F8F8))//(0xFFF8F8F8)
+            .background(Color(0xFFF8F8F8))
             .fillMaxWidth(),
         contentAlignment = Alignment.TopCenter
     ) {
@@ -104,8 +105,9 @@ fun MyRequests(context: Context) {
             requests.forEachIndexed { index, request ->
                 RequestItem(
                     request = request,
-                    onCancelRequest = {
-                        requests = requests.filter { it != request }
+                    onRequestCancelled = {
+                        // Remove the request from the list
+                        requests = requests.filter { it.id != request.id }
                     }
                 )
                 if (index < requests.size - 1) {
@@ -122,17 +124,20 @@ fun MyRequests(context: Context) {
     }
 }
 
+
 @Composable
 fun RequestItem(
     request: Request,
-    onCancelRequest: () -> Unit
+    onRequestCancelled: () -> Unit
 ) {
+    val context = LocalContext.current
+    val token = PreferencesManager.getTokenFromPreferences(context) ?: return
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
-        // Display a fallback value if timeAgo is null
         Text(
             text = request.timeAgo ?: "Unknown time",
             fontSize = 16.sp,
@@ -141,7 +146,6 @@ fun RequestItem(
                 .padding(bottom = 4.dp)
                 .alpha(0.5f)
         )
-        // Display a fallback value if description is null
         Text(
             text = request.description ?: "No description available",
             fontSize = 16.sp,
@@ -152,7 +156,7 @@ fun RequestItem(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            val status = request.status ?: RequestStatus.PENDING // Provide a fallback value or handle null case
+            val status = request.status ?: RequestStatus.PENDING
             when (status) {
                 RequestStatus.PENDING -> {
                     Image(
@@ -160,7 +164,13 @@ fun RequestItem(
                         contentDescription = null,
                         modifier = Modifier
                             .size(24.dp)
-                            .clickable { onCancelRequest() },
+                            .clickable {
+                                cancelRequest(token, request.id, context) { success ->
+                                    if (success) {
+                                        onRequestCancelled()
+                                    }
+                                }
+                            },
                         contentScale = ContentScale.Fit
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -168,7 +178,13 @@ fun RequestItem(
                         text = "Cancel Request",
                         fontSize = 18.sp,
                         color = Color(0xFF86BC24),
-                        modifier = Modifier.clickable { onCancelRequest() }
+                        modifier = Modifier.clickable {
+                            cancelRequest(token, request.id, context) { success ->
+                                if (success) {
+                                    onRequestCancelled()
+                                }
+                            }
+                        }
                     )
                 }
                 RequestStatus.APPROVED -> {
@@ -205,3 +221,29 @@ fun RequestItem(
         }
     }
 }
+
+private fun cancelRequest(token: String, requestId: String, context: Context, onResult: (Boolean) -> Unit) {
+    val apiService = RetrofitClient.apiService
+
+    apiService.cancelRequest("Bearer $token", RequestId(requestId))
+        .enqueue(object : Callback<CancelRequestResponse> {
+            override fun onResponse(call: Call<CancelRequestResponse>, response: Response<CancelRequestResponse>) {
+                if (response.isSuccessful) {
+                    onResult(true)
+                    Log.d("CancelRequest", "Request cancelled successfully")
+                } else {
+                    val errorMessage = response.errorBody()?.string() ?: "Unknown error occurred"
+                    Log.e("CancelRequest", "Error cancelling request: $errorMessage")
+                    Toast.makeText(context, "Failed to cancel request: $errorMessage", Toast.LENGTH_LONG).show()
+                    onResult(false)
+                }
+            }
+
+            override fun onFailure(call: Call<CancelRequestResponse>, t: Throwable) {
+                Log.e("CancelRequest", "Failure cancelling request: ${t.localizedMessage}", t)
+                Toast.makeText(context, "Failed to cancel request: ${t.localizedMessage}", Toast.LENGTH_LONG).show()
+                onResult(false)
+            }
+        })
+}
+
