@@ -245,3 +245,21 @@ fun CalendarView(context: Context, userId: String?) {
         )
     }
 }
+@Composable
+fun LegendItem(color: Color, label: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(horizontal = 8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(16.dp)
+                .background(color, shape = CircleShape)
+        )
+        Text(
+            text = label,
+            fontSize = 16.sp,
+            modifier = Modifier.padding(start = 8.dp)
+        )
+    }
+}

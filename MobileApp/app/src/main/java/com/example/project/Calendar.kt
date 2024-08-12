@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import com.example.project.components.CalendarContent
 import com.example.project.components.CalendarView
+import com.example.project.components.LegendItem
 import com.example.project.ui.theme.DarkGrassGreen2
 import com.example.project.ui.theme.DarkTeal2
 import com.example.project.ui.theme.LightGrassGreen
@@ -83,7 +84,7 @@ fun HomeScreen(context: Context) {
                             todayStatus = when (userInfo.todaySchedule) {
                                 "Home" -> "Today, you are working from Home!"
                                 "Office" -> "Today, you are working from Office!"
-                                else -> "Failed to load status"
+                                else -> "It's Weekend Time!"
                             }
                         } else {
                             todayStatus = "Failed to load status"
@@ -680,21 +681,21 @@ fun DatePickerWithLabel(
 
 
 
-@Composable
-fun LegendItem(color: Color, label: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(horizontal = 8.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(16.dp)
-                .background(color, shape = CircleShape)
-        )
-        Text(
-            text = label,
-            fontSize = 16.sp,
-            modifier = Modifier.padding(start = 8.dp)
-        )
-    }
-}
+//@Composable
+//fun LegendItem(color: Color, label: String) {
+//    Row(
+//        verticalAlignment = Alignment.CenterVertically,
+//        modifier = Modifier.padding(horizontal = 8.dp)
+//    ) {
+//        Box(
+//            modifier = Modifier
+//                .size(16.dp)
+//                .background(color, shape = CircleShape)
+//        )
+//        Text(
+//            text = label,
+//            fontSize = 16.sp,
+//            modifier = Modifier.padding(start = 8.dp)
+//        )
+//    }
+//}

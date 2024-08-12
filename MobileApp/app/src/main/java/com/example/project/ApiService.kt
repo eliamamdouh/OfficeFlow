@@ -41,6 +41,15 @@ data class ScheduleDay(
     val location: String
 )
 
+data class TeamMembersResponse(val teamMembers: List<TeamMember>)
+
+data class TeamMember(
+    val userId: String,
+    val name: String,
+    val role: String,
+    val schedules: Map<String, List<ScheduleDay>>
+)
+
 
 interface ApiService {
     @POST("users/login")
@@ -55,6 +64,8 @@ interface ApiService {
     ): Call<SubmitRequestResponse>
 
     @GET("users/schedule")
-//    fun viewSchedule(@Query("username") username: String): Call<ScheduleResponse>
     fun viewSchedule(@Query("userId") userId: String): Call<ScheduleResponse>
+
+    @GET("users/team")
+    fun getTeamMembers(@Query("managerId") managerId: String): Call<TeamMembersResponse>
 }

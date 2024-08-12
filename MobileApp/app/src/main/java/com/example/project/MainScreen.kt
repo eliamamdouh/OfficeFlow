@@ -64,7 +64,7 @@ fun MainScreen() {
             composable("page3") { MyRequests() }
             composable("page4") { NotificationPage() }
             composable("page5") { ManagerRequests() }
-            composable("page6") { ScheduleScreen()}
+            composable("page6") { ScheduleScreen(context)}
         }
     }
 }

@@ -4,6 +4,7 @@ package com.example.project
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -36,6 +37,7 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.example.project.components.CalendarContent
 import com.example.project.components.CalendarView
+import com.example.project.components.LegendItem
 import kotlinx.coroutines.delay
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -45,20 +47,71 @@ import java.util.Locale
 import com.example.project.ui.theme.DarkGrassGreen2
 import com.example.project.ui.theme.DarkTeal2
 import com.example.project.ui.theme.LightGrassGreen
+//import com.google.android.gms.common.api.Response
+
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+
 
 
 @Composable
 fun ScheduleScreen(context: Context) {
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
-    var selectedTeam by remember { mutableIntStateOf(-1) } // No team selected initially
+    var selectedTeamMemberId by remember { mutableStateOf<String?>(null) } // Stores the selected team member's userId
+    var teamMembers by remember { mutableStateOf<List<TeamMember>>(emptyList()) } // List of team members
     var showPopup by remember { mutableStateOf(false) }
-    val teamList = listOf("Member Team 1", "Member Team 2", "Member Team 3", "Member Team 4")
+    var schedule by remember { mutableStateOf<Map<String, List<ScheduleDay>>?>(null) }
 
     // User Data
-    val userId: String? = remember(context) { PreferencesManager.getUserIdFromPreferences(context) }
-    var userName by remember { mutableStateOf("User") }
+    val managerId: String? = remember(context) { PreferencesManager.getUserIdFromPreferences(context) }
     val token = PreferencesManager.getTokenFromPreferences(context)
 
+    LaunchedEffect(managerId) {
+        managerId?.let {
+            Log.d("ScheduleScreen", "Manager ID: $it") // Log the managerId for debugging
+            val call = RetrofitClient.apiService.getTeamMembers(managerId = it)
+            call.enqueue(object : Callback<TeamMembersResponse> {
+                override fun onResponse(
+                    call: Call<TeamMembersResponse>,
+                    response: Response<TeamMembersResponse>
+                ) {
+                    if (response.isSuccessful) {
+                        teamMembers = response.body()?.teamMembers ?: emptyList()
+                    } else {
+                        println("Error fetching team members: ${response.errorBody()?.string()}")
+                    }
+                }
+
+                override fun onFailure(call: Call<TeamMembersResponse>, t: Throwable) {
+                    println("Failed to fetch team members: ${t.message}")
+                }
+            })
+        }
+    }
+
+    // Fetch the selected team member's schedule
+    LaunchedEffect(selectedTeamMemberId) {
+        selectedTeamMemberId?.let { memberId ->
+            val call = RetrofitClient.apiService.viewSchedule(memberId)
+            call.enqueue(object : Callback<ScheduleResponse> {
+                override fun onResponse(
+                    call: Call<ScheduleResponse>,
+                    response: Response<ScheduleResponse>
+                ) {
+                    if (response.isSuccessful) {
+                        schedule = response.body()?.schedule
+                    } else {
+                        println("Error fetching schedule: ${response.errorBody()?.string()}")
+                    }
+                }
+
+                override fun onFailure(call: Call<ScheduleResponse>, t: Throwable) {
+                    println("Failed to fetch schedule: ${t.message}")
+                }
+            })
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -95,15 +148,15 @@ fun ScheduleScreen(context: Context) {
                             )
 
                             DropdownList(
-                                itemList = teamList,
-                                selectedIndex = selectedTeam,
-                                onItemClick = { selectedTeam = it },
+                                itemList = teamMembers.map { it.name },
+                                selectedIndex = teamMembers.indexOfFirst { it.userId == selectedTeamMemberId },
+                                onItemClick = { selectedTeamMemberId = teamMembers[it].userId },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(bottom = 16.dp)
                             )
 
-                            if (selectedTeam != -1) {
+                            if (selectedTeamMemberId != null && schedule != null) {
                                 Text(
                                     text = "Click on day to change between office and home",
                                     fontFamily = FontFamily.SansSerif,
@@ -120,16 +173,18 @@ fun ScheduleScreen(context: Context) {
                                         .alpha(0.3f)
                                 )
 
-//                                CalendarContentMgr(
-//                                    currentMonth = currentMonth,
-//                                    onDateSelected = {},
-//                                    showMonthNavigation = true,
-//                                    onPreviousMonth = { currentMonth = currentMonth.minusMonths(1) },
-//                                    onNextMonth = { currentMonth = currentMonth.plusMonths(1) }
-//                                )
-                                if (userId != null) {
-                                    CalendarView(context, userId)
-                                }
+                                // Display schedule in the calendar
+                                CalendarContent(
+                                    context = context,
+                                    userId = selectedTeamMemberId!!,
+                                    onDateSelected = {},
+                                    showMonthNavigation = true,
+                                    onPreviousMonth = { currentMonth = currentMonth.minusMonths(1) },
+                                    onNextMonth = { currentMonth = currentMonth.plusMonths(1) },
+                                    selectedDate = null,
+                                    restrictDateSelection = false,
+                                    isDialog = false
+                                )
 
                                 Divider(
                                     color = Color.Gray,
@@ -144,14 +199,13 @@ fun ScheduleScreen(context: Context) {
                                     horizontalArrangement = Arrangement.Start,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    LegendItemMgr(color = DarkTeal2, label = "From Office")
-                                    LegendItemMgr(color = DarkGrassGreen2, label = "From Home")
+                                    LegendItem(color = DarkTeal2, label = "From Office")
+                                    LegendItem(color = DarkGrassGreen2, label = "From Home")
                                 }
 
-                                    LaunchedEffect(Unit) {
-                                        delay(3000)
-                                        showPopup = false
-                                    }
+                                LaunchedEffect(Unit) {
+                                    delay(3000)
+                                    showPopup = false
                                 }
                             }
                         }
@@ -160,9 +214,7 @@ fun ScheduleScreen(context: Context) {
             }
         }
     }
-//}
-
-
+}
 @SuppressLint("InvalidColorHexValue")
 @Composable
 fun DropdownList(
@@ -388,41 +440,41 @@ fun DropdownList(
 //    }
 //}
 
-@Composable
-fun CalendarViewt(context: Context, userId: String?) {
-    userId?.let {
-        var currentMonth by remember { mutableStateOf(YearMonth.now()) }
-
-        CalendarContent(
-            context = context,
-            userId = it,
-            onDateSelected = {},
-            showMonthNavigation = true,
-            onPreviousMonth = { currentMonth = currentMonth.minusMonths(1) },
-            onNextMonth = { currentMonth = currentMonth.plusMonths(1) }
-        )
-    }
-}
-@Composable
-fun LegendItemMgr(color: Color, label: String) {
-    Row(
+//@Composable
+//fun CalendarView(context: Context, userId: String?) {
+//    userId?.let {
+//        var currentMonth by remember { mutableStateOf(YearMonth.now()) }
+//
+//        CalendarContent(
+//            context = context,
+//            userId = it,
+//            onDateSelected = {},
+//            showMonthNavigation = true,
+//            onPreviousMonth = { currentMonth = currentMonth.minusMonths(1) },
+//            onNextMonth = { currentMonth = currentMonth.plusMonths(1) }
+//        )
+//    }
+//}
+//@Composable
+//fun LegendItemMgr(color: Color, label: String) {
+//    Row(
+////        verticalAlignment = Alignment.CenterVertically,
+////        horizontalArrangement = Arrangement.Start,
+////        modifier = Modifier.padding(end = 12.dp)
 //        verticalAlignment = Alignment.CenterVertically,
-//        horizontalArrangement = Arrangement.Start,
-//        modifier = Modifier.padding(end = 12.dp)
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(horizontal = 8.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(16.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(color)
-        )
-        Text(
-            text = label,
-            color = Color.Black,
-            fontSize = 16.sp,
-            modifier = Modifier.padding(start = 8.dp)
-        )
-    }
-}
+//        modifier = Modifier.padding(horizontal = 8.dp)
+//    ) {
+//        Box(
+//            modifier = Modifier
+//                .size(16.dp)
+//                .clip(RoundedCornerShape(10.dp))
+//                .background(color)
+//        )
+//        Text(
+//            text = label,
+//            color = Color.Black,
+//            fontSize = 16.sp,
+//            modifier = Modifier.padding(start = 8.dp)
+//        )
+//    }
+//}
