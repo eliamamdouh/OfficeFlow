@@ -61,7 +61,7 @@ fun MainScreen() {
             composable("page1") {HomeScreen(context) }
 
             composable("page2") { ChatScreen() }
-            composable("page3") { MyRequests() }
+            composable("page3") { MyRequests(context) }
             composable("page4") { NotificationPage() }
             composable("page5") { ManagerRequests() }
             composable("page6") { ScheduleScreen()}
