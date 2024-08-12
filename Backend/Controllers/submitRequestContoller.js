@@ -79,7 +79,6 @@ const submitRequest = async (req, res) => {
             requestDate: new Date().toISOString(),
         };
 
-        // Check for any undefined or null values in requestData
         for (const key in requestData) {
             if (requestData[key] === undefined || requestData[key] === null) {
                 console.error(`Invalid data for ${key}:`, requestData[key]);
@@ -98,4 +97,85 @@ const submitRequest = async (req, res) => {
     }
 };
 
-module.exports = { submitRequest };
+
+const changeSchedule = async (req, res) => {
+    try {
+        const { username, newDate, dayToChange } = req.body;
+
+        const userSnapshot = await db.collection('Users').where('username', '==', username).get();
+        if (userSnapshot.empty) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const userDoc = userSnapshot.docs[0];
+        const userData = userDoc.data();
+        console.log(userData);
+      
+        if (newDate === dayToChange) {
+            return res.status(400).json({ message: 'The new date and the day to change cannot be the same' });
+        }
+
+        const schedule = userData.schedule;
+
+        // Helper variables to track locations
+        let locationForDayToChange = null;
+        let locationForNewDate = null;
+        let dayToChangeFound = false;
+        let newDateFound = false;
+
+        // Traverse the schedule to find the days and their locations
+        for (let week in schedule) {
+            for (let entry of schedule[week]) {
+                if (entry.day === dayToChange) {
+                    locationForDayToChange = entry.location;
+                    dayToChangeFound = true;
+                }
+                if (entry.day === newDate) {
+                    locationForNewDate = entry.location;
+                    newDateFound = true;
+                }
+                if (dayToChangeFound && newDateFound) break;
+            }
+            if (dayToChangeFound && newDateFound) break;
+        }
+
+        // Check if both dates were found
+        if (!dayToChangeFound || !newDateFound) {
+            return res.status(404).json({ message: 'One or both dates not found in the schedule' });
+        }
+
+        // Ensure the locations are different before swapping
+        if (locationForDayToChange === locationForNewDate) {
+            return res.status(400).json({ message: 'The selected days must be from different locations (one office, one home)' });
+        }
+
+        // Swap the locations
+        for (let week in schedule) {
+            for (let entry of schedule[week]) {
+                if (entry.day === dayToChange) {
+                    entry.location = locationForNewDate;
+                }
+                if (entry.day === newDate) {
+                    entry.location = locationForDayToChange;
+                }
+            }
+        }
+
+        // Update the user's schedule in the database
+        await db.collection('Users').doc(userDoc.id).update({
+            schedule: schedule
+        });
+
+        return res.status(200).json({ message: 'Schedule updated successfully' });
+
+    } catch (error) {
+        console.error('Error updating schedule:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+
+
+
+
+module.exports = { submitRequest , changeSchedule};

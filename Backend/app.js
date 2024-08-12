@@ -7,6 +7,7 @@ const DEFAULT_PORT = 3000;
 const DEFAULT_HOST = '0.0.0.0';
 const userRoutes = require('./Routes/userRoutes.js');
 const { getTeamMembers } = require('./Controllers/userController');
+const {changeSchedule} = require('./Controllers/submitRequestContoller.js')
 
 
 app.use(express.json());
@@ -16,6 +17,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/getTeamMembers',getTeamMembers)
+app.get('/changeSchedule',changeSchedule)
 
 app.use('/api/users', userRoutes);
 

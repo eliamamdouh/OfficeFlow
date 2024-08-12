@@ -26,7 +26,7 @@ const createUser = async (req, res) => {
 
         const createdAt = new Date().toISOString();
         const updatedAt = createdAt;
-        const projectId = 10;
+        const projectId = 0;
         const schedule = await generateScheduleForProject(projectId);
 
         const userData = {
@@ -162,10 +162,10 @@ const generateUsers = async (numUsers) => {
     for (let i = 0; i < numUsers; i++) {
         const req = {
             body: {
-                Fullname: `Manager10`,
-                username: `Manager10`,
+                Fullname: `SuperManager`,
+                username: `SuperManager`,
                 password: `password@123`,
-                email: `Manager10@Deloitte.com`,
+                email: `SuperManager@Deloitte.com`,
                 role: 'Manager',
             }
         };

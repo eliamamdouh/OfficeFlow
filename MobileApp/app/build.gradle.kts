@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -60,7 +61,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.navigation:navigation-compose:2.7.7")
-    
+    implementation ("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-firestore-ktx:25.0.0")
 
     testImplementation("junit:junit:4.13.2")
@@ -79,6 +80,9 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.0.0")
     implementation ("io.coil-kt:coil:2.0.0") // Make sure this is the latest version
     implementation ("io.coil-kt:coil-gif:2.0.0") // Add GIF support explicitly
+    implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
+    implementation("com.google.firebase:firebase-messaging")
+
 
 
 }
