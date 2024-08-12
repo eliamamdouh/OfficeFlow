@@ -1,46 +1,57 @@
-// viewRequestsController.js
 const { db } = require('../firebase-init.js');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-const { StatusCodes } = require ("http-status-codes");
- 
+const { StatusCodes } = require("http-status-codes");
+const moment = require('moment');
+
 const viewRequests = async (req, res) => {
-    console.log('gowa viewreq')
     try {
-        console.log('gowa viewreq')
         const { authorization } = req.headers;
- 
+
         if (!authorization) {
-            return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Authorization header is missing' });
+            return res.status(400).json({ message: 'Authorization header is missing' });
         }
- 
+
         const token = authorization.split(' ')[1];
         if (!token) {
-            return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'No token provided' });
+            return res.status(401).json({ message: 'No token provided' });
         }
- 
+
         const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
         const userId = decoded.userId;
- 
+
         // Fetch the user's requests from the database
         const requestsCollectionRef = db.collection('Requests');
         const userRequestsQuery = await requestsCollectionRef.where('userId', '==', userId).get();
- 
+
         if (userRequestsQuery.empty) {
-            return res.status(StatusCodes.NOT_FOUND).json({ message: 'No requests found for this user' });
+            return res.status(404).json({ message: 'No requests found for this user' });
         }
- 
+
         const userRequests = [];
         userRequestsQuery.forEach(doc => {
-            userRequests.push({ id: doc.id, ...doc.data() });
+            const data = doc.data();
+            
+            // Parse dates using moment, assuming requestDate is a string
+            const requestDate = moment(data.requestDate);
+            const timeAgo = requestDate.fromNow();
+            
+            const request = {
+                id: doc.id,
+                timeAgo: timeAgo,
+                description: `Change ${data.dayToChange} to ${data.newDate}\nReason: ${data.reason}`,
+                status: data.status,
+            };
+            
+            userRequests.push(request);
         });
-        return res.status(StatusCodes.OK).json(userRequests);
+
+        return res.status(200).json(userRequests);
     } catch (error) {
         console.error("Error retrieving user requests:", error);
-        //console.log("dhdbss")
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
- 
+
 module.exports = { viewRequests };

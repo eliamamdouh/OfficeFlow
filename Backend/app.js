@@ -7,7 +7,7 @@ const DEFAULT_PORT = 3000;
 const DEFAULT_HOST = '0.0.0.0';
 const userRoutes = require('./Routes/userRoutes.js');
 
-const {viewRequests}= require('./Controllers/viewRequestsController.js');
+//const {viewRequests}= require('./Controllers/viewRequestsController.js');
 
 const { getTeamMembers } = require('./Controllers/userController');
 
@@ -22,7 +22,7 @@ app.get('/', (req, res) => {
 app.get('/getTeamMembers',getTeamMembers)
 
 app.use('/api/users', userRoutes);
-app.get('/view-requests', viewRequests);
+//app.get('/api/view-requests', viewRequests);
 
 const PORT = process.env.PORT || DEFAULT_PORT;
 const HOST = process.env.HOST || DEFAULT_HOST;

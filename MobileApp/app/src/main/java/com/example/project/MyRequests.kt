@@ -2,19 +2,20 @@ package com.example.project
 
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -24,117 +25,98 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.launch
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+
+private fun fetchRequests(token: String, context: Context, onResult: (List<Request>) -> Unit) {
+    val apiService = RetrofitClient.apiService
+    Log.d("token mn fetch:","$token")
+
+    apiService.viewRequests("Bearer $token")
+        .enqueue(object : Callback<List<Request>> {
+        override fun onResponse(call: Call<List<Request>>, response: Response<List<Request>>) {
+            if (response.isSuccessful) {
+                val requests = response.body() ?: emptyList()
+                onResult(requests)
+                Log.d("req:","$requests")
+            } else {
+                val errorMessage = response.errorBody()?.string() ?: "Unknown error occurred"
+                Log.e("Requests", "Error fetching requests: $errorMessage")
+                // Show a user-friendly message
+                Toast.makeText(context, "Failed to fetch requests: $errorMessage", Toast.LENGTH_LONG).show()
+            }
+        }
+
+        override fun onFailure(call: Call<List<Request>>, t: Throwable) {
+            Log.e("Requests", "Failure fetching requests: ${t.localizedMessage}", t)
+            // Show a user-friendly message
+            Toast.makeText(context, "Failed to fetch requests: ${t.localizedMessage}", Toast.LENGTH_LONG).show()
+        }
+    })
+}
+
 
 @Composable
 fun MyRequests(context: Context) {
+    var requests by remember { mutableStateOf(emptyList<Request>()) }
 
-    var requests by remember { mutableStateOf<List<Request>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    // Retrieve the token from SharedPreferences
+    val token = PreferencesManager.getTokenFromPreferences(context)
 
-    val scrollState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
-    var showScrollToTop by remember { mutableStateOf(false) }
-
-    val token = remember(context) { PreferencesManager.getTokenFromPreferences(context) }
-
-    LaunchedEffect(token) {
-        if (token != null) {
-            try {
-                val response = RetrofitClient.apiService.viewRequests("Bearer $token").execute()
-                if (response.isSuccessful) {
-                    requests = response.body() ?: emptyList()
-                    Log.d("req:","$requests")
-                } else {
-                    errorMessage = "Failed to load requests"
-                }
-            } catch (e: Exception) {
-                errorMessage = "Error: ${e.message}"
-            } finally {
-                isLoading = false
+    // Fetch requests when the composable is first launched
+    LaunchedEffect(Unit) {
+        token?.let {
+            fetchRequests(it, context) { fetchedRequests ->
+                requests = fetchedRequests
             }
-        } else {
-            errorMessage = "Token not found"
-            isLoading = false
         }
-    }
-
-    LaunchedEffect(scrollState.firstVisibleItemIndex) {
-        showScrollToTop = scrollState.firstVisibleItemIndex > 0
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF8F8F8))
+            .background(Color(0xFFF8F8F8))//(0xFFF8F8F8)
             .fillMaxWidth(),
         contentAlignment = Alignment.TopCenter
     ) {
-        LazyColumn(
-            state = scrollState,
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color.White, RoundedCornerShape(35.dp))
                 .padding(16.dp)
         ) {
-            item {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "My Requests",
-                        fontSize = 35.sp,
-                        color = Color.Black,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                }
-                Divider(
-                    color = Color.Gray.copy(alpha = 0.5f),
-                    thickness = 1.dp,
-                    modifier = Modifier
-                        .padding(bottom = 16.dp)
-                        .alpha(0.5f)
-                )
-            }
-
-            items(requests) { request ->
+            Text(
+                text = "My Requests",
+                fontSize = 35.sp,
+                color = Color.Black,
+                modifier = Modifier
+                    .padding(bottom = 8.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
+            Divider(
+                color = Color.Gray.copy(alpha = 0.5f),
+                thickness = 1.dp,
+                modifier = Modifier
+                    .padding(bottom = 16.dp)
+                    .alpha(0.5f)
+            )
+            requests.forEachIndexed { index, request ->
                 RequestItem(
                     request = request,
                     onCancelRequest = {
                         requests = requests.filter { it != request }
                     }
                 )
-                Divider(
-                    modifier = Modifier
-                        .padding(vertical = 8.dp)
-                        .alpha(0.5f),
-                    thickness = 1.dp,
-                    color = Color.Gray.copy(alpha = 0.5f)
-                )
-            }
-        }
-
-        if (showScrollToTop) {
-            IconButton(
-                onClick = {
-                    coroutineScope.launch {
-                        scrollState.scrollToItem(0)
-                    }
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .size(80.dp)
-                    .padding(16.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.arrowupgray), // Replace with your icon resource ID
-                    contentDescription = "Scroll to Top",
-                    modifier = Modifier
-                        .size(40.dp)
-                        .alpha(0.6f)
-                )
+                if (index < requests.size - 1) {
+                    Divider(
+                        modifier = Modifier
+                            .padding(vertical = 8.dp)
+                            .alpha(0.5f),
+                        thickness = 1.dp,
+                        color = Color.Gray.copy(alpha = 0.5f)
+                    )
+                }
             }
         }
     }
@@ -150,16 +132,18 @@ fun RequestItem(
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
+        // Display a fallback value if timeAgo is null
         Text(
-            text = request.timeAgo,
+            text = request.timeAgo ?: "Unknown time",
             fontSize = 16.sp,
             color = Color.Gray,
             modifier = Modifier
                 .padding(bottom = 4.dp)
                 .alpha(0.5f)
         )
+        // Display a fallback value if description is null
         Text(
-            text = request.description,
+            text = request.description ?: "No description available",
             fontSize = 16.sp,
             color = Color.Black,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -168,7 +152,8 @@ fun RequestItem(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            when (request.status) {
+            val status = request.status ?: RequestStatus.PENDING // Provide a fallback value or handle null case
+            when (status) {
                 RequestStatus.PENDING -> {
                     Image(
                         painter = painterResource(id = R.drawable.trash),
@@ -220,5 +205,3 @@ fun RequestItem(
         }
     }
 }
-
-
