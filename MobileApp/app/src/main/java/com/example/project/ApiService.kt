@@ -42,23 +42,26 @@ data class ScheduleDay(
 )
 
 data class Request(
-    val id: String, // Assuming there's an ID field in your response
+    val id: String,
     val timeAgo: String,
     val description: String,
     val status: RequestStatus
 )
-
 enum class RequestStatus {
     PENDING,
     APPROVED,
     DENIED
 }
+data class RequestsResponse(
+    val requests: List<Request>
+)
 
 
 
 interface ApiService {
     @POST("users/login")
     fun loginUser(@Body request: LoginRequest): Call<LoginResponse>
+
     @GET("users/{userId}")
     fun getUserInfo(@Path("userId") userId: String): Call<UserInfoResponse>
 
@@ -72,3 +75,6 @@ interface ApiService {
 //    fun viewSchedule(@Query("username") username: String): Call<ScheduleResponse>
     fun viewSchedule(@Query("userId") userId: String): Call<ScheduleResponse>
 
+    @GET("users/view-requests")
+    fun viewRequests(@Header("Authorization") token: String): Call<List<Request>>
+    }
