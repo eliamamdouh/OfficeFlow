@@ -336,26 +336,28 @@ const countUsersByRole = async () => {
 const getTeamMembers = async (req, res) => {
   try {
     const { authorization } = req.headers;
+    const { managerId } = req.query;
+
     if (!authorization) {
-      return res
-        .status(400)
-        .json({ message: "Authorization header is missing" });
+      return res.status(StatusCodes.BAD_REQUEST).send("Authorization header is missing");
     }
 
-    // Extract and verify the JWT token
     const token = authorization.split(" ")[1];
     if (!token) {
-      return res.status(401).json({ message: "No token provided" });
+      return res.status(StatusCodes.UNAUTHORIZED).send("No token provided");
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-    const managerId = decoded.userId;
+
+    if (decoded.userId !== managerId) {
+      return res.status(StatusCodes.FORBIDDEN).send("Unauthorized access");
+    }
 
     // Retrieve the manager's document based on managerId
     const userDoc = await db.collection("Users").doc(managerId).get();
 
     if (!userDoc.exists) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(StatusCodes.NOT_FOUND).send("User not found");
     }
 
     const userData = userDoc.data();
@@ -368,9 +370,7 @@ const getTeamMembers = async (req, res) => {
       .get();
 
     if (usersSnapshot.empty) {
-      return res
-        .status(404)
-        .json({ message: "No team members found for this project" });
+      return res.status(StatusCodes.NOT_FOUND).send("No team members found for this project");
     }
 
     // Prepare a list to store team members and their schedules
@@ -379,18 +379,22 @@ const getTeamMembers = async (req, res) => {
     usersSnapshot.forEach((userDoc) => {
       const userData = userDoc.data();
 
-      teamMembers.push({
-        userId: userDoc.id,
-        name: userData.name,
-        role: userData.role,
-        schedules: userData.schedule,
-      });
+      // Exclude the manager (the logged-in user) from the list
+      if (userDoc.id !== managerId) {
+        teamMembers.push({
+          userId: userDoc.id,
+          name: userData.username,
+          role: userData.role,
+          schedules: userData.schedule,
+        });
+      }
     });
 
-    return res.status(200).json({ teamMembers });
+    return res.status(StatusCodes.OK).json({ teamMembers });
   } catch (error) {
     console.error("Error fetching team members:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send("Internal server error");
   }
 };
+
 module.exports = { createUser, login, getUserInfo, getTeamMembers };
