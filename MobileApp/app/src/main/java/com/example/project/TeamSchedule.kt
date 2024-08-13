@@ -69,8 +69,8 @@ fun ScheduleScreen(context: Context) {
 
     LaunchedEffect(managerId) {
         managerId?.let {
-            Log.d("ScheduleScreen", "Manager ID: $it")
             if (token != null) {
+                Log.d("ScheduleScreen", "Manager ID: $it") // Log the managerId for debugging
                 val call = RetrofitClient.apiService.getTeamMembers("Bearer $token", managerId = it)
                 call.enqueue(object : Callback<TeamMembersResponse> {
                     override fun onResponse(
@@ -89,11 +89,10 @@ fun ScheduleScreen(context: Context) {
                     }
                 })
             } else {
-                Log.e("ScheduleScreen", "Token is missing")
+                Log.e("ScheduleScreen", "Token is missing from SharedPreferences")
             }
         }
     }
-
 
     // Fetch the selected team member's schedule
     LaunchedEffect(selectedTeamMemberId) {
@@ -153,7 +152,7 @@ fun ScheduleScreen(context: Context) {
                             )
 
                             DropdownList(
-                                itemList = teamMembers.map { it.name },
+                                itemList = teamMembers.map { it.name ?: "Unknown" },
                                 selectedIndex = teamMembers.indexOfFirst { it.userId == selectedTeamMemberId },
                                 onItemClick = { selectedTeamMemberId = teamMembers[it].userId },
                                 modifier = Modifier
@@ -220,7 +219,7 @@ fun ScheduleScreen(context: Context) {
         }
     }
 }
-@SuppressLint("InvalidColorHexValue")
+
 @Composable
 fun DropdownList(
     itemList: List<String>,
@@ -249,7 +248,7 @@ fun DropdownList(
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
                 contentDescription = "Dropdown Arrow",
-                tint = LightGrassGreen,// Color(0xFF86BC24), // Arrow color
+                tint = LightGrassGreen, // Arrow color
                 modifier = Modifier.size(34.dp) // Make the arrow slightly larger
             )
         }
@@ -260,15 +259,15 @@ fun DropdownList(
             enter = fadeIn(animationSpec = tween(durationMillis = 300)) + expandVertically(animationSpec = tween(durationMillis = 300)),
             exit = fadeOut(animationSpec = tween(durationMillis = 300)) + shrinkVertically(animationSpec = tween(durationMillis = 300))
         ) {
-            Column(
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .wrapContentHeight()
+                    .heightIn(max = 200.dp) // Limit the height to show only four rows
                     .background(Color(0xFFF6F6F6)) // Background color of the dropdown list
                     .border(1.dp, Color.Gray)
                     .clip(RoundedCornerShape(8.dp)) // Rounded corners
             ) {
-                itemList.forEachIndexed { index, item ->
+                items(itemList.size) { index ->
                     if (index != 0) {
                         Divider(thickness = 1.dp, color = Color.LightGray)
                     }
@@ -283,7 +282,7 @@ fun DropdownList(
                             .background(Color(0xFFF6F6F6)) // Background color for each item
                     ) {
                         Text(
-                            text = item,
+                            text = itemList[index],
                             color = if (index == selectedIndex) Color.Black else Color(0xFFBDBDBD), // Black color for selected item
                             modifier = Modifier.padding(horizontal = 16.dp) // Padding inside each item
                         )
@@ -293,193 +292,3 @@ fun DropdownList(
         }
     }
 }
-//@Composable
-//fun CalendarContentMgr(
-//    currentMonth: YearMonth,
-//    onDateSelected: (LocalDate) -> Unit,
-//    showMonthNavigation: Boolean = false,
-//    onPreviousMonth: (() -> Unit)? = null,
-//    onNextMonth: (() -> Unit)? = null,
-//    selectedDate: LocalDate? = null,
-//    restrictDateSelection: Boolean = false
-//) {
-//    val daysOfWeek = listOf(
-//        DayOfWeek.SUNDAY, DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
-//        DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY
-//    )
-//
-//    val today = LocalDate.now()
-//
-//    Column(
-//        modifier = Modifier.fillMaxWidth(),
-//        horizontalAlignment = Alignment.CenterHorizontally
-//    ) {
-//        if (showMonthNavigation) {
-//            Row(
-//                modifier = Modifier.fillMaxWidth(),
-//                horizontalArrangement = Arrangement.Start,
-//                verticalAlignment = Alignment.CenterVertically
-//            ) {
-//                IconButton(onClick = { onPreviousMonth?.invoke() }) {
-//                    Icon(
-//                        imageVector = Icons.Default.KeyboardArrowLeft,
-//                        contentDescription = "Previous Month",
-//                        tint = LightGrassGreen
-//                    )
-//                }
-//
-//                Text(
-//                    text = "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${currentMonth.year}",
-//                    fontSize = 16.sp,
-//                    fontWeight = FontWeight.Bold,
-//                    modifier = Modifier.padding(16.dp)
-//                )
-//
-//                IconButton(onClick = { onNextMonth?.invoke() }) {
-//                    Icon(
-//                        imageVector = Icons.Default.KeyboardArrowRight,
-//                        contentDescription = "Next Month",
-//                        tint = LightGrassGreen
-//                    )
-//                }
-//            }
-//        } else {
-//            Text(
-//                text = "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${currentMonth.year}",
-//                fontSize = 24.sp,
-//                fontWeight = FontWeight.Bold,
-//                modifier = Modifier.padding(16.dp)
-//            )
-//        }
-//
-//        Row(
-//            modifier = Modifier.fillMaxWidth(),
-//            horizontalArrangement = Arrangement.SpaceAround
-//        ) {
-//            daysOfWeek.forEach { day ->
-//                Text(
-//                    text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
-//                    fontWeight = FontWeight.Bold,
-//                    modifier = Modifier.padding(8.dp)
-//                )
-//            }
-//        }
-//
-//        val firstDayOfMonth = currentMonth.atDay(1)
-//        val lastDayOfMonth = currentMonth.atEndOfMonth()
-//        val daysInMonth = (1..lastDayOfMonth.dayOfMonth).map { firstDayOfMonth.plusDays((it - 1).toLong()) }
-//
-//        val previousMonthDays = (1..firstDayOfMonth.dayOfWeek.value % 7).map {
-//            firstDayOfMonth.minusDays(it.toLong())
-//        }.reversed()
-//
-//        val totalDays = previousMonthDays.size + daysInMonth.size
-//        val remainingDays = 7 - totalDays % 7
-//
-//        val nextMonthDays = if (remainingDays < 7) (1..remainingDays).map {
-//            lastDayOfMonth.plusDays(it.toLong())
-//        } else emptyList()
-//
-//        val daysWithBlanks = mutableListOf<LocalDate?>()
-//        daysWithBlanks.addAll(previousMonthDays)
-//        daysWithBlanks.addAll(daysInMonth)
-//        daysWithBlanks.addAll(nextMonthDays)
-//
-//        daysWithBlanks.chunked(7).forEach { week ->
-//            Row(
-//                modifier = Modifier.fillMaxWidth(),
-//                horizontalArrangement = Arrangement.SpaceAround
-//            ) {
-//                week.forEach { day ->
-//                    val isWeekend = day?.dayOfWeek == DayOfWeek.SATURDAY || day?.dayOfWeek == DayOfWeek.SUNDAY
-//                    val isWorkFromOffice = day?.dayOfWeek == DayOfWeek.MONDAY || day?.dayOfWeek == DayOfWeek.TUESDAY || day?.dayOfWeek == DayOfWeek.WEDNESDAY
-//                    val isWorkFromHome = day?.dayOfWeek == DayOfWeek.THURSDAY || day?.dayOfWeek == DayOfWeek.FRIDAY
-//
-//                    val textColor = when {
-//                        isWeekend -> Color.Gray
-//                        isWorkFromHome -> DarkGrassGreen2
-//                        isWorkFromOffice -> DarkTeal2
-//                        else -> Color.Black
-//                    }
-//                    val textAlpha = if (day?.month != currentMonth.month) 0.3f else 1f
-//                    val isToday = day == today
-//
-//                    val isDisabled = restrictDateSelection && day?.let {
-//                        it.isBefore(today) || it == selectedDate || isWeekend
-//                    } ?: false
-//
-//                    Box(
-//                        contentAlignment = Alignment.Center,
-//                        modifier = Modifier
-//                            .size(35.dp)
-//                            .padding(4.dp)
-//                            .clickable(enabled = !isDisabled && day != null && day.month == currentMonth.month) {
-//                                day?.let { onDateSelected(it) }
-//                            }
-//                            .border(
-//                                width = if (isToday) 2.dp else 0.dp,
-//                                color = when {
-//                                    isToday && isWeekend -> Color.Gray
-//                                    isToday && isWorkFromHome -> DarkGrassGreen2
-//                                    isToday && isWorkFromOffice -> DarkTeal2
-//                                    else -> Color.Transparent
-//                                },
-//                                shape = CircleShape
-//                            )
-//                            .background(
-//                                color = if (isToday) Color.Transparent else Color.Transparent,
-//                                shape = CircleShape
-//                            )
-//                    ) {
-//                        if (day != null) {
-//                            Text(
-//                                text = day.dayOfMonth.toString(),
-//                                color = textColor,
-//                                modifier = Modifier.alpha(if (isDisabled) 0.3f else textAlpha)
-//                            )
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
-
-//@Composable
-//fun CalendarView(context: Context, userId: String?) {
-//    userId?.let {
-//        var currentMonth by remember { mutableStateOf(YearMonth.now()) }
-//
-//        CalendarContent(
-//            context = context,
-//            userId = it,
-//            onDateSelected = {},
-//            showMonthNavigation = true,
-//            onPreviousMonth = { currentMonth = currentMonth.minusMonths(1) },
-//            onNextMonth = { currentMonth = currentMonth.plusMonths(1) }
-//        )
-//    }
-//}
-//@Composable
-//fun LegendItemMgr(color: Color, label: String) {
-//    Row(
-////        verticalAlignment = Alignment.CenterVertically,
-////        horizontalArrangement = Arrangement.Start,
-////        modifier = Modifier.padding(end = 12.dp)
-//        verticalAlignment = Alignment.CenterVertically,
-//        modifier = Modifier.padding(horizontal = 8.dp)
-//    ) {
-//        Box(
-//            modifier = Modifier
-//                .size(16.dp)
-//                .clip(RoundedCornerShape(10.dp))
-//                .background(color)
-//        )
-//        Text(
-//            text = label,
-//            color = Color.Black,
-//            fontSize = 16.sp,
-//            modifier = Modifier.padding(start = 8.dp)
-//        )
-//    }
-//}
