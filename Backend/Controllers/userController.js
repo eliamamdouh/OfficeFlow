@@ -335,8 +335,21 @@ const countUsersByRole = async () => {
 
 const getTeamMembers = async (req, res) => {
   try {
-    const { managerId } = req.query;
-    console.log(managerId);
+    const { authorization } = req.headers;
+    if (!authorization) {
+      return res
+        .status(400)
+        .json({ message: "Authorization header is missing" });
+    }
+
+    // Extract and verify the JWT token
+    const token = authorization.split(" ")[1];
+    if (!token) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    const managerId = decoded.userId;
 
     // Retrieve the manager's document based on managerId
     const userDoc = await db.collection("Users").doc(managerId).get();
@@ -347,7 +360,6 @@ const getTeamMembers = async (req, res) => {
 
     const userData = userDoc.data();
     const projectId = userData.projectId;
-    console.log(projectId);
 
     // Get all users with the same projectId
     const usersSnapshot = await db
@@ -364,7 +376,6 @@ const getTeamMembers = async (req, res) => {
     // Prepare a list to store team members and their schedules
     let teamMembers = [];
 
-    // Iterate over each user and fetch their data including schedules
     usersSnapshot.forEach((userDoc) => {
       const userData = userDoc.data();
 
@@ -372,7 +383,7 @@ const getTeamMembers = async (req, res) => {
         userId: userDoc.id,
         name: userData.name,
         role: userData.role,
-        schedules: userData.schedule, // Assuming schedules are stored in an array within userData
+        schedules: userData.schedule,
       });
     });
 
