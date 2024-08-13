@@ -69,26 +69,31 @@ fun ScheduleScreen(context: Context) {
 
     LaunchedEffect(managerId) {
         managerId?.let {
-            Log.d("ScheduleScreen", "Manager ID: $it") // Log the managerId for debugging
-            val call = RetrofitClient.apiService.getTeamMembers(managerId = it)
-            call.enqueue(object : Callback<TeamMembersResponse> {
-                override fun onResponse(
-                    call: Call<TeamMembersResponse>,
-                    response: Response<TeamMembersResponse>
-                ) {
-                    if (response.isSuccessful) {
-                        teamMembers = response.body()?.teamMembers ?: emptyList()
-                    } else {
-                        println("Error fetching team members: ${response.errorBody()?.string()}")
+            Log.d("ScheduleScreen", "Manager ID: $it")
+            if (token != null) {
+                val call = RetrofitClient.apiService.getTeamMembers("Bearer $token", managerId = it)
+                call.enqueue(object : Callback<TeamMembersResponse> {
+                    override fun onResponse(
+                        call: Call<TeamMembersResponse>,
+                        response: Response<TeamMembersResponse>
+                    ) {
+                        if (response.isSuccessful) {
+                            teamMembers = response.body()?.teamMembers ?: emptyList()
+                        } else {
+                            println("Error fetching team members: ${response.errorBody()?.string()}")
+                        }
                     }
-                }
 
-                override fun onFailure(call: Call<TeamMembersResponse>, t: Throwable) {
-                    println("Failed to fetch team members: ${t.message}")
-                }
-            })
+                    override fun onFailure(call: Call<TeamMembersResponse>, t: Throwable) {
+                        println("Failed to fetch team members: ${t.message}")
+                    }
+                })
+            } else {
+                Log.e("ScheduleScreen", "Token is missing")
+            }
         }
     }
+
 
     // Fetch the selected team member's schedule
     LaunchedEffect(selectedTeamMemberId) {

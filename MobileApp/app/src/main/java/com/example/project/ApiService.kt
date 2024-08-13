@@ -67,5 +67,8 @@ interface ApiService {
     fun viewSchedule(@Query("userId") userId: String): Call<ScheduleResponse>
 
     @GET("users/team")
-    fun getTeamMembers(@Query("managerId") managerId: String): Call<TeamMembersResponse>
+    fun getTeamMembers(
+        @Header("Authorization") token: String,
+        @Query("managerId") managerId: String
+    ): Call<TeamMembersResponse>
 }
