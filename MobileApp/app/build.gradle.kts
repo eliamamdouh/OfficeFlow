@@ -74,7 +74,8 @@ dependencies {
     implementation ("androidx.compose.material:material-icons-extended:<compose_version>")
 
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation ("com.squareup.retrofit2:converter-gson:2.5.0")
+    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
+
 
 
     implementation("io.coil-kt:coil-compose:2.0.0")

@@ -8,7 +8,12 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-data class LoginRequest(val email: String?, val password: String?)
+data class LoginRequest(
+    val email: String?,
+    val password: String?,
+    val deviceToken: String?  // Add this field
+)
+
 data class LoginResponse(
     val message: String,
     val userId: String,

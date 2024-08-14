@@ -46,6 +46,7 @@ import com.example.project.PreferencesManager
 import coil.compose.rememberImagePainter
 import coil.decode.GifDecoder
 import coil.request.ImageRequest
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.delay
 
 @Composable
@@ -125,11 +126,20 @@ fun LoginScreen(navController: NavHostController) {
     var password by remember { mutableStateOf("") }
     var emailError by remember { mutableStateOf<String?>(null) }
     var loginError by remember { mutableStateOf<String?>(null) } // State variable to hold login error message
-
+    var deviceToken by remember { mutableStateOf<String?>(null) }  // State variable for device token
     val isEmailValid = email.contains("@Deloitte.com")
     val isFormValid = email.isNotBlank() && password.isNotBlank() && isEmailValid
     val context = LocalContext.current
-
+    FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+        if (task.isSuccessful) {
+            deviceToken  = task.result
+            Log.d("test", "FCM Token successfully retrieved: $deviceToken")
+        } else {
+            Log.w("test", "Fetching FCM registration token failed", task.exception)
+        }
+    }.addOnFailureListener { exception ->
+        Log.e("test", "Error retrieving FCM token", exception)
+    }
     Box(modifier = Modifier.fillMaxSize()) {
         // Background image
         BackgroundImage()
@@ -252,7 +262,7 @@ fun LoginScreen(navController: NavHostController) {
                 Button(
                     onClick = {
                         if (isFormValid) {
-                            val request = LoginRequest(email, password)
+                            val request = LoginRequest(email, password,deviceToken)
                             RetrofitClient.apiService.loginUser(request).enqueue(object : Callback<LoginResponse> {
                                 override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
                                     if (response.isSuccessful) {

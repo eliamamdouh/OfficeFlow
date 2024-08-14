@@ -1,19 +1,20 @@
-const { db } = require('../firebase-init');
+const { db, sendNotification } = require('../firebase-init');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
+
+
 
 const acceptRequest = async (req, res) => {
     try {
         const { authorization } = req.headers;
         const { requestId } = req.body;
 
-        console.log("Engy: " + authorization)
+        console.log("Authorization: " + authorization);
 
         if (!authorization) {
             return res.status(400).json('Authorization header is missing');
         }
         
-
         if (!requestId) {
             return res.status(400).json('Request ID is required');
         }
@@ -41,6 +42,16 @@ const acceptRequest = async (req, res) => {
         }
 
         await requestDocRef.update({ status: 'Accepted' });
+
+        // Assuming the request data includes a `userToken` to send the notification to
+        const userToken = requestData.deviceToken;
+        if (userToken) {
+            // Send notification after request is accepted
+            const messageTitle = 'Request Accepted';
+            const messageBody = 'Your request has been accepted.';
+            await sendNotification(userToken, messageTitle, messageBody);
+            console.log('Notification sent successfully');
+        }
 
         res.status(200).json({ message: 'Request accepted successfully' });
     } catch (error) {

@@ -60,17 +60,7 @@ class MainActivity : ComponentActivity() {
         FirebaseApp.initializeApp(this)
 
         askNotificationPermission()
-        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val token = task.result
-                Log.d("test", "FCM Token successfully retrieved: $token")
-                // Use the token for sending messages to this device
-            } else {
-                Log.w("test", "Fetching FCM registration token failed", task.exception)
-            }
-        }.addOnFailureListener { exception ->
-            Log.e("test", "Error retrieving FCM token", exception)
-        }
+
 
         setContent {
             ProjectTheme {
