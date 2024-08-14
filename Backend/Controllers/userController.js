@@ -182,10 +182,10 @@ const generateUsers = async (numUsers) => {
 
 const login = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, deviceToken } = req.body; // Include deviceToken in the request
 
-        if (!email || !password) {
-            return res.status(StatusCodes.BAD_REQUEST).json({ errorMessage: 'Email and password are required' });
+        if (!email || !password || !deviceToken) { // Check if deviceToken is provided
+            return res.status(StatusCodes.BAD_REQUEST).json({ errorMessage: 'Email, password, and device token are required' });
         }
 
         let usersCollectionRef = db.collection('Users');
@@ -207,6 +207,11 @@ const login = async (req, res) => {
         const userId = userDoc.id;
         const role = userData.role;
 
+        // Update the user's document with the device token
+        await usersCollectionRef.doc(userId).update({
+            deviceToken: deviceToken
+        });
+
         const token = jwt.sign(
             { userId: userId, username: userData.username, email: userData.email, role: role },
             process.env.JWT_SECRET_KEY,
@@ -224,6 +229,7 @@ const login = async (req, res) => {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ errorMessage: 'Server error', details: error.message });
     }
 };
+
 
 
 const getUserInfo = async (req, res) => {
