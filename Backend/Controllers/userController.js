@@ -206,6 +206,7 @@ const login = async (req, res) => {
 
         const userId = userDoc.id;
         const role = userData.role;
+        console.log("Engy betdawar 3ala dah: " + role)
 
         const token = jwt.sign(
             { userId: userId, username: userData.username, email: userData.email, role: role },
