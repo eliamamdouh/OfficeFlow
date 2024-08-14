@@ -36,15 +36,19 @@ const acceptRequest = async (req, res) => {
             return res.status(404).json({ message: 'Request not found' });
         }
 
+
         const requestData = requestDoc.data();
+        const requestedId =requestData.userId;
+        const userDoc = await db.collection('Users').doc(requestedId).get();
+        const userData = userDoc.data();
         if (requestData.status !== 'Pending') {
             return res.status(400).json({ message: 'Request status is not Pending' });
         }
 
         await requestDocRef.update({ status: 'Accepted' });
 
-        // Assuming the request data includes a `userToken` to send the notification to
-        const userToken = requestData.deviceToken;
+    
+        const userToken = userData.deviceToken;
         if (userToken) {
             // Send notification after request is accepted
             const messageTitle = 'Request Accepted';
