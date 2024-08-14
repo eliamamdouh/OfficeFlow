@@ -1,4 +1,4 @@
-const { db } = require('../firebase-init.js');
+const { db ,sendNotification} = require('../firebase-init.js');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { StatusCodes } = require("http-status-codes");
@@ -30,14 +30,22 @@ const cancelRequest = async (req, res) => {
 
         const requestData = requestDoc.data();
 
+        const requestedId =requestData.userId;
+        const userDoc = await db.collection('Users').doc(requestedId).get();
+        const userData = userDoc.data();
         // Check if the request belongs to the user
         if (requestData.userId !== userId) {
             return res.status(403).json({ message: 'You do not have permission to cancel this request' });
         }
 
-        // Remove the request from the database
         await requestDocRef.delete();
-
+        const userToken = userData.deviceToken;
+        if (userToken) {
+            const messageTitle = 'Request Rejected';
+            const messageBody = 'Your request has been Rejected.';
+            await sendNotification(userToken, messageTitle, messageBody);
+            console.log('Notification sent successfully');
+        }
         return res.status(200).json({ message: 'Request successfully cancelled' });
     } catch (error) {
         console.error("Error cancelling request:", error);
