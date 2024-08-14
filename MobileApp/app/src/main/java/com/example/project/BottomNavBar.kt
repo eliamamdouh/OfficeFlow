@@ -18,17 +18,41 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 
+data class NavBarItem(
+    val route: String,
+    val iconId: Int,
+    val selectedIconId: Int
+)
+
 @Composable
 fun BottomNavBar(navController: NavHostController) {
+    val navItems = listOf(
+        NavBarItem("page1", R.drawable.graynotes, R.drawable.greennotes),
+        NavBarItem("page2", R.drawable.graycomment, R.drawable.greencomment),
+        NavBarItem("page3", R.drawable.graymessagealertsquare, R.drawable.greenmessagealertsquare),
+        NavBarItem("page4", R.drawable.graybell, R.drawable.greenbell)
+    )
+
+    CommonNavBar(navController = navController, navItems = navItems)
+}
+
+@Composable
+fun ManagerNavBar(navController: NavHostController) {
+    val navItems = listOf(
+        NavBarItem("page1", R.drawable.graynotes, R.drawable.greennotes),
+        NavBarItem("page2", R.drawable.graycomment, R.drawable.greencomment),
+        NavBarItem("page6", R.drawable.mgrgray, R.drawable.mgrgreen),
+        NavBarItem("page5", R.drawable.graymessagealertsquare, R.drawable.greenmessagealertsquare),
+        NavBarItem("page4", R.drawable.graybell, R.drawable.greenbell)
+    )
+
+    CommonNavBar(navController = navController, navItems = navItems)
+}
+
+@Composable
+fun CommonNavBar(navController: NavHostController, navItems: List<NavBarItem>) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
-
-    val navItems = listOf(
-        NavItem("page1", R.drawable.graynotes, R.drawable.greennotes),
-        NavItem("page2", R.drawable.graycomment, R.drawable.greencomment),
-        NavItem("page3", R.drawable.graymessagealertsquare, R.drawable.greenmessagealertsquare),
-        NavItem("page4", R.drawable.graybell, R.drawable.greenbell)
-    )
 
     Box(
         modifier = Modifier
@@ -52,7 +76,7 @@ fun BottomNavBar(navController: NavHostController) {
                 navItems.forEach { item ->
                     NavBarIcon(
                         iconId = item.iconId,
-                        greenIconId = item.greenIconId,
+                        selectedIconId = item.selectedIconId,
                         isSelected = currentRoute == item.route,
                         onClick = { navController.navigate(item.route) }
                     )
@@ -65,7 +89,7 @@ fun BottomNavBar(navController: NavHostController) {
 @Composable
 fun NavBarIcon(
     iconId: Int,
-    greenIconId: Int,
+    selectedIconId: Int,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
@@ -78,7 +102,7 @@ fun NavBarIcon(
         modifier = Modifier.clickable(onClick = onClick)
     ) {
         Image(
-            painter = painterResource(id = if (isSelected) greenIconId else iconId),
+            painter = painterResource(id = if (isSelected) selectedIconId else iconId),
             contentDescription = null,
             modifier = Modifier.size(iconSize),
             contentScale = ContentScale.Fit
@@ -94,9 +118,3 @@ fun NavBarIcon(
         }
     }
 }
-
-data class NavItem(
-    val route: String,
-    val iconId: Int,
-    val greenIconId: Int
-)
