@@ -206,6 +206,7 @@ const login = async (req, res) => {
 
         const userId = userDoc.id;
         const role = userData.role;
+        console.log("Engy betdawar 3ala dah: " + role)
 
         // Update the user's document with the device token
         await usersCollectionRef.doc(userId).update({

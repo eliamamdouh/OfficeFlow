@@ -28,11 +28,10 @@ fun MainScreen() {
     val context = LocalContext.current
     LaunchedEffect(Unit) {
         coroutineScope.launch(Dispatchers.IO) {
-            // Replace this with your actual API call
             val roleFromApi = PreferencesManager.getUserRoleFromPreferences(context)
             println(roleFromApi)
             userRole = roleFromApi
-            println(userRole)
+            println("test user role" + userRole)
         }
     }
 
@@ -44,7 +43,7 @@ fun MainScreen() {
                     when (userRole) {
                         "Employee" -> BottomNavBar(navController)
                         "Manager" -> ManagerNavBar(navController)
-                        else -> {} // You can handle other cases or leave it empty
+                        else -> {}
                     }
                 }
             }
@@ -68,5 +67,3 @@ fun MainScreen() {
         }
     }
 }
-
-// Dummy function to simulate fetching user role from API

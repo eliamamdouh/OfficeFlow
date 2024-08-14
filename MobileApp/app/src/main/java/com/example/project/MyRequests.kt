@@ -7,14 +7,19 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Divider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,6 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -60,6 +66,15 @@ private fun fetchRequests(token: String, context: Context, onResult: (List<Reque
 
 @Composable
 fun MyRequests(context: Context) {
+    // Scroll stuff
+    val scrollState = rememberScrollState()
+    var showScrollToTop by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(scrollState.value) {
+        showScrollToTop = scrollState.value > 300
+    }
+
     var requests by remember { mutableStateOf(emptyList<Request>()) }
 
     // Retrieve the token from SharedPreferences
@@ -86,6 +101,7 @@ fun MyRequests(context: Context) {
                 .fillMaxWidth()
                 .background(Color.White, RoundedCornerShape(35.dp))
                 .padding(16.dp)
+                .verticalScroll(scrollState)
         ) {
             Text(
                 text = "My Requests",
@@ -106,7 +122,6 @@ fun MyRequests(context: Context) {
                 RequestItem(
                     request = request,
                     onRequestCancelled = {
-                        // Remove the request from the list
                         requests = requests.filter { it.id != request.id }
                     }
                 )
@@ -119,6 +134,27 @@ fun MyRequests(context: Context) {
                         color = Color.Gray.copy(alpha = 0.5f)
                     )
                 }
+            }
+        }
+
+        if (showScrollToTop) {
+            IconButton(
+                onClick = {
+                    coroutineScope.launch {
+                        scrollState.scrollTo(0)
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter) //could be bottom end
+                    .size(80.dp)
+                    .padding(16.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.arrowupgray),
+                    contentDescription = "Scroll to Top",
+                    modifier = Modifier.size(40.dp)
+                        .alpha(0.6f)
+                )
             }
         }
     }

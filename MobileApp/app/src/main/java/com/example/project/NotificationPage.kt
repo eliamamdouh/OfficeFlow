@@ -25,9 +25,8 @@ fun NotificationPage() {
     var showScrollToTop by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
-    // Update the visibility of the "Scroll to Top" button based on scroll position
     LaunchedEffect(scrollState.value) {
-        showScrollToTop = scrollState.value > 300 // You can adjust this threshold
+        showScrollToTop = scrollState.value > 300
     }
 
     Box(
@@ -44,7 +43,7 @@ fun NotificationPage() {
                 .background(Color.White, RoundedCornerShape(35.dp))
                 .padding(16.dp)
                 .height(700.dp)
-                .verticalScroll(scrollState) // Make column scrollable
+                .verticalScroll(scrollState)
         ) {
             Text(
                 text = "Notifications",
@@ -102,10 +101,8 @@ fun NotificationPage() {
                 iconResId = R.drawable.ghalat,
                 sidebarColor = Color(0xFFF44336)
             )
-            // Add more NotificationCard instances as needed
         }
 
-        // Scroll to Top Button
         if (showScrollToTop) {
             IconButton(
                 onClick = {
@@ -114,12 +111,12 @@ fun NotificationPage() {
                     }
                 },
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)//BottomEnd
+                    .align(Alignment.BottomCenter)// could be BottomEnd
                     .size(80.dp)
                     .padding(16.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.arrowupgray), // Replace with your icon resource ID
+                    painter = painterResource(id = R.drawable.arrowupgray),
                     contentDescription = "Scroll to Top",
                     modifier = Modifier.size(40.dp)
                         .alpha(0.6f)
