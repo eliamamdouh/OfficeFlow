@@ -130,7 +130,7 @@ fun ScheduleScreen(context: Context) {
                             )
 
                             DropdownList(
-                                itemList = teamMembers.map { it.name },
+                                itemList = teamMembers.map { it.name ?: "Unknown" }, // if returned Unknown then this means something wrong with retrieving it from the back
                                 selectedIndex = teamMembers.indexOfFirst { it.userId == selectedTeamMemberId },
                                 onItemClick = { selectedTeamMemberId = teamMembers[it].userId },
                                 modifier = Modifier
