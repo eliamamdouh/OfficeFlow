@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.project.ui.theme.BackgroundGray
 import com.example.project.ui.theme.LightGrassGreen
 
 @Composable
@@ -77,7 +78,7 @@ fun DropdownList(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 200.dp) // Limit the height to show only four rows
-                    .background(Color(0xFFF6F6F6)) // Background color of the dropdown list
+                    .background(BackgroundGray) // Gray Background color for the dropdown list
                     .border(1.dp, Color.Gray)
                     .clip(RoundedCornerShape(8.dp)) // Rounded corners
             ) {

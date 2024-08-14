@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.example.project.components.CalendarContent
 import com.example.project.components.DropdownList
 import com.example.project.components.LegendItem
-import com.example.project.ui.theme.BackgoundGray
+import com.example.project.ui.theme.BackgroundGray
 import kotlinx.coroutines.delay
 import java.time.YearMonth
 import com.example.project.ui.theme.DarkGrassGreen2
@@ -99,7 +99,7 @@ fun ScheduleScreen(context: Context) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgoundGray) // Screen background grey
+            .background(BackgroundGray) // Screen background grey
             .padding(top = 20.dp, bottom = 100.dp)
     ) {
         Box(
