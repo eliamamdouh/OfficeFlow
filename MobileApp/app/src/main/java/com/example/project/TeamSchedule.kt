@@ -2,52 +2,30 @@ package com.example.project
 //FIX PACKAGE
 
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import com.example.project.components.CalendarContent
-import com.example.project.components.CalendarView
+import com.example.project.components.DropdownList
 import com.example.project.components.LegendItem
 import kotlinx.coroutines.delay
-import java.time.DayOfWeek
-import java.time.LocalDate
 import java.time.YearMonth
-import java.time.format.TextStyle
-import java.util.Locale
 import com.example.project.ui.theme.DarkGrassGreen2
 import com.example.project.ui.theme.DarkTeal2
-import com.example.project.ui.theme.LightGrassGreen
-//import com.google.android.gms.common.api.Response
+
 
 import retrofit2.Call
 import retrofit2.Callback
@@ -152,7 +130,7 @@ fun ScheduleScreen(context: Context) {
                             )
 
                             DropdownList(
-                                itemList = teamMembers.map { it.name ?: "Unknown" },
+                                itemList = teamMembers.map { it.name },
                                 selectedIndex = teamMembers.indexOfFirst { it.userId == selectedTeamMemberId },
                                 onItemClick = { selectedTeamMemberId = teamMembers[it].userId },
                                 modifier = Modifier
@@ -213,79 +191,6 @@ fun ScheduleScreen(context: Context) {
                                 }
                             }
                         }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun DropdownList(
-    itemList: List<String>,
-    selectedIndex: Int,
-    modifier: Modifier = Modifier,
-    onItemClick: (Int) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val selectedItem = if (selectedIndex >= 0) itemList[selectedIndex] else "Select a team member"
-
-    Box(modifier = modifier) {
-        TextButton(
-            onClick = { expanded = !expanded },
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFFF6F6F6), RoundedCornerShape(8.dp)) // Background color
-                .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp))
-                .padding(3.dp)
-        ) {
-            Text(
-                text = selectedItem,
-                fontSize = 16.sp,
-                color = if (selectedIndex >= 0) Color.Black else Color(0xFFBDBDBD), // Text color based on selection
-                modifier = Modifier.weight(1f) // Ensure text takes up available space
-            )
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
-                contentDescription = "Dropdown Arrow",
-                tint = LightGrassGreen, // Arrow color
-                modifier = Modifier.size(34.dp) // Make the arrow slightly larger
-            )
-        }
-
-        // Animated visibility for dropdown list
-        AnimatedVisibility(
-            visible = expanded,
-            enter = fadeIn(animationSpec = tween(durationMillis = 300)) + expandVertically(animationSpec = tween(durationMillis = 300)),
-            exit = fadeOut(animationSpec = tween(durationMillis = 300)) + shrinkVertically(animationSpec = tween(durationMillis = 300))
-        ) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 200.dp) // Limit the height to show only four rows
-                    .background(Color(0xFFF6F6F6)) // Background color of the dropdown list
-                    .border(1.dp, Color.Gray)
-                    .clip(RoundedCornerShape(8.dp)) // Rounded corners
-            ) {
-                items(itemList.size) { index ->
-                    if (index != 0) {
-                        Divider(thickness = 1.dp, color = Color.LightGray)
-                    }
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                onItemClick(index)
-                                expanded = false
-                            }
-                            .padding(vertical = 8.dp) // Increased padding between items
-                            .background(Color(0xFFF6F6F6)) // Background color for each item
-                    ) {
-                        Text(
-                            text = itemList[index],
-                            color = if (index == selectedIndex) Color.Black else Color(0xFFBDBDBD), // Black color for selected item
-                            modifier = Modifier.padding(horizontal = 16.dp) // Padding inside each item
-                        )
                     }
                 }
             }
