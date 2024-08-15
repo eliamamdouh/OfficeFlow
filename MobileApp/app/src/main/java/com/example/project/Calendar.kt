@@ -31,6 +31,7 @@ import android.widget.Toast
 import com.example.project.components.CalendarContent
 import com.example.project.components.CalendarView
 import com.example.project.components.LegendItem
+import com.example.project.components.parseUserIdFromToken
 import com.example.project.ui.theme.DarkGrassGreen2
 import com.example.project.ui.theme.DarkTeal2
 
@@ -48,15 +49,16 @@ fun HomeScreen(context: Context) {
     // State variables to hold user data
     var userName by remember { mutableStateOf("User") }
     var todayStatus by remember { mutableStateOf("Loading...") }
-    val userId: String? = remember(context) { PreferencesManager.getUserIdFromPreferences(context) }
     val token = PreferencesManager.getTokenFromPreferences(context)
-    var reason by remember { mutableStateOf("") }  // Initialize reason variable
+
+    // Extract the userId from the token
+    val userId = token?.let { parseUserIdFromToken(it) }
 
     // Fetch user data on load
     LaunchedEffect(userId) {
-        println(userId)
+        println("Extracted User ID: $userId")
         userId?.let {
-            val call = RetrofitClient.apiService.getUserInfo(userId)
+            val call = RetrofitClient.apiService.getUserInfo(it)
             call.enqueue(object : Callback<UserInfoResponse> {
                 override fun onResponse(
                     call: Call<UserInfoResponse>,
@@ -88,7 +90,10 @@ fun HomeScreen(context: Context) {
                     todayStatus = "Error: ${t.message}"
                 }
             })
-        }}
+        } ?: run {
+            todayStatus = "Invalid token or user ID"
+        }
+    }
 
     // Current date formatting
     val currentDate = remember {

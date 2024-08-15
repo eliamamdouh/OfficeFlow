@@ -3,8 +3,6 @@ package com.example.project.components
 //import androidx.compose.foundation.lazy.items
 
 
-import android.annotation.SuppressLint
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,30 +15,21 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontFamily
 import android.content.Context
-import android.util.Log
-import android.widget.Toast
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import com.example.project.PreferencesManager
 import com.example.project.RetrofitClient
 import com.example.project.ScheduleDay
 import com.example.project.ScheduleResponse
@@ -66,26 +55,32 @@ fun CalendarContent(
 ) {
     var schedule by remember { mutableStateOf<Map<String, List<ScheduleDay>>?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    val token = PreferencesManager.getTokenFromPreferences(context)
+
 
     // Fetch schedule data
     LaunchedEffect(userId) {
-        val call = RetrofitClient.apiService.viewSchedule(userId)
-        call.enqueue(object : Callback<ScheduleResponse> {
-            override fun onResponse(call: Call<ScheduleResponse>, response: Response<ScheduleResponse>) {
-                if (response.isSuccessful) {
-                    schedule = response.body()?.schedule
-                    println("Schedule fetched successfully: $schedule")
-                } else {
-                    errorMessage = "Error fetching schedule: ${response.errorBody()?.string()}"
+        println("Extracted User ID in Component: $userId")
+        userId.let { RetrofitClient.apiService.viewSchedule("Bearer $token") }
+            .enqueue(object : Callback<ScheduleResponse> {
+                override fun onResponse(
+                    call: Call<ScheduleResponse>,
+                    response: Response<ScheduleResponse>
+                ) {
+                    if (response.isSuccessful) {
+                        schedule = response.body()?.schedule
+                        println("Schedule fetched successfully: $schedule")
+                    } else {
+                        errorMessage = "Error fetching schedule: ${response.errorBody()?.string()}"
+                        println(errorMessage)
+                    }
+                }
+
+                override fun onFailure(call: Call<ScheduleResponse>, t: Throwable) {
+                    errorMessage = "Failed to fetch schedule: ${t.message}"
                     println(errorMessage)
                 }
-            }
-
-            override fun onFailure(call: Call<ScheduleResponse>, t: Throwable) {
-                errorMessage = "Failed to fetch schedule: ${t.message}"
-                println(errorMessage)
-            }
-        })
+            })
     }
 
     val currentMonth = YearMonth.now()
