@@ -68,8 +68,7 @@ interface ApiService {
 
     @GET("/getTeamMembers")
     fun getTeamMembers(
-        @Header("Authorization") token: String,
-        @Query("managerId") managerId: String
+        @Header("Authorization") token: String
     ): Call<TeamMembersResponse>
 
 }

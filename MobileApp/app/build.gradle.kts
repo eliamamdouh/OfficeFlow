@@ -13,10 +13,14 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+        multiDexEnabled = true
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
+        }
+        ndk {
+            abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
         }
     }
 
@@ -75,7 +79,7 @@ dependencies {
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")
     implementation ("com.squareup.retrofit2:converter-gson:2.5.0")
 
-
+    implementation ("androidx.multidex:multidex:2.0.1")
     implementation("io.coil-kt:coil-compose:2.0.0")
     implementation ("io.coil-kt:coil:2.0.0") // Make sure this is the latest version
     implementation ("io.coil-kt:coil-gif:2.0.0") // Add GIF support explicitly

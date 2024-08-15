@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.example.project.components.CalendarContent
 import com.example.project.components.DropdownList
 import com.example.project.components.LegendItem
+import com.example.project.components.parseUserIdFromToken
 import com.example.project.ui.theme.BackgroundGray
 import kotlinx.coroutines.delay
 import java.time.YearMonth
@@ -43,40 +44,38 @@ fun ScheduleScreen(context: Context) {
     var schedule by remember { mutableStateOf<Map<String, List<ScheduleDay>>?>(null) }
 
     // User Data
-    val managerId: String? = remember(context) { PreferencesManager.getUserIdFromPreferences(context) }
+//    val managerId: String? = remember(context) { PreferencesManager.getUserIdFromPreferences(context) }
     val token = PreferencesManager.getTokenFromPreferences(context)
+    val managerId = token?.let { parseUserIdFromToken(it) }
+
 
     LaunchedEffect(managerId) {
         managerId?.let {
-            if (token != null) {
-                Log.d("ScheduleScreen", "Manager ID: $it") // Log the managerId for debugging
-                val call = RetrofitClient.apiService.getTeamMembers("Bearer $token", managerId = it)
-                call.enqueue(object : Callback<TeamMembersResponse> {
-                    override fun onResponse(
-                        call: Call<TeamMembersResponse>,
-                        response: Response<TeamMembersResponse>
-                    ) {
-                        if (response.isSuccessful) {
-                            teamMembers = response.body()?.teamMembers ?: emptyList()
-                        } else {
-                            println("Error fetching team members: ${response.errorBody()?.string()}")
-                        }
+            Log.d("ScheduleScreen", "Manager ID: $it") // Log the managerId for debugging
+            val call = RetrofitClient.apiService.getTeamMembers("Bearer $token")
+            call.enqueue(object : Callback<TeamMembersResponse> {
+                override fun onResponse(
+                    call: Call<TeamMembersResponse>,
+                    response: Response<TeamMembersResponse>
+                ) {
+                    if (response.isSuccessful) {
+                        teamMembers = response.body()?.teamMembers ?: emptyList()
+                    } else {
+                        println("Error fetching team members: ${response.errorBody()?.string()}")
                     }
+                }
 
-                    override fun onFailure(call: Call<TeamMembersResponse>, t: Throwable) {
-                        println("Failed to fetch team members: ${t.message}")
-                    }
-                })
-            } else {
-                Log.e("ScheduleScreen", "Token is missing from SharedPreferences")
-            }
+                override fun onFailure(call: Call<TeamMembersResponse>, t: Throwable) {
+                    println("Failed to fetch team members: ${t.message}")
+                }
+            })
         }
     }
 
     // Fetch the selected team member's schedule
     LaunchedEffect(selectedTeamMemberId) {
-        selectedTeamMemberId?.let { memberId ->
-            val call = RetrofitClient.apiService.viewSchedule(memberId)
+        selectedTeamMemberId?.let {
+            val call = RetrofitClient.apiService.viewSchedule("Bearer $token")
             call.enqueue(object : Callback<ScheduleResponse> {
                 override fun onResponse(
                     call: Call<ScheduleResponse>,
