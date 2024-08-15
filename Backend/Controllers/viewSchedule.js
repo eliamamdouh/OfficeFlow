@@ -14,10 +14,11 @@ const viewSchedule = async (req, res) => {
         console.log('Headers received:', req.headers);
 
         const token = authorization.split(' ')[1];
-        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-        // Extract the userId from the decoded token
+
+    
+        const decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
+
         const userId = decodedToken.userId; 
-        console.log('Authorization Header:', authorization);
 
 
         const usersCollectionRef = db.collection('Users');

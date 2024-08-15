@@ -336,7 +336,6 @@ const countUsersByRole = async () => {
 const getTeamMembers = async (req, res) => {
   try {
     const { authorization } = req.headers;
-    const { managerId } = req.query;
 
     if (!authorization) {
       return res.status(StatusCodes.BAD_REQUEST).send("Authorization header is missing");
@@ -349,9 +348,8 @@ const getTeamMembers = async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
-    if (decoded.userId !== managerId) {
-      return res.status(StatusCodes.FORBIDDEN).send("Unauthorized access");
-    }
+    const managerId = decoded.userId;
+
 
     // Retrieve the manager's document based on managerId
     const userDoc = await db.collection("Users").doc(managerId).get();
