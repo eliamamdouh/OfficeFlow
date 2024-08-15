@@ -31,12 +31,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-private fun fetchRequests(token: String, context: Context, onResult: (List<Request>) -> Unit) {
+private fun fetchRequests(token: String, context: Context, navController: NavHostController, onResult: (List<Request>) -> Unit) {
     val apiService = RetrofitClient.apiService
     Log.d("token mn fetch:","$token")
 
@@ -47,7 +48,9 @@ private fun fetchRequests(token: String, context: Context, onResult: (List<Reque
                 val requests = response.body() ?: emptyList()
                 onResult(requests)
                 Log.d("req:","$requests")
-            } else {
+            } else { if (response.code() == 401 && response.message() == "Token expired") {
+                handleTokenExpiration(navController)
+            }
                 val errorMessage = response.errorBody()?.string() ?: "Unknown error occurred"
                 Log.e("Requests", "Error fetching requests: $errorMessage")
                 // Show a user-friendly message
@@ -65,7 +68,7 @@ private fun fetchRequests(token: String, context: Context, onResult: (List<Reque
 
 
 @Composable
-fun MyRequests(context: Context) {
+fun MyRequests(context: Context, navController: NavHostController) {
     // Scroll stuff
     val scrollState = rememberScrollState()
     var showScrollToTop by remember { mutableStateOf(false) }
@@ -83,7 +86,7 @@ fun MyRequests(context: Context) {
     // Fetch requests when the composable is first launched
     LaunchedEffect(Unit) {
         token?.let {
-            fetchRequests(it, context) { fetchedRequests ->
+            fetchRequests(it, context, navController) { fetchedRequests ->
                 requests = fetchedRequests
             }
         }
@@ -120,7 +123,7 @@ fun MyRequests(context: Context) {
             )
             requests.forEachIndexed { index, request ->
                 RequestItem(
-                    request = request,
+                    request = request, navController,
                     onRequestCancelled = {
                         requests = requests.filter { it.id != request.id }
                     }
@@ -163,7 +166,7 @@ fun MyRequests(context: Context) {
 
 @Composable
 fun RequestItem(
-    request: Request,
+    request: Request, navController: NavHostController,
     onRequestCancelled: () -> Unit
 ) {
     val context = LocalContext.current
@@ -201,7 +204,7 @@ fun RequestItem(
                         modifier = Modifier
                             .size(24.dp)
                             .clickable {
-                                cancelRequest(token, request.id, context) { success ->
+                                cancelRequest(token, request.id, context, navController) { success ->
                                     if (success) {
                                         onRequestCancelled()
                                     }
@@ -215,7 +218,7 @@ fun RequestItem(
                         fontSize = 18.sp,
                         color = Color(0xFF86BC24),
                         modifier = Modifier.clickable {
-                            cancelRequest(token, request.id, context) { success ->
+                            cancelRequest(token, request.id, context, navController) { success ->
                                 if (success) {
                                     onRequestCancelled()
                                 }
@@ -258,7 +261,7 @@ fun RequestItem(
     }
 }
 
-private fun cancelRequest(token: String, requestId: String, context: Context, onResult: (Boolean) -> Unit) {
+private fun cancelRequest(token: String, requestId: String, context: Context, navController: NavHostController, onResult: (Boolean) -> Unit) {
     val apiService = RetrofitClient.apiService
 
     apiService.cancelRequest("Bearer $token", RequestId(requestId))
@@ -267,12 +270,14 @@ private fun cancelRequest(token: String, requestId: String, context: Context, on
                 if (response.isSuccessful) {
                     onResult(true)
                     Log.d("CancelRequest", "Request cancelled successfully")
-                } else {
+                } else { if (response.code() == 401 && response.message() == "Token expired") {
+                    handleTokenExpiration(navController)
+                } else{
                     val errorMessage = response.errorBody()?.string() ?: "Unknown error occurred"
                     Log.e("CancelRequest", "Error cancelling request: $errorMessage")
                     Toast.makeText(context, "Failed to cancel request: $errorMessage", Toast.LENGTH_LONG).show()
                     onResult(false)
-                }
+                }}
             }
 
             override fun onFailure(call: Call<CancelRequestResponse>, t: Throwable) {

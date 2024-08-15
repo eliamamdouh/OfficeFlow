@@ -20,7 +20,16 @@ const getRequests = async (req, res) => {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'No token provided' });
         }
  
-        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        } catch (error) {
+            if (error.name === 'TokenExpiredError') {
+                return res.status(401).json({ message: 'Token expired' });
+            }
+            throw error; // Re-throw other errors
+        }
+
         console.log('Decoded Token:', decoded);
         const userId = decoded.userId;
         console.log('UserID:', userId);

@@ -35,7 +35,16 @@ const submitRequest = async (req, res) => {
         }
 
         // Verify and decode the token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        } catch (error) {
+            if (error.name === 'TokenExpiredError') {
+                return res.status(401).json({ message: 'Token expired' });
+            }
+            throw error; // Re-throw other errors
+        }
+
         const userId = decoded.userId;
 
         // Fetch the user data from the database

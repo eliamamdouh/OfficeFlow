@@ -39,6 +39,7 @@ import android.widget.Toast
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.navigation.NavHostController
 
 
 import retrofit2.Call
@@ -55,7 +56,7 @@ val DarkGrassGreen2 = Color(0xFF2C8431)
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("SuspiciousIndentation")
 @Composable
-fun HomeScreen(context: Context) {
+fun HomeScreen(context: Context, navController: NavHostController) {
     // State variables to hold user data
     var userName by remember { mutableStateOf("User") }
     var todayStatus by remember { mutableStateOf("Loading...") }
@@ -89,7 +90,11 @@ fun HomeScreen(context: Context) {
                             todayStatus = "Failed to load status"
                         }
                     } else {
-                        todayStatus = "Failed to load status"
+                        if (response.code() == 401 && response.message() == "Token expired") {
+                            handleTokenExpiration(navController)
+                        }
+                        else{
+                        todayStatus = "Failed to load status"}
                     }
                 }
 

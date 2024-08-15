@@ -2,6 +2,7 @@ package com.example.project
 
 import ManagerRequests
 import android.annotation.SuppressLint
+import android.util.Log
 import android.window.SplashScreen
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -14,6 +15,8 @@ import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
+import com.example.project.PreferencesManager.getTokenFromPreferences
+//import isTokenExpired
 
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -23,19 +26,33 @@ fun MainScreen() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+
     var userRole by remember { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+    val token = getTokenFromPreferences(context)
+    Log.d("fein tokenn","token: $token")
+     fun handleTokenExpiration() {
+        // Redirect to login screen
+        navController.navigate("page0") {
+            popUpTo("page0") { inclusive = true }
+        }
+    }
     LaunchedEffect(Unit) {
         coroutineScope.launch(Dispatchers.IO) {
             val roleFromApi = PreferencesManager.getUserRoleFromPreferences(context)
             println(roleFromApi)
             userRole = roleFromApi
             println("test user role" + userRole)
+          //   Check if the token is expired
+            if (token.isNullOrEmpty()) {
+                // Token is expired, redirect to login
+                navController.navigate("page0") {
+                    popUpTo("page0") { inclusive = true }
+                }
+            }
         }
     }
-
-
     Scaffold(
         bottomBar = {
             if (currentRoute != "splash") {
@@ -57,10 +74,10 @@ fun MainScreen() {
             composable("splash") { SplashScreen(navController) }
             composable("page0") { LoginScreen(navController) }
 
-            composable("page1") {HomeScreen(context) }
+            composable("page1") {HomeScreen(context,navController) }
 
             composable("page2") { ChatScreen() }
-            composable("page3") { MyRequests(context) }
+            composable("page3") { MyRequests(context,navController) }
             composable("page4") { NotificationPage() }
             composable("page5") { ManagerRequests() }
             composable("page6") { ScheduleScreen()}
