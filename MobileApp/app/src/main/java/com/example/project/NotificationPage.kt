@@ -14,10 +14,15 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.project.PreferencesManager.getTokenFromPreferences
+import com.example.project.RetrofitClient.apiService
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
+import java.io.IOException
 
 @Composable
 fun NotificationPage() {
@@ -25,9 +30,29 @@ fun NotificationPage() {
     var showScrollToTop by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
-    // Update the visibility of the "Scroll to Top" button based on scroll position
+    var notifications by remember { mutableStateOf<List<Notification>>(emptyList()) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    val token =getTokenFromPreferences(context)
+    println(token)
+    LaunchedEffect(Unit) {
+        coroutineScope.launch {
+            try {
+                val response = RetrofitClient.apiService.getNotifications("Bearer $token")
+                if (response.isSuccessful) {
+                    notifications = response.body() ?: emptyList()
+                } else {
+                    errorMessage = "Error fetching notifications: ${response.message()}"
+                }
+            } catch (e: Exception) {
+                errorMessage = "Error: ${e.message}"
+            }
+        }
+    }
+
+
     LaunchedEffect(scrollState.value) {
-        showScrollToTop = scrollState.value > 300 // You can adjust this threshold
+        showScrollToTop = scrollState.value > 300
     }
 
     Box(
@@ -44,7 +69,7 @@ fun NotificationPage() {
                 .background(Color.White, RoundedCornerShape(35.dp))
                 .padding(16.dp)
                 .height(700.dp)
-                .verticalScroll(scrollState) // Make column scrollable
+                .verticalScroll(scrollState)
         ) {
             Text(
                 text = "Notifications",
@@ -54,58 +79,27 @@ fun NotificationPage() {
                     .align(Alignment.CenterHorizontally)
                     .padding(vertical = 16.dp)
             )
-            NotificationCard(
-                message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu facilisis mollis.",
-                backgroundColor = Color(0xFFE8F8F8),
-                iconResId = R.drawable.sa7,
-                sidebarColor = Color(0xFF4CAF50)
-            )
-            NotificationCard(
-                message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu facilisis mollis.",
-                backgroundColor = Color(0xFFFEE8E8),
-                iconResId = R.drawable.ghalat,
-                sidebarColor = Color(0xFFF44336)
-            )
-            NotificationCard(
-                message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu facilisis mollis.",
-                backgroundColor = Color(0xFFE8F8F8),
-                iconResId = R.drawable.sa7,
-                sidebarColor = Color(0xFF4CAF50)
-            )
-            NotificationCard(
-                message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu facilisis mollis.",
-                backgroundColor = Color(0xFFFEE8E8),
-                iconResId = R.drawable.ghalat,
-                sidebarColor = Color(0xFFF44336)
-            )
-            NotificationCard(
-                message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu facilisis mollis.",
-                backgroundColor = Color(0xFFE8F8F8),
-                iconResId = R.drawable.sa7,
-                sidebarColor = Color(0xFF4CAF50)
-            )
-            NotificationCard(
-                message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu facilisis mollis.",
-                backgroundColor = Color(0xFFFEE8E8),
-                iconResId = R.drawable.ghalat,
-                sidebarColor = Color(0xFFF44336)
-            )
-            NotificationCard(
-                message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu facilisis mollis.",
-                backgroundColor = Color(0xFFE8F8F8),
-                iconResId = R.drawable.sa7,
-                sidebarColor = Color(0xFF4CAF50)
-            )
-            NotificationCard(
-                message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu facilisis mollis.",
-                backgroundColor = Color(0xFFFEE8E8),
-                iconResId = R.drawable.ghalat,
-                sidebarColor = Color(0xFFF44336)
-            )
-            // Add more NotificationCard instances as needed
+
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage ?: "",
+                    color = Color.Red,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            } else {
+                notifications.forEach { notification ->
+                    NotificationCard(
+                        message = notification.text,
+                        backgroundColor = Color(0xFFFEE8E8),
+                        sidebarColor = Color(0xFFF44336),
+                        iconResId = R.drawable.sa7
+
+
+                    )
+                }
+            }
         }
 
-        // Scroll to Top Button
         if (showScrollToTop) {
             IconButton(
                 onClick = {
@@ -114,14 +108,15 @@ fun NotificationPage() {
                     }
                 },
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)//BottomEnd
+                    .align(Alignment.BottomCenter)
                     .size(80.dp)
                     .padding(16.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.arrowupgray), // Replace with your icon resource ID
+                    painter = painterResource(id = R.drawable.arrowupgray),
                     contentDescription = "Scroll to Top",
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier
+                        .size(40.dp)
                         .alpha(0.6f)
                 )
             }

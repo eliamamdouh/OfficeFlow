@@ -1,48 +1,92 @@
 package com.example.project
 
+import android.content.Context
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+
+private fun fetchRequests(token: String, context: Context, onResult: (List<Request>) -> Unit) {
+    val apiService = RetrofitClient.apiService
+    Log.d("token mn fetch:","$token")
+
+    apiService.viewRequests("Bearer $token")
+        .enqueue(object : Callback<List<Request>> {
+        override fun onResponse(call: Call<List<Request>>, response: Response<List<Request>>) {
+            if (response.isSuccessful) {
+                val requests = response.body() ?: emptyList()
+                onResult(requests)
+                Log.d("req:","$requests")
+            } else {
+                val errorMessage = response.errorBody()?.string() ?: "Unknown error occurred"
+                Log.e("Requests", "Error fetching requests: $errorMessage")
+                // Show a user-friendly message
+                Toast.makeText(context, "Failed to fetch requests: $errorMessage", Toast.LENGTH_LONG).show()
+            }
+        }
+
+        override fun onFailure(call: Call<List<Request>>, t: Throwable) {
+            Log.e("Requests", "Failure fetching requests: ${t.localizedMessage}", t)
+            // Show a user-friendly message
+            Toast.makeText(context, "Failed to fetch requests: ${t.localizedMessage}", Toast.LENGTH_LONG).show()
+        }
+    })
+}
+
 
 @Composable
-fun MyRequests() {
-    var requests by remember {
-        mutableStateOf(listOf(
-            Request("8m ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci", RequestStatus.PENDING),
-            Request("10 days ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci", RequestStatus.APPROVED),
-            Request("15 days ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci", RequestStatus.DENIED),
-            Request("8m ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci", RequestStatus.PENDING),
-            Request("10 days ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci", RequestStatus.APPROVED),
-            Request("15 days ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci", RequestStatus.DENIED)
-        ))
+fun MyRequests(context: Context) {
+    // Scroll stuff
+    val scrollState = rememberScrollState()
+    var showScrollToTop by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(scrollState.value) {
+        showScrollToTop = scrollState.value > 300
     }
 
-    val scrollState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
-    var showScrollToTop by remember { mutableStateOf(false) }
+    var requests by remember { mutableStateOf(emptyList<Request>()) }
 
-    LaunchedEffect(scrollState.firstVisibleItemIndex) {
-        showScrollToTop = scrollState.firstVisibleItemIndex > 0
+    // Retrieve the token from SharedPreferences
+    val token = PreferencesManager.getTokenFromPreferences(context)
+
+    // Fetch requests when the composable is first launched
+    LaunchedEffect(Unit) {
+        token?.let {
+            fetchRequests(it, context) { fetchedRequests ->
+                requests = fetchedRequests
+            }
+        }
     }
 
     Box(
@@ -52,48 +96,44 @@ fun MyRequests() {
             .fillMaxWidth(),
         contentAlignment = Alignment.TopCenter
     ) {
-        LazyColumn(
-            state = scrollState,
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color.White, RoundedCornerShape(35.dp))
                 .padding(16.dp)
+                .verticalScroll(scrollState)
         ) {
-            item {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "My Requests",
-                        fontSize = 35.sp,
-                        color = Color.Black,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                }
-                Divider(
-                    color = Color.Gray.copy(alpha = 0.5f),
-                    thickness = 1.dp,
-                    modifier = Modifier
-                        .padding(bottom = 16.dp)
-                        .alpha(0.5f)
-                )
-            }
-
-            items(requests) { request ->
+            Text(
+                text = "My Requests",
+                fontSize = 35.sp,
+                color = Color.Black,
+                modifier = Modifier
+                    .padding(bottom = 8.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
+            Divider(
+                color = Color.Gray.copy(alpha = 0.5f),
+                thickness = 1.dp,
+                modifier = Modifier
+                    .padding(bottom = 16.dp)
+                    .alpha(0.5f)
+            )
+            requests.forEachIndexed { index, request ->
                 RequestItem(
                     request = request,
-                    onCancelRequest = {
-                        requests = requests.filter { it != request }
+                    onRequestCancelled = {
+                        requests = requests.filter { it.id != request.id }
                     }
                 )
-                Divider(
-                    modifier = Modifier
-                        .padding(vertical = 8.dp)
-                        .alpha(0.5f),
-                    thickness = 1.dp,
-                    color = Color.Gray.copy(alpha = 0.5f)
-                )
+                if (index < requests.size - 1) {
+                    Divider(
+                        modifier = Modifier
+                            .padding(vertical = 8.dp)
+                            .alpha(0.5f),
+                        thickness = 1.dp,
+                        color = Color.Gray.copy(alpha = 0.5f)
+                    )
+                }
             }
         }
 
@@ -101,19 +141,18 @@ fun MyRequests() {
             IconButton(
                 onClick = {
                     coroutineScope.launch {
-                        scrollState.scrollToItem(0)
+                        scrollState.scrollTo(0)
                     }
                 },
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
+                    .align(Alignment.BottomCenter) //could be bottom end
                     .size(80.dp)
                     .padding(16.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.arrowupgray), // Replace with your icon resource ID
+                    painter = painterResource(id = R.drawable.arrowupgray),
                     contentDescription = "Scroll to Top",
-                    modifier = Modifier
-                        .size(40.dp)
+                    modifier = Modifier.size(40.dp)
                         .alpha(0.6f)
                 )
             }
@@ -121,18 +160,22 @@ fun MyRequests() {
     }
 }
 
+
 @Composable
 fun RequestItem(
     request: Request,
-    onCancelRequest: () -> Unit
+    onRequestCancelled: () -> Unit
 ) {
+    val context = LocalContext.current
+    val token = PreferencesManager.getTokenFromPreferences(context) ?: return
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
         Text(
-            text = request.timeAgo,
+            text = request.timeAgo ?: "Unknown time",
             fontSize = 16.sp,
             color = Color.Gray,
             modifier = Modifier
@@ -140,7 +183,7 @@ fun RequestItem(
                 .alpha(0.5f)
         )
         Text(
-            text = request.description,
+            text = request.description ?: "No description available",
             fontSize = 16.sp,
             color = Color.Black,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -149,14 +192,21 @@ fun RequestItem(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            when (request.status) {
+            val status = request.status ?: RequestStatus.PENDING
+            when (status) {
                 RequestStatus.PENDING -> {
                     Image(
                         painter = painterResource(id = R.drawable.trash),
                         contentDescription = null,
                         modifier = Modifier
                             .size(24.dp)
-                            .clickable { onCancelRequest() },
+                            .clickable {
+                                cancelRequest(token, request.id, context) { success ->
+                                    if (success) {
+                                        onRequestCancelled()
+                                    }
+                                }
+                            },
                         contentScale = ContentScale.Fit
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -164,7 +214,13 @@ fun RequestItem(
                         text = "Cancel Request",
                         fontSize = 18.sp,
                         color = Color(0xFF86BC24),
-                        modifier = Modifier.clickable { onCancelRequest() }
+                        modifier = Modifier.clickable {
+                            cancelRequest(token, request.id, context) { success ->
+                                if (success) {
+                                    onRequestCancelled()
+                                }
+                            }
+                        }
                     )
                 }
                 RequestStatus.APPROVED -> {
@@ -202,14 +258,28 @@ fun RequestItem(
     }
 }
 
-data class Request(
-    val timeAgo: String,
-    val description: String,
-    val status: RequestStatus
-)
+private fun cancelRequest(token: String, requestId: String, context: Context, onResult: (Boolean) -> Unit) {
+    val apiService = RetrofitClient.apiService
 
-enum class RequestStatus {
-    PENDING,
-    APPROVED,
-    DENIED
+    apiService.cancelRequest("Bearer $token", RequestId(requestId))
+        .enqueue(object : Callback<CancelRequestResponse> {
+            override fun onResponse(call: Call<CancelRequestResponse>, response: Response<CancelRequestResponse>) {
+                if (response.isSuccessful) {
+                    onResult(true)
+                    Log.d("CancelRequest", "Request cancelled successfully")
+                } else {
+                    val errorMessage = response.errorBody()?.string() ?: "Unknown error occurred"
+                    Log.e("CancelRequest", "Error cancelling request: $errorMessage")
+                    Toast.makeText(context, "Failed to cancel request: $errorMessage", Toast.LENGTH_LONG).show()
+                    onResult(false)
+                }
+            }
+
+            override fun onFailure(call: Call<CancelRequestResponse>, t: Throwable) {
+                Log.e("CancelRequest", "Failure cancelling request: ${t.localizedMessage}", t)
+                Toast.makeText(context, "Failed to cancel request: ${t.localizedMessage}", Toast.LENGTH_LONG).show()
+                onResult(false)
+            }
+        })
 }
+

@@ -1,6 +1,7 @@
 package com.example.project
 
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Body
 import retrofit2.http.Header
@@ -8,7 +9,12 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-data class LoginRequest(val email: String?, val password: String?)
+data class LoginRequest(
+    val email: String?,
+    val password: String?,
+    val deviceToken: String?  // Add this field
+)
+
 data class LoginResponse(
     val message: String,
     val userId: String,
@@ -49,6 +55,24 @@ data class TeamMember(
     val role: String,
     val schedules: Map<String, List<ScheduleDay>>
 )
+data class Request(
+    val id: String,
+    val timeAgo: String?,
+    val description: String?,
+    val userName:String?,
+    val status: RequestStatus
+)
+
+enum class RequestStatus {
+    PENDING,
+    APPROVED,
+    DENIED
+}
+
+data class Notification(
+
+    val text: String,
+)
 
 
 interface ApiService {
@@ -71,4 +95,21 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Call<TeamMembersResponse>
 
+    @GET("requests/view-requests")
+    fun viewRequests(@Header("Authorization") token: String): Call<List<Request>>
+    @POST("users/cancel-request")
+    fun cancelRequest(
+        @Header("Authorization") token: String,
+        @Body requestId: RequestId
+    ): Call<CancelRequestResponse>
+    @GET("viewNotifications")
+    suspend fun getNotifications(
+        @Header("Authorization") token: String
+    ): Response<List<Notification>>
+
 }
+
+
+
+data class RequestId(val requestId: String)
+data class CancelRequestResponse(val message: String)

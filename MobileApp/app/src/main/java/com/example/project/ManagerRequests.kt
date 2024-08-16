@@ -1,12 +1,19 @@
+package com.example.project
+
+import android.content.Context
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -14,135 +21,155 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
-import com.example.project.R
-import kotlinx.coroutines.launch
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+// Fetch requests from the backend API
+private fun fetchRequests(token: String, context: Context, onResult: (List<Request>) -> Unit) {
+    val apiService = RetrofitClient.apiService
+    Log.d("Token in fetchRequests:", "$token")
+
+    apiService.viewRequests("Bearer $token")
+        .enqueue(object : Callback<List<Request>> {
+            override fun onResponse(call: Call<List<Request>>, response: Response<List<Request>>) {
+                if (response.isSuccessful) {
+                    val requests = response.body() ?: emptyList()
+                    onResult(requests)
+                    Log.d("Fetched Requests:", "$requests")
+                } else {
+                    val errorMessage = response.errorBody()?.string() ?: "Unknown error occurred"
+                    Log.e("Requests", "Error fetching requests: $errorMessage")
+                    Toast.makeText(context, "Failed to fetch requests: $errorMessage", Toast.LENGTH_LONG).show()
+                }
+            }
+
+            override fun onFailure(call: Call<List<Request>>, t: Throwable) {
+                Log.e("Requests", "Failure fetching requests: ${t.localizedMessage}", t)
+                Toast.makeText(context, "Failed to fetch requests: ${t.localizedMessage}", Toast.LENGTH_LONG).show()
+            }
+        })
+}
 
 @Composable
-fun ManagerRequests() {
-    var requests by remember {
-        mutableStateOf(listOf(
-            MgrRequest("Merna Ahmed", "8m ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci"),
-            MgrRequest("Ali Mohammed", "10 days ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci"),
-            MgrRequest("Mazen Abdullah", "15 days ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci"),
-            MgrRequest("Merna Ahmed", "8m ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci"),
-            MgrRequest("Ali Mohammed", "10 days ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci"),
-            MgrRequest("Mazen Abdullah", "15 days ago", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fringilla quam eu faci")
-        ))
-    }
+fun ManagerRequests(context: Context) {
+    var requests by remember { mutableStateOf(emptyList<Request>()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    val scrollState = rememberScrollState()
-    var showScrollToTop by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
+    // Retrieve the token from SharedPreferences
+    val token = PreferencesManager.getTokenFromPreferences(context)
 
-    // Update the visibility of the "Scroll to Top" button based on scroll position
-    LaunchedEffect(scrollState.value) {
-        showScrollToTop = scrollState.value > 300 // You can adjust this threshold
+    // Fetch requests when the composable is first launched
+    LaunchedEffect(Unit) {
+        token?.let {
+            fetchRequests(it, context) { fetchedRequests ->
+                requests = fetchedRequests
+                isLoading = false
+            }
+        } ?: run {
+            isLoading = false
+            errorMessage = "No token found"
+        }
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF8F8F8))
-            .fillMaxWidth()
+            .fillMaxWidth(),
+        contentAlignment = Alignment.TopCenter
     ) {
-        Column(//da el col bta3 el bta3a el 3ayza tetrefe3
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White, RoundedCornerShape(35.dp))
-                .padding(16.dp)
-                //.padding(horizontal = 0.dp , vertical = 200.dp)
-                .verticalScroll(scrollState) // Make column scrollable
-        ) {
+        if (isLoading) {
+            // Show a loading spinner or message
             Text(
-                text = "Requests",
-                fontSize = 25.sp,
-                color = Color.Black,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .padding(bottom = 8.dp)
-                    .align(Alignment.CenterHorizontally)
+                text = "Loading...",
+                fontSize = 18.sp,
+                color = Color.Gray,
+                modifier = Modifier.align(Alignment.Center)
             )
-            Divider(
-                color = Color.Gray.copy(alpha = 0.5f),
-                thickness = 1.dp,
-                modifier = Modifier
-                    .padding(bottom = 16.dp)
-                    .alpha(0.5f)
+        } else if (errorMessage != null) {
+            // Show the error message
+            Text(
+                text = errorMessage!!,
+                fontSize = 18.sp,
+                color = Color.Red,
+                modifier = Modifier.align(Alignment.Center)
             )
-            requests.forEachIndexed { index, request ->
-                RequestItem(
-                    request = request,
-                    onApprove = { updatedRequest ->
-                        requests = requests.map { if (it == updatedRequest) it.copy(status = "Request Accepted") else it }
-                    },
-                    onDeny = { updatedRequest ->
-                        requests = requests.map { if (it == updatedRequest) it.copy(status = "Request Rejected") else it }
-                    }
-                )
-                if (index < requests.size - 1) {
-                    Divider(
-                        modifier = Modifier
-                            .padding(vertical = 8.dp)
-                            .alpha(0.5f),
-                        thickness = 1.dp,
-                        color = Color.Gray.copy(alpha = 0.5f)
-                    )
-                }
-            }
-        }
-
-        // Scroll to Top Button
-        if (showScrollToTop) {
-            IconButton(
-                onClick = {
-                    coroutineScope.launch {
-                        scrollState.scrollTo(0)
-                    }
-                },
+        } else {
+            Column(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .size(80.dp)
+                    .fillMaxWidth()
+                    .background(Color.White, RoundedCornerShape(35.dp))
                     .padding(16.dp)
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.arrowupgray), // Replace with your icon resource ID
-                    contentDescription = "Scroll to Top",
-                    modifier = Modifier.size(40.dp)
-                        .alpha(0.6f)
+                Text(
+                    text = "Manager Requests",
+                    fontSize = 35.sp,
+                    color = Color.Black,
+                    modifier = Modifier
+                        .padding(bottom = 8.dp)
+                        .align(Alignment.CenterHorizontally)
                 )
+                Divider(
+                    color = Color.Gray.copy(alpha = 0.5f),
+                    thickness = 1.dp,
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .alpha(0.5f)
+                )
+                requests.forEachIndexed { index, request ->
+                    ManagerRequestItem(
+                        request = request,
+                        onApprove = { updatedRequest -> /* Handle approve action */ },
+                        onDeny = { updatedRequest -> /* Handle deny action */ }
+                    )
+                    if (index < requests.size - 1) {
+                        Divider(
+                            modifier = Modifier
+                                .padding(vertical = 8.dp)
+                                .alpha(0.5f),
+                            thickness = 1.dp,
+                            color = Color.Gray.copy(alpha = 0.5f)
+                        )
+                    }
+                }
             }
         }
     }
 }
+enum class Action {
+    APPROVE,
+    DENY
+}
 
 @Composable
-fun RequestItem(
-    request: MgrRequest,
-    onApprove: (MgrRequest) -> Unit,
-    onDeny: (MgrRequest) -> Unit
+fun ManagerRequestItem(
+    request: Request,
+    onApprove: (Request) -> Unit,
+    onDeny: (Request) -> Unit
 ) {
     var showDialog by remember { mutableStateOf(false) }
     var currentAction by remember { mutableStateOf<Action?>(null) }
-    var status by remember { mutableStateOf(request.status) }
+    var status by remember { mutableStateOf(request.status ?: RequestStatus.PENDING) }
 
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Are you sure you want to ${currentAction?.text} this request?") },
+            title = { Text("Are you sure you want to ${currentAction?.name?.lowercase()} this request?") },
             confirmButton = {
                 Button(
                     onClick = {
                         when (currentAction) {
                             Action.APPROVE -> {
-                                onApprove(request.copy(status = "Request Accepted"))
-                                status = "Request Accepted"
+                                onApprove(request.copy(status = RequestStatus.APPROVED))
+                                status = RequestStatus.APPROVED
                             }
                             Action.DENY -> {
-                                onDeny(request.copy(status = "Request Rejected"))
-                                status = "Request Rejected"
+                                onDeny(request.copy(status = RequestStatus.DENIED))
+                                status = RequestStatus.DENIED
                             }
                             else -> {}
                         }
@@ -168,41 +195,31 @@ fun RequestItem(
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = request.name,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                modifier = Modifier
-                    .padding(bottom = 4.dp)
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Text(
-                text = request.timeAgo,
-                fontSize = 14.sp,
-                color = Color.Gray,
-                modifier = Modifier
-                    .padding(bottom = 4.dp)
-                    .alpha(0.5f)
-            )
-        }
-
         Text(
-            text = request.description,
-            fontSize = 14.sp,
+            text = request.userName ?: "No UserName available",
+            fontSize = 20.sp,
+            color = Color.Black,
+            modifier = Modifier.padding(bottom = 8.dp),
+        )
+        Text(
+            text = request.timeAgo ?: "Unknown time",
+            fontSize = 16.sp,
+            color = Color.Gray,
+            modifier = Modifier
+                .padding(bottom = 4.dp)
+                .alpha(0.5f)
+        )
+        Text(
+            text = request.description ?: "No description available",
+            fontSize = 16.sp,
             color = Color.Black,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-
-        if (status.isEmpty()) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (status == RequestStatus.PENDING) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
@@ -238,52 +255,25 @@ fun RequestItem(
                         )
                     }
                 }
-            }
-        } else {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            } else {
                 Box(
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .background(
-                            color = if (status == "Request Accepted") Color(0xFF00cc99) else Color(0xFFeb5757),
+                            color = if (status == RequestStatus.APPROVED) Color(0xFF00cc99) else Color(0xFFeb5757),
                             shape = RoundedCornerShape(4.dp)
                         )
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = status,
+                        text = if (status == RequestStatus.APPROVED) "Approved" else "Denied",
                         fontSize = 16.sp,
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
-                Spacer(modifier = Modifier.weight(1f))
-                Button(
-                    onClick = {
-                        status = ""
-                        // You may need to also update the request in the parent composable if needed
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
-                    modifier = Modifier.align(Alignment.CenterVertically)
-                ) {
-                    Text("Cancel")
-                }
             }
         }
     }
-}
-
-data class MgrRequest(
-    val name: String,
-    val timeAgo: String,
-    val description: String,
-    val status: String = ""
-)
-
-enum class Action(val text: String) {
-    APPROVE("accept"), DENY("reject")
 }

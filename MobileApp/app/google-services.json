@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "466131895747",
+    "project_id": "wfho-app-3af10",
+    "storage_bucket": "wfho-app-3af10.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:466131895747:android:d48dfc29caae1b40a0e976",
+        "android_client_info": {
+          "package_name": "com.example.project"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBejnQ5kAV3ywE_6IAgpxeE97R585Efgc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

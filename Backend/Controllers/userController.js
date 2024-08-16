@@ -9,55 +9,46 @@ const createUser = async (req, res) => {
   try {
     const { Fullname, username, password, email, role } = req.body;
 
-    if (!username || !password || !email) {
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ message: "Username, password, and email are required" });
+        if (!username || !password || !email) {
+            return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Username, password, and email are required' });
+        }
+
+        const usersCollectionRef = db.collection('Users');
+        const existingUserQuery = await usersCollectionRef.where('email', '==', email).get();
+
+        if (!existingUserQuery.empty) {
+            return res.status(StatusCodes.BAD_REQUEST).json({ message: 'User already exists' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const userDocRef = usersCollectionRef.doc(); // Auto-generate a document ID
+
+        const createdAt = new Date().toISOString();
+        const updatedAt = createdAt;
+        const projectId = 0;
+        const schedule = await generateScheduleForProject(projectId);
+
+        const userData = {
+            Fullname,
+            username,
+            email,
+            role,
+            password: hashedPassword,
+            createdAt,
+            updatedAt,
+            schedule,
+            projectId
+        };
+
+
+        await userDocRef.set(userData);
+
+        res.status(StatusCodes.CREATED).json({ message: 'User created successfully', userId: userDocRef.id });
+    } catch (error) {
+        console.error("Error creating user:", error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Server error', error: error.message });
     }
-
-    const usersCollectionRef = db.collection("Users");
-    const existingUserQuery = await usersCollectionRef
-      .where("email", "==", email)
-      .get();
-
-    if (!existingUserQuery.empty) {
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ message: "User already exists" });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const userDocRef = usersCollectionRef.doc(); // Auto-generate a document ID
-
-    const createdAt = new Date().toISOString();
-    const updatedAt = createdAt;
-    const projectId = 10;
-    const schedule = await generateScheduleForProject(projectId);
-
-    const userData = {
-      Fullname,
-      username,
-      email,
-      role,
-      password: hashedPassword,
-      createdAt,
-      updatedAt,
-      schedule,
-      projectId,
-    };
-
-    await userDocRef.set(userData);
-
-    res
-      .status(StatusCodes.CREATED)
-      .json({ message: "User created successfully", userId: userDocRef.id });
-  } catch (error) {
-    console.error("Error creating user:", error);
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ message: "Server error", error: error.message });
-  }
 };
 
 const generateScheduleForProject = async (projectId) => {
@@ -174,87 +165,77 @@ const incrementOfficeCapacity = async (date) => {
   });
 };
 const generateUsers = async (numUsers) => {
-  for (let i = 0; i < numUsers; i++) {
-    const req = {
-      body: {
-        Fullname: `Manager10`,
-        username: `Manager10`,
-        password: `password@123`,
-        email: `Manager10@Deloitte.com`,
-        role: "Manager",
-      },
-    };
-    const res = {
-      status: (statusCode) => ({
-        json: (data) => console.log(`Status: ${statusCode}`, data),
-      }),
-    };
-    await createUser(req, res);
-  }
+    for (let i = 0; i < numUsers; i++) {
+        const req = {
+            body: {
+                Fullname: `SuperManager`,
+                username: `SuperManager`,
+                password: `password@123`,
+                email: `SuperManager@Deloitte.com`,
+                role: 'Manager',
+            }
+        };
+        const res = {
+            status: (statusCode) => ({
+                json: (data) => console.log(`Status: ${statusCode}`, data)
+            })
+        };
+        await createUser(req, res);
+    }
 };
 
 // generateUsers(1); // Adjust the number as needed
 
 const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+    try {
+        const { email, password, deviceToken } = req.body; // Include deviceToken in the request
 
-    if (!email || !password) {
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ errorMessage: "Email and password are required" });
+        if (!email || !password || !deviceToken) { // Check if deviceToken is provided
+            return res.status(StatusCodes.BAD_REQUEST).json({ errorMessage: 'Email, password, and device token are required' });
+        }
+
+        let usersCollectionRef = db.collection('Users');
+        let userQuerySnapshot = await usersCollectionRef.where('email', '==', email).get();
+
+        if (userQuerySnapshot.empty) {
+            return res.status(StatusCodes.UNAUTHORIZED).json({ errorMessage: 'Login failed: User not found' });
+        }
+
+        const userDoc = userQuerySnapshot.docs[0];
+        const userData = userDoc.data();
+        
+        const isPasswordValid = await bcrypt.compare(password, userData.password);
+
+        if (!isPasswordValid) {
+            return res.status(StatusCodes.UNAUTHORIZED).json({ errorMessage: 'Login failed: Password does not match' });
+        }
+
+        const userId = userDoc.id;
+        const role = userData.role;
+        console.log("Engy betdawar 3ala dah: " + role)
+
+        // Update the user's document with the device token
+        await usersCollectionRef.doc(userId).update({
+            deviceToken: deviceToken
+        });
+
+        const token = jwt.sign(
+            { userId: userId, username: userData.username, email: userData.email, role: role },
+            process.env.JWT_SECRET_KEY,
+            { expiresIn: '1h' }
+        );
+        console.log(token)
+        res.status(StatusCodes.OK).json({
+            message: 'Login successful',
+            userId: userId,
+            role: role, 
+            token: token,
+        });
+    } catch (error) {
+        console.error("Error during login:", error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ errorMessage: 'Server error', details: error.message });
     }
-
-    let usersCollectionRef = db.collection("Users");
-    let userQuerySnapshot = await usersCollectionRef
-      .where("email", "==", email)
-      .get();
-
-    if (userQuerySnapshot.empty) {
-      return res
-        .status(StatusCodes.UNAUTHORIZED)
-        .json({ errorMessage: "Login failed: User not found" });
-    }
-
-    const userDoc = userQuerySnapshot.docs[0];
-    const userData = userDoc.data();
-
-    const isPasswordValid = await bcrypt.compare(password, userData.password);
-
-    if (!isPasswordValid) {
-      return res
-        .status(StatusCodes.UNAUTHORIZED)
-        .json({ errorMessage: "Login failed: Password does not match" });
-    }
-
-    const userId = userDoc.id;
-    const role = userData.role;
-
-    const token = jwt.sign(
-      {
-        userId: userId,
-        username: userData.username,
-        email: userData.email,
-        role: role,
-      },
-      process.env.JWT_SECRET_KEY,
-      { expiresIn: "1h" }
-    );
-
-    res.status(StatusCodes.OK).json({
-      message: "Login successful",
-      userId: userId,
-      role: role,
-      token: token,
-    });
-  } catch (error) {
-    console.error("Error during login:", error);
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ errorMessage: "Server error", details: error.message });
-  }
 };
-
 const getUserInfo = async (req, res) => {
   try {
     const userId = req.params.userId;

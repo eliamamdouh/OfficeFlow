@@ -18,19 +18,50 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 
+data class NavBarItem(
+    val route: String,
+    val iconId: Int,
+    val selectedIconId: Int
+)
+
 @Composable
 fun BottomNavBar(navController: NavHostController) {
+    val navItems = listOf(
+        NavBarItem("page1", R.drawable.graynotes, R.drawable.greennotes),
+        NavBarItem("page2", R.drawable.graycomment, R.drawable.greencomment),
+        NavBarItem("page3", R.drawable.graymessagealertsquare, R.drawable.greenmessagealertsquare),
+        NavBarItem("page4", R.drawable.graybell, R.drawable.greenbell)
+    )
+
+    CommonNavBar(navController = navController, navItems = navItems)
+}
+
+@Composable
+fun ManagerNavBar(navController: NavHostController) {
+    val navItems = listOf(
+        NavBarItem("page1", R.drawable.graynotes, R.drawable.greennotes),
+        NavBarItem("page2", R.drawable.graycomment, R.drawable.greencomment),
+        NavBarItem("page6", R.drawable.mgrgray, R.drawable.mgrgreen),
+        NavBarItem("page5", R.drawable.graymessagealertsquare, R.drawable.greenmessagealertsquare),
+        NavBarItem("page4", R.drawable.graybell, R.drawable.greenbell)
+    )
+
+    CommonNavBar(navController = navController, navItems = navItems)
+}
+
+@Composable
+fun CommonNavBar(navController: NavHostController, navItems: List<NavBarItem>) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
-    //ask if it should be passed as a string.
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFF8F8F8)) // Set the background color to blue
+            .background(Color(0xFFF8F8F8))
     ) {
         Surface(
             shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
-            color = Color.White, // Set the navigation bar color to black
+            color = Color.White,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(90.dp)
@@ -41,31 +72,15 @@ fun BottomNavBar(navController: NavHostController) {
                     .padding(vertical = 16.dp, horizontal = 16.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
-            ) {// for loop instead calling function 4x
-                NavBarIcon(
-                    iconId = R.drawable.graynotes,
-                    greenIconId = R.drawable.greennotes,
-                    isSelected = currentRoute == "page1",
-                    onClick = { navController.navigate("page1") }
-                )
-                NavBarIcon(
-                    iconId = R.drawable.graycomment,
-                    greenIconId = R.drawable.greencomment,
-                    isSelected = currentRoute == "page2",
-                    onClick = { navController.navigate("page2") }
-                )
-                NavBarIcon(
-                    iconId = R.drawable.graymessagealertsquare,
-                    greenIconId = R.drawable.greenmessagealertsquare,
-                    isSelected = currentRoute == "page3",
-                    onClick = { navController.navigate("page3") }
-                )
-                NavBarIcon(
-                    iconId = R.drawable.graybell,
-                    greenIconId = R.drawable.greenbell,
-                    isSelected = currentRoute == "page4",
-                    onClick = { navController.navigate("page4") }
-                )
+            ) {
+                navItems.forEach { item ->
+                    NavBarIcon(
+                        iconId = item.iconId,
+                        selectedIconId = item.selectedIconId,
+                        isSelected = currentRoute == item.route,
+                        onClick = { navController.navigate(item.route) }
+                    )
+                }
             }
         }
     }
@@ -74,37 +89,32 @@ fun BottomNavBar(navController: NavHostController) {
 @Composable
 fun NavBarIcon(
     iconId: Int,
-    greenIconId: Int,
+    selectedIconId: Int,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val iconSize = if (isSelected) 32.dp else 28.dp
+    val spacerHeight = if (isSelected) 2.dp else 10.dp
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = Modifier.clickable(onClick = onClick)
     ) {
+        Image(
+            painter = painterResource(id = if (isSelected) selectedIconId else iconId),
+            contentDescription = null,
+            modifier = Modifier.size(iconSize),
+            contentScale = ContentScale.Fit
+        )
+        Spacer(modifier = Modifier.height(spacerHeight))
         if (isSelected) {
-            Image(
-                painter = painterResource(id = greenIconId),
-                contentDescription = null,
-                modifier = Modifier.size(32.dp),
-                contentScale = ContentScale.Fit
-            )
-            Spacer(modifier = Modifier.height(2.dp))
             Box(
                 modifier = Modifier
                     .size(5.dp)
                     .clip(RoundedCornerShape(50))
                     .background(Color(0xFF86BC24))
             )
-        } else {
-            Image(
-                painter = painterResource(id = iconId),
-                contentDescription = null,
-                modifier = Modifier.size(28.dp),
-                contentScale = ContentScale.Fit
-            )
-            Spacer(modifier = Modifier.height(10.dp))
         }
     }
 }
