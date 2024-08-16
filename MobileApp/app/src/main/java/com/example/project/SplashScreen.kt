@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
 import coil.decode.GifDecoder
 import coil.request.ImageRequest
@@ -39,7 +40,7 @@ fun SplashScreen(navController: NavHostController) {
     var startAnimation by remember { mutableStateOf(false) }
     val gifOpacity by animateFloatAsState(
         targetValue = if (startAnimation) 0f else 1f,
-        animationSpec = tween(durationMillis = 1000)
+        animationSpec = tween(durationMillis = 1000), label = ""
     )
 
     LaunchedEffect(Unit) {
@@ -70,7 +71,7 @@ fun SplashScreen(navController: NavHostController) {
 @Composable
 fun GifImage(drawableResId: Int, opacity: Float) {
     val context = LocalContext.current
-    val painter = rememberImagePainter(
+    val painter = rememberAsyncImagePainter(
         ImageRequest.Builder(context)
             .data(drawableResId)
             .decoderFactory(GifDecoder.Factory())
