@@ -72,7 +72,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainScreen(apiService)  // Pass apiService to MainScreen
+                    AppNavigation(apiService = apiService)
                 }
             }
         }
