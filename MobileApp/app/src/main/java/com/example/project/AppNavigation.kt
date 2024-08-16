@@ -54,7 +54,7 @@ fun AppNavigation(apiService: ApiService, modifier: Modifier = Modifier) {
             composable("page2") { ChatScreen() }
             composable("page3") { MyRequests(navController.context) }
             composable("page4") { NotificationPage() }
-            composable("page5") { ManagerRequests() }
+            composable("page5") { ManagerRequests(context) }
             composable("page6") { ScheduleScreen() }
         }
     }
