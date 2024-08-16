@@ -16,6 +16,7 @@ const {changeSchedule} = require('./Controllers/submitRequestContoller.js')
 
 
 const {sendNotification} = require('./firebase-init');
+const { viewNotifications } = require('./Controllers/viewNotifications.js');
 
 
 app.use(express.json());
@@ -27,7 +28,7 @@ app.get('/', (req, res) => {
 
 app.get('/getTeamMembers',getTeamMembers)
 app.get('/changeSchedule',changeSchedule)
-
+app.get('/api/viewNotifications',viewNotifications)
 app.use('/api/users', userRoutes);
 app.use('/api/requests', requestRoutes);
 //app.get('/api/view-requests', viewRequests);

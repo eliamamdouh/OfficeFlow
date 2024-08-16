@@ -218,7 +218,7 @@ const login = async (req, res) => {
             process.env.JWT_SECRET_KEY,
             { expiresIn: '1h' }
         );
-
+        console.log(token)
         res.status(StatusCodes.OK).json({
             message: 'Login successful',
             userId: userId,

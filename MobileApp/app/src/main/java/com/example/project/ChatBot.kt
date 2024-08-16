@@ -1,5 +1,8 @@
 package com.example.project
 
+import android.content.Context
+import android.content.SharedPreferences
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -12,7 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -25,7 +27,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.graphics.graphicsLayer
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 val lighterGray = Color(0xFFEBEBEB) // Lighter grey
 val slightlyDarkerGreen = Color(0xFF86BC24) // Darker green
@@ -40,53 +44,40 @@ data class ChatMessage(
 
 @Composable
 fun ChatScreen() {
-    var chatMessages by remember { mutableStateOf(
-        listOf(
-            ChatMessage(isBot = true, message = "Hello, how can I assist you today?")
+    var chatMessages by remember {
+        mutableStateOf(
+            listOf(ChatMessage(isBot = true, message = "Hello, how can I assist you today?"))
         )
-    )}
+    }
     var userInput by remember { mutableStateOf("") }
-    var conversationStep by remember { mutableIntStateOf(0) } // To track conversation flow
 
     // Function to handle user input and generate bot responses
-    fun handleUserInput(input: String) {
-        val lowerCaseInput = input.lowercase()
-        val response = when {
-            lowerCaseInput.contains("thank you") -> {
-                conversationStep = 0
-                "I am happy to answer you anytime, Bye!"
-            }
-            conversationStep == 0 -> {
-                if (lowerCaseInput.contains("i want to ask a quick question")) {
-                    conversationStep = 1
-                    "Yeah, go right ahead."
-                } else {
-                    "Sorry, I didn't understand. Please say 'I want to ask a quick question' to proceed."
-                }
-            }
-            conversationStep == 1 -> {
-                when {
-                    lowerCaseInput.contains("changing work day") -> {
-                        "You can go right ahead to the home page and choose the day you want to change and the day you want it to be changed to and submit the request for the change."
-                    }
-                    lowerCaseInput.contains("request status") -> {
-                        "You can open the activity screen and you will find your request and based on three status options whether it's pending, accepted, or denied."
-                    }
-                    lowerCaseInput.contains("workload reminders") -> {
-                        "There will be reminders every day that will alert you for any workload you have."
-                    }
-                    else -> "Sorry, I didn't understand that. Please choose one of the questions."
-                }
-            }
-            else -> {
-                conversationStep = 0
-                "Sorry, I didn't understand that."
-            }
-        }
+    fun handleUserInput(
+        input: String,
+        chatMessages: List<ChatMessage>,
+        updateMessages: (List<ChatMessage>) -> Unit
+    ) {
+        // Add user message to the list
+        updateMessages(chatMessages + ChatMessage(isBot = false, message = input))
 
-        chatMessages = chatMessages + ChatMessage(isBot = false, message = input)
-        chatMessages = chatMessages + ChatMessage(isBot = true, message = response)
-        userInput = ""
+        // Prepare the request
+        val chatRequest = ChatRequest(prompt = input)
+
+        // Send the request to the backend
+        RetrofitClient2.chatApiService.sendChatMessage(chatRequest).enqueue(object : Callback<ChatResponse> {
+            override fun onResponse(call: Call<ChatResponse>, response: Response<ChatResponse>) {
+                val botResponse = if (response.isSuccessful) {
+                    response.body()?.response ?: "Sorry, I didn't understand that."
+                } else {
+                    "Error: ${response.errorBody()?.string()}"
+                }
+                updateMessages(chatMessages + ChatMessage(isBot = true, message = botResponse))
+            }
+
+            override fun onFailure(call: Call<ChatResponse>, t: Throwable) {
+                updateMessages(chatMessages + ChatMessage(isBot = true, message = "Error: ${t.message}"))
+            }
+        })
     }
 
     Column(
@@ -188,7 +179,10 @@ fun ChatScreen() {
                         IconButton(
                             onClick = {
                                 if (userInput.isNotEmpty()) {
-                                    handleUserInput(userInput)
+                                    handleUserInput(userInput, chatMessages) { updatedMessages ->
+                                        chatMessages = updatedMessages
+                                    }
+                                    userInput = ""
                                 }
                             },
                             modifier = Modifier
