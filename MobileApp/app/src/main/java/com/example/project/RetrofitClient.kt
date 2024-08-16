@@ -15,3 +15,14 @@ object RetrofitClient {
             .create(ApiService::class.java)
     }
 }
+object RetrofitClient2 {
+    private const val BASE_URL = "http://10.0.2.2:5000/" // Replace with your second backend URL
+
+    val chatApiService: ChatApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(ChatApiService::class.java) // Corrected this line
+    }
+}
