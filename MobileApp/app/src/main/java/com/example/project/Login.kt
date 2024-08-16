@@ -32,7 +32,7 @@ import retrofit2.Response
 
 
 @Composable
-fun LoginScreen(navController: NavHostController) {
+fun LoginScreen(navController: NavHostController, onLoginSuccess: (String) -> Unit) {
     var passwordVisible by remember { mutableStateOf(false) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -78,14 +78,17 @@ fun LoginScreen(navController: NavHostController) {
                     override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
                         if (response.isSuccessful) {
                             val loginResponse = response.body()
+
+                            if (loginResponse != null) {
+                                Log.d("LOGIN" , loginResponse.role)
+                            }
+
                             if (loginResponse != null && loginResponse.userId.isNotEmpty()) {
                                 PreferencesManager.saveUserIdToPreferences(context, loginResponse.userId)
                                 PreferencesManager.saveTokenToPreferences(context, loginResponse.token)
-                                PreferencesManager.saveRoleToPreferences(context, loginResponse.role)
-                                Log.d("LOGIN", loginResponse.role)
-                                navController.navigate("page1") {
-                                    popUpTo("page0") { inclusive = true }
-                                }
+
+                                // Notify AppNavigation of the role
+                                onLoginSuccess(loginResponse.role)
                             } else {
                                 loginError = "Unexpected response from the server"
                             }
