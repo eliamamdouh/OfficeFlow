@@ -89,10 +89,10 @@ fun HomeScreen(context: Context, navController: NavHostController) {
                         } else {
                             todayStatus = "Failed to load status"
                         }
-                    } else {
-                        if (response.code() == 401 && response.message() == "Token expired") {
-                            handleTokenExpiration(navController)
-                        }
+                    } else { if (response.code() == 401 ) {
+                        Log.d("respCode:","$response.code()")
+                        handleTokenExpiration(navController)
+                    }
                         else{
                         todayStatus = "Failed to load status"}
                     }
@@ -321,15 +321,19 @@ fun HomeScreen(context: Context, navController: NavHostController) {
                                                     Log.e("SubmitRequest", "Submit response was null")
                                                 }
                                             } else {
-                                                // Handle failed response
+                                                 if (response.code() == 401 ) {
+                                                    Log.d("respCode:","$response.code()")
+                                                    handleTokenExpiration(navController)
+                                                }
+                                                    else{
                                                 val errorMessage = response.errorBody()?.string() ?: "Failed to submit request"
                                                 Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
                                                 Log.e("SubmitRequest", "Submit failed: ${response.message()}")
-                                            }
+                                            }}
                                         }
 
                                         override fun onFailure(call: Call<SubmitRequestResponse>, t: Throwable) {
-                                            // Handle API call failure
+                                            // z API call failure
                                             Toast.makeText(context, "Failed to submit request: ${t.message}", Toast.LENGTH_LONG).show()
                                             Log.e("SubmitRequest", "API call failed: ${t.message}")
                                         }

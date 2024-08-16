@@ -277,13 +277,12 @@ fun LoginScreen(navController: NavHostController) {
                                         } else {
                                             loginError = "Unexpected response from the server"
                                         }
-                                    } else {
-                                        if (response.code() == 401 && response.message() == "Token expired") {
-                                            handleTokenExpiration(navController)
-                                        }
-                                        if (response.code() == 401) {
-                                            loginError = "Invalid email or password"
-                                        } else {
+                                    }  else { if (response.code() == 401 ) {
+                                        Log.d("respCode:","$response.code()")
+                                        handleTokenExpiration(navController)
+                                        loginError = "Invalid email or password"
+                                    }
+                                   else {
                                             loginError = "Login failed: ${response.message()}"
                                         }
                                     }

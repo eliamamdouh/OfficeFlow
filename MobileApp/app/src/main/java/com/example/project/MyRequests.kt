@@ -48,7 +48,8 @@ private fun fetchRequests(token: String, context: Context, navController: NavHos
                 val requests = response.body() ?: emptyList()
                 onResult(requests)
                 Log.d("req:","$requests")
-            } else { if (response.code() == 401 && response.message() == "Token expired") {
+            } else { if (response.code() == 401 ) {
+                Log.d("respCode:","$response.code()")
                 handleTokenExpiration(navController)
             }
                 val errorMessage = response.errorBody()?.string() ?: "Unknown error occurred"
@@ -270,7 +271,8 @@ private fun cancelRequest(token: String, requestId: String, context: Context, na
                 if (response.isSuccessful) {
                     onResult(true)
                     Log.d("CancelRequest", "Request cancelled successfully")
-                } else { if (response.code() == 401 && response.message() == "Token expired") {
+                }  else { if (response.code() == 401 ) {
+                    Log.d("respCode:","$response.code()")
                     handleTokenExpiration(navController)
                 } else{
                     val errorMessage = response.errorBody()?.string() ?: "Unknown error occurred"
