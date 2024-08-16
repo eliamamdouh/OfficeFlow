@@ -44,7 +44,6 @@ fun ScheduleScreen(context: Context) {
     var schedule by remember { mutableStateOf<Map<String, List<ScheduleDay>>?>(null) }
 
     // User Data
-//    val managerId: String? = remember(context) { PreferencesManager.getUserIdFromPreferences(context) }
     val token = PreferencesManager.getTokenFromPreferences(context)
     val managerId = token?.let { parseUserIdFromToken(it) }
 
@@ -140,7 +139,7 @@ fun ScheduleScreen(context: Context) {
 
                             if (selectedTeamMemberId != null && schedule != null) {
                                 Text(
-                                    text = "Click on day to change between office and home",
+                                    text = "Working from home/office schedule",
                                     fontFamily = FontFamily.SansSerif,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
