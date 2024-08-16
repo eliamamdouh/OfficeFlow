@@ -1,6 +1,7 @@
 package com.example.project
 
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Body
 import retrofit2.http.Header
@@ -58,7 +59,10 @@ enum class RequestStatus {
     DENIED
 }
 
+data class Notification(
 
+    val text: String,
+)
 
 
 interface ApiService {
@@ -86,6 +90,11 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body requestId: RequestId
     ): Call<CancelRequestResponse>
+    @GET("viewNotifications")
+    suspend fun getNotifications(
+        @Header("Authorization") token: String
+    ): Response<List<Notification>>
+
 }
 
 data class RequestId(val requestId: String)

@@ -8,6 +8,7 @@ const { cancelRequest } = require ('../Controllers/cancelRequest');
 const { acceptRequest } = require('../Controllers/acceptRequest');
 const { rejectRequest } = require('../Controllers/rejectRequest');
 
+
 router.post('/create', createUser);
 router.post('/login', login);
 router.get('/schedule', viewSchedule);
@@ -17,6 +18,7 @@ router.get('/:userId', getUserInfo);
 router.post('/cancel-request', cancelRequest);
 router.post('/accept-request', acceptRequest);
 router.post('/reject-request', rejectRequest);
+
 
 
 module.exports = router;
