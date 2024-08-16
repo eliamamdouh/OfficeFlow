@@ -65,12 +65,12 @@ const submitRequest = async (req, res) => {
        // const managerName = userData.managerName || 'Unknown Manager';
                 // Ensure the managerName is present, otherwise handle the missing value
 
-                const projID = userData.projectId
+                const projectId = userData.projectId
                 // console.log("engyy:" + projID)
        
                 //  const managerName = await db.collection('Users').where('projectId', '==', projID).where('role', '==', 'manager').get();
                 //  console.log("engy manager name: "+managerName)
-                const ManagerSnapshot = await db.collection('Users').where('projectId', '==', projID).where('role', '==', 'Manager').get();
+                const ManagerSnapshot = await db.collection('Users').where('projectId', '==', projectId).where('role', '==', 'Manager').get();
 
                 let managerName = null;
 
@@ -99,6 +99,7 @@ const submitRequest = async (req, res) => {
             managerName,
             dayToChange,
             newDate,
+            projectId,
             reason, // Save the reason in the database
             status: 'Pending',
             requestDate: new Date().toISOString(),

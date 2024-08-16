@@ -6,6 +6,7 @@ const app = express();
 const DEFAULT_PORT = 3000;
 const DEFAULT_HOST = '0.0.0.0';
 const userRoutes = require('./Routes/userRoutes.js');
+const requestRoutes = require('./Routes/requestRoutes.js');
 
 //const {viewRequests}= require('./Controllers/viewRequestsController.js');
 
@@ -28,6 +29,7 @@ app.get('/getTeamMembers',getTeamMembers)
 app.get('/changeSchedule',changeSchedule)
 
 app.use('/api/users', userRoutes);
+app.use('/api/requests', requestRoutes);
 //app.get('/api/view-requests', viewRequests);
 
 

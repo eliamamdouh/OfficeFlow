@@ -48,10 +48,12 @@ data class ScheduleDay(
 
 data class Request(
     val id: String,
-    val timeAgo: String,
-    val description: String,
+    val timeAgo: String?,
+    val description: String?,
+    val userName:String?,
     val status: RequestStatus
 )
+
 enum class RequestStatus {
     PENDING,
     APPROVED,
@@ -64,7 +66,6 @@ enum class RequestStatus {
 interface ApiService {
     @POST("users/login")
     fun loginUser(@Body request: LoginRequest): Call<LoginResponse>
-
     @GET("users/{userId}")
     fun getUserInfo(@Path("userId") userId: String): Call<UserInfoResponse>
 
@@ -78,15 +79,16 @@ interface ApiService {
 //    fun viewSchedule(@Query("username") username: String): Call<ScheduleResponse>
     fun viewSchedule(@Query("userId") userId: String): Call<ScheduleResponse>
 
-    @GET("users/view-requests")
+    @GET("requests/view-requests")
     fun viewRequests(@Header("Authorization") token: String): Call<List<Request>>
-
     @POST("users/cancel-request")
     fun cancelRequest(
         @Header("Authorization") token: String,
         @Body requestId: RequestId
     ): Call<CancelRequestResponse>
 }
+
+
 
 data class RequestId(val requestId: String)
 data class CancelRequestResponse(val message: String)

@@ -1,6 +1,5 @@
 package com.example.project
 
-import ManagerRequests
 import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.layout.padding
@@ -57,7 +56,7 @@ fun MainScreen(apiService: ApiService) {  // Accept apiService as a parameter
             composable("page2") { ChatScreen() }
             composable("page3") { MyRequests(context) }
             composable("page4") { NotificationPage() }
-            composable("page5") { ManagerRequests() }
+            composable("page5") { ManagerRequests(context) }
             composable("page6") { ScheduleScreen() }
         }
     }
