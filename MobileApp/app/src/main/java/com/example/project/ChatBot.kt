@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.navigation.NavController
 import com.example.project.PreferencesManager.getTokenFromPreferences
 import retrofit2.Call
 import retrofit2.Callback
@@ -45,7 +46,7 @@ data class ChatMessage(
 )
 
 @Composable
-fun ChatScreen() {
+fun ChatScreen( navController: NavController) {
     var chatMessages by remember {
         mutableStateOf(
             listOf(ChatMessage(isBot = true, message = "Hello, how can I assist you today?"))
@@ -77,9 +78,14 @@ fun ChatScreen() {
                 val botResponse = if (response.isSuccessful) {
                     response.body()?.response ?: "Sorry, I didn't understand that."
                 } else {
+                    if (response.code() == 401 ) {
+                        Log.d("respCode:","$response.code()")
+                        handleTokenExpiration(navController)
+                    }
+                    else{
                     "Error: ${response.errorBody()?.string()}"
-                }
-                updateMessages(updatedMessages + ChatMessage(isBot = true, message = botResponse))
+                }}
+                updateMessages(updatedMessages + ChatMessage(isBot = true, message = botResponse.toString()))
             }
 
             override fun onFailure(call: Call<ChatResponse>, t: Throwable) {
@@ -243,8 +249,8 @@ fun ChatBubble(isBot: Boolean, message: String) {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun ChatScreenPreview() {
-    ChatScreen()
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun ChatScreenPreview() {
+//    ChatScreen()
+//}

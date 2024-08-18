@@ -1,5 +1,6 @@
 package com.example.project
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -19,6 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.project.PreferencesManager.getTokenFromPreferences
 import com.example.project.RetrofitClient.apiService
 import kotlinx.coroutines.launch
@@ -26,7 +28,7 @@ import retrofit2.HttpException
 import java.io.IOException
 
 @Composable
-fun NotificationPage() {
+fun NotificationPage(navController : NavController) {
     val scrollState = rememberScrollState()
     var showScrollToTop by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
@@ -43,6 +45,9 @@ fun NotificationPage() {
                 val response = apiService.getNotifications("Bearer $token")
                 if (response.isSuccessful) {
                     notifications = response.body() ?: emptyList()
+                } else if(response.code() == 401 ) {
+                    Log.d("respCode:","$response.code()")
+                    handleTokenExpiration(navController)
                 }
             } catch (e: Exception) {
                 errorMessage = "Error: ${e.message}"

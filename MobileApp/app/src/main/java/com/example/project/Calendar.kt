@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontFamily
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.navigation.NavController
 import com.example.project.components.CalendarContent
 import com.example.project.components.CalendarView
 import com.example.project.components.LegendItem
@@ -44,7 +45,7 @@ import retrofit2.Response
 
 @SuppressLint("SuspiciousIndentation")
 @Composable
-fun HomeScreen(context: Context) {
+fun HomeScreen(context: Context, navController: NavController) {
     // State variables to hold user data
     var userName by remember { mutableStateOf("User") }
     var todayStatus by remember { mutableStateOf("Loading...") }
@@ -309,15 +310,19 @@ fun HomeScreen(context: Context) {
                                                     Log.e("SubmitRequest", "Submit response was null")
                                                 }
                                             } else {
-                                                // Handle failed response
-                                                val errorMessage = response.errorBody()?.string() ?: "Failed to submit request"
-                                                Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
-                                                Log.e("SubmitRequest", "Submit failed: ${response.message()}")
-                                            }
+                                                if (response.code() == 401 ) {
+                                                    Log.d("respCode:","$response.code()")
+                                                    handleTokenExpiration(navController)
+                                                }
+                                                else{
+                                                    val errorMessage = response.errorBody()?.string() ?: "Failed to submit request"
+                                                    Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+                                                    Log.e("SubmitRequest", "Submit failed: ${response.message()}")
+                                                }}
                                         }
 
                                         override fun onFailure(call: Call<SubmitRequestResponse>, t: Throwable) {
-                                            // Handle API call failure
+                                            // z API call failure
                                             Toast.makeText(context, "Failed to submit request: ${t.message}", Toast.LENGTH_LONG).show()
                                             Log.e("SubmitRequest", "API call failed: ${t.message}")
                                         }

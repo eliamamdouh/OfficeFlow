@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.project.components.CalendarContent
 import com.example.project.components.DropdownList
 import com.example.project.components.LegendItem
@@ -36,7 +37,7 @@ import retrofit2.Response
 
 
 @Composable
-fun ScheduleScreen(context: Context) {
+fun ScheduleScreen(context: Context, navController: NavController) {
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
     var selectedTeamMemberId by remember { mutableStateOf<String?>(null) } // Stores the selected team member's userId
     var teamMembers by remember { mutableStateOf<List<TeamMember>>(emptyList()) } // List of team members
@@ -60,8 +61,13 @@ fun ScheduleScreen(context: Context) {
                     if (response.isSuccessful) {
                         teamMembers = response.body()?.teamMembers ?: emptyList()
                     } else {
+                        if (response.code() == 401 ) {
+                            Log.d("respCode:","$response.code()")
+                            handleTokenExpiration(navController)
+                        }
+                        else{
                         println("Error fetching team members: ${response.errorBody()?.string()}")
-                    }
+                    }}
                 }
 
                 override fun onFailure(call: Call<TeamMembersResponse>, t: Throwable) {
@@ -83,8 +89,13 @@ fun ScheduleScreen(context: Context) {
                     if (response.isSuccessful) {
                         schedule = response.body()?.schedule
                     } else {
-                        println("Error fetching schedule: ${response.errorBody()?.string()}")
-                    }
+                        if (response.code() == 401 ) {
+                            Log.d("respCode:","$response.code()")
+                            handleTokenExpiration(navController)
+                        }
+                        else{
+                            println("Error fetching team members: ${response.errorBody()?.string()}")
+                        }}
                 }
 
                 override fun onFailure(call: Call<ScheduleResponse>, t: Throwable) {
