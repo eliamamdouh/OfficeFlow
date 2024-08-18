@@ -27,6 +27,7 @@ const viewNotifications = async (req, res) => {
     
 
         if (notificationsQuerySnapshot.empty) {
+            console.log("here samasemo")
             return res.status(404).json({ message: 'No notifications found for this user' });
         }
 

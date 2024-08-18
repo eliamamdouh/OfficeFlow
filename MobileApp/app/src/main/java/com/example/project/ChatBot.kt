@@ -24,9 +24,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
+import com.example.project.PreferencesManager.getTokenFromPreferences
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -50,6 +52,8 @@ fun ChatScreen() {
         )
     }
     var userInput by remember { mutableStateOf("") }
+    val scrollState = rememberScrollState()
+    val context = LocalContext.current
 
     // Function to handle user input and generate bot responses
     fun handleUserInput(
@@ -57,36 +61,45 @@ fun ChatScreen() {
         chatMessages: List<ChatMessage>,
         updateMessages: (List<ChatMessage>) -> Unit
     ) {
+
+
+        val userToken = getTokenFromPreferences(context)
         // Add user message to the list
-        updateMessages(chatMessages + ChatMessage(isBot = false, message = input))
+        val updatedMessages = chatMessages + ChatMessage(isBot = false, message = input)
+        updateMessages(updatedMessages)
 
         // Prepare the request
         val chatRequest = ChatRequest(prompt = input)
 
         // Send the request to the backend
-        RetrofitClient2.chatApiService.sendChatMessage(chatRequest).enqueue(object : Callback<ChatResponse> {
+        RetrofitClient2.chatApiService.sendChatMessage(chatRequest, "Bearer $userToken").enqueue(object : Callback<ChatResponse> {
             override fun onResponse(call: Call<ChatResponse>, response: Response<ChatResponse>) {
                 val botResponse = if (response.isSuccessful) {
                     response.body()?.response ?: "Sorry, I didn't understand that."
                 } else {
                     "Error: ${response.errorBody()?.string()}"
                 }
-                updateMessages(chatMessages + ChatMessage(isBot = true, message = botResponse))
+                updateMessages(updatedMessages + ChatMessage(isBot = true, message = botResponse))
             }
 
             override fun onFailure(call: Call<ChatResponse>, t: Throwable) {
-                updateMessages(chatMessages + ChatMessage(isBot = true, message = "Error: ${t.message}"))
+                updateMessages(updatedMessages + ChatMessage(isBot = true, message = "Error: ${t.message}"))
             }
         })
+
+    }
+
+    // Automatically scroll to the latest message when chatMessages changes
+    LaunchedEffect(chatMessages.size) {
+        scrollState.animateScrollTo(scrollState.maxValue)
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(lighterGray) // Grey page background
-            .padding(start = 0.dp, top = 15.dp, bottom = 26.dp) // Padding around the rounded box
+            .background(lighterGray)
+            .padding(start = 0.dp, top = 15.dp, bottom = 26.dp)
     ) {
-        // Rounded box container
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -97,9 +110,8 @@ fun ChatScreen() {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = 25.dp) // Ensure space for the input field
+                    .padding(bottom = 25.dp)
             ) {
-                // Title
                 Text(
                     text = "ChatBot",
                     fontSize = 24.sp,
@@ -110,19 +122,17 @@ fun ChatScreen() {
                         .align(Alignment.CenterHorizontally)
                 )
 
-                // Chat messages and input field
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth() // Ensure space for the input field
+                        .fillMaxWidth()
                 ) {
-                    // Scrollable chat messages
                     Box(
                         modifier = Modifier
-                            .weight(1f) // Takes up available space
-                            .background(Color.White) // Ensure messages are on white background
+                            .weight(1f)
+                            .background(Color.White)
                     ) {
                         Column(
-                            modifier = Modifier.verticalScroll(rememberScrollState())
+                            modifier = Modifier.verticalScroll(scrollState)
                         ) {
                             chatMessages.forEach { message ->
                                 Row(
@@ -140,15 +150,14 @@ fun ChatScreen() {
                         }
                     }
 
-                    // Input field with submit button
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(49.dp) // Set the height as specified
-                            .background(Color(0xFFF6F6F6)) // Background color
+                            .height(49.dp)
+                            .background(Color(0xFFF6F6F6))
                             .border(1.dp, borderColor, RoundedCornerShape(50.dp))
                             .clip(RoundedCornerShape(50.dp))
-                            .padding(horizontal = 20.dp) // Padding to ensure input and button are properly aligned
+                            .padding(horizontal = 20.dp)
                     ) {
                         BasicTextField(
                             value = userInput,
@@ -207,6 +216,7 @@ fun ChatScreen() {
         }
     }
 }
+
 
 @Composable
 fun ChatBubble(isBot: Boolean, message: String) {

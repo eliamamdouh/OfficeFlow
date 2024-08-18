@@ -2,6 +2,7 @@ package com.example.project
 
 import retrofit2.Call
 import retrofit2.http.Body
+import retrofit2.http.Header
 import retrofit2.http.POST
 
 
@@ -14,6 +15,10 @@ data class ChatResponse(
 )
 
 interface ChatApiService {
-    @POST("chat")
-    fun sendChatMessage(@Body request: ChatRequest): Call<ChatResponse>
+    @POST("/chat")
+    fun sendChatMessage(
+        @Body chatRequest: ChatRequest,
+        @Header("Authorization") authToken: String
+    ): Call<ChatResponse>
 }
+

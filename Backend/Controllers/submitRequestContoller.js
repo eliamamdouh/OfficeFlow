@@ -4,21 +4,29 @@ require('dotenv').config();
 
 const getLocationForDate = (schedule, date) => {
     let location = null;
+
+    console.log("Searching for date:", date);  // Log the date being searched for
+
     Object.keys(schedule).forEach(week => {
         schedule[week].forEach(day => {
+            console.log(`Checking date ${day.day} in week ${week}`);  // Log the current day being checked
             if (day.day === date) {
                 location = day.location;
+                console.log(`Match found: ${location} for date ${date}`);
             }
         });
     });
     return location;
 };
 
+
 const submitRequest = async (req, res) => {
     try {
+        console.log("1")
         const { authorization } = req.headers;
         const { newDate, dayToChange, reason } = req.body;
-
+console.log(newDate)
+console.log(dayToChange)
         if (!authorization) {
             return res.status(400).json( 'Authorization header is missing');
         }
@@ -37,7 +45,7 @@ const submitRequest = async (req, res) => {
         // Verify and decode the token
         const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
         const userId = decoded.userId;
-
+        console.log("2")
         // Fetch the user data from the database
         const usersCollectionRef = db.collection('Users');
         const userDoc = await usersCollectionRef.doc(userId).get();
@@ -56,8 +64,10 @@ const submitRequest = async (req, res) => {
 
         const locationForDayToChange = getLocationForDate(schedule, dayToChange);
         const locationForNewDate = getLocationForDate(schedule, newDate);
-
+        console.log(locationForDayToChange )
+        console.log(locationForNewDate  )
         if (locationForDayToChange === locationForNewDate) {
+            console.log("3")
             return res.status(400).json( 'The selected days must be from different locations (one office, one home)');
         }
 
@@ -66,6 +76,7 @@ const submitRequest = async (req, res) => {
                 // Ensure the managerName is present, otherwise handle the missing value
 
                 const projectId = userData.projectId
+                console.log("4")
                 // console.log("engyy:" + projID)
        
                 //  const managerName = await db.collection('Users').where('projectId', '==', projID).where('role', '==', 'manager').get();
@@ -73,7 +84,7 @@ const submitRequest = async (req, res) => {
                 const ManagerSnapshot = await db.collection('Users').where('projectId', '==', projectId).where('role', '==', 'Manager').get();
 
                 let managerName = null;
-
+                console.log("5")
                 if (!ManagerSnapshot.empty) {
                     const managerDoc = ManagerSnapshot.docs[0]; // Get the first (and presumably only) document
                     managerName = managerDoc.data().Fullname; // Assuming 'name' is the field for the manager's name

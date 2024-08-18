@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.project.PreferencesManager.getTokenFromPreferences
@@ -29,27 +30,25 @@ fun NotificationPage() {
     val scrollState = rememberScrollState()
     var showScrollToTop by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
-
+    val apiService = RetrofitClient.apiService
     var notifications by remember { mutableStateOf<List<Notification>>(emptyList()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
-    val token =getTokenFromPreferences(context)
+    val token = getTokenFromPreferences(context)
     println(token)
+
     LaunchedEffect(Unit) {
         coroutineScope.launch {
             try {
-                val response = RetrofitClient.apiService.getNotifications("Bearer $token")
+                val response = apiService.getNotifications("Bearer $token")
                 if (response.isSuccessful) {
                     notifications = response.body() ?: emptyList()
-                } else {
-                    errorMessage = "Error fetching notifications: ${response.message()}"
                 }
             } catch (e: Exception) {
                 errorMessage = "Error: ${e.message}"
             }
         }
     }
-
 
     LaunchedEffect(scrollState.value) {
         showScrollToTop = scrollState.value > 300
@@ -86,6 +85,18 @@ fun NotificationPage() {
                     color = Color.Red,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
+            } else if (notifications.isEmpty()) {
+                // Display a cute message when no notifications are found
+                Text(
+                    text = "No notifications found! 🎉\nEnjoy your day!",
+                    fontSize = 18.sp,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp)
+                        .align(Alignment.CenterHorizontally)
+                )
             } else {
                 notifications.forEach { notification ->
                     NotificationCard(
@@ -93,8 +104,6 @@ fun NotificationPage() {
                         backgroundColor = Color(0xFFFEE8E8),
                         sidebarColor = Color(0xFFF44336),
                         iconResId = R.drawable.sa7
-
-
                     )
                 }
             }
@@ -123,6 +132,7 @@ fun NotificationPage() {
         }
     }
 }
+
 
 @Composable
 fun NotificationCard(
