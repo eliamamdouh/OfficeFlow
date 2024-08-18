@@ -49,12 +49,12 @@ fun AppNavigation(apiService: ApiService, modifier: Modifier = Modifier) {
                     }
                 }
             }
-            composable("page1") { HomeScreen(navController.context) }
-            composable("page2") { ChatScreen() }
-            composable("page3") { MyRequests(navController.context) }
-            composable("page4") { NotificationPage() }
+            composable("page1") { HomeScreen(navController.context, navController) }
+            composable("page2") { ChatScreen(navController) }
+            composable("page3") { MyRequests(navController.context, navController) }
+            composable("page4") { NotificationPage(navController) }
             composable("page5") { ManagerRequests(navController.context) }
-            composable("page6") { ScheduleScreen(navController.context) }
+            composable("page6") { ScheduleScreen(navController.context, navController) }
         }
     }
 }

@@ -22,7 +22,16 @@ const acceptRequest = async (req, res) => {
             return res.status(401).json({ message: 'No token provided' });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        } catch (error) {
+            if (error.name === 'TokenExpiredError') {
+                return res.status(401).json({ message: 'Token expired' });
+            }
+            throw error; // Re-throw other errors
+        }
+
         const userId = decoded.userId;
 
         // Update the request status to "Accepted"
@@ -46,12 +55,13 @@ const acceptRequest = async (req, res) => {
 
         const userToken = userData.deviceToken;
         if (userToken) {
-
+            // Send notification after request is accepted
             const messageTitle = 'Request Accepted';
             const messageBody = 'Your request has been accepted.';
             await sendNotification(userToken, messageTitle, messageBody);
             console.log('Notification sent successfully');
 
+            // Save notification in the Notifications collection
             const notificationText = `${messageTitle}: ${messageBody}`;
             const notificationData = {
                 userId: requestedId,
