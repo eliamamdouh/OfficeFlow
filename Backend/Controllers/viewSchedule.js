@@ -15,9 +15,9 @@ const viewSchedule = async (req, res) => {
 
         const token = authorization.split(' ')[1];
 
-        let decoded;
+        let decodedToken;
         try {
-            decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+            decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
         } catch (error) {
             if (error.name === 'TokenExpiredError') {
                 return res.status(401).json({ message: 'Token expired' });
