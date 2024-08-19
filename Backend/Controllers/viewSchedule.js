@@ -24,8 +24,8 @@ const viewSchedule = async (req, res) => {
             }
             throw error; // Re-throw other errors
         }
-
-        const userId = decodedToken.userId; 
+        console.log(decoded);
+        const userId = decoded.userId; 
 
 
         const usersCollectionRef = db.collection('Users');
