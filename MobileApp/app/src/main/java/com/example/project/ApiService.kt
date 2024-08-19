@@ -95,8 +95,11 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Call<TeamMembersResponse>
 
-    @GET("requests/view-requests")
+    @GET("users/view-requests")
     fun viewRequests(@Header("Authorization") token: String): Call<List<Request>>
+    @GET("requests/view-requests")
+    fun getRequests(@Header("Authorization") token: String): Call<List<Request>>
+
     @POST("users/cancel-request")
     fun cancelRequest(
         @Header("Authorization") token: String,
