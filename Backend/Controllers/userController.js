@@ -457,11 +457,18 @@ const getTeamMembers = async (req, res) => {
     const userData = userDoc.data();
     const projectId = userData.projectId;
 
-    // Get all users with the same projectId
-    const usersSnapshot = await db
-      .collection("Users")
-      .where("projectId", "==", projectId)
-      .get();
+    let usersSnapshot;
+
+    // If the username is SuperManager, retrieve all users
+    if (userData.username === "SuperManager") { // change later to role
+      usersSnapshot = await db.collection("Users").get();
+    } else {
+      // Get all users with the same projectId
+      usersSnapshot = await db
+        .collection("Users")
+        .where("projectId", "==", projectId)
+        .get();
+    }
 
     if (usersSnapshot.empty) {
       return res

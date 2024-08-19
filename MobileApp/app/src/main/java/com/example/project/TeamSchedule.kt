@@ -70,9 +70,13 @@ fun ScheduleScreen(context: Context) {
             })
         }
     }
-
+ if(selectedTeamMemberId != null){
     // Fetch the selected team member's schedule
     LaunchedEffect(selectedTeamMemberId) {
+        Log.d(
+            "ScheduleScreen",
+            "Employee ID: $selectedTeamMemberId"
+        ) // Log the EmployeeId for debugging
         selectedTeamMemberId?.let {
             val call = RetrofitClient.apiService.viewSchedule("Bearer $token")
             call.enqueue(object : Callback<ScheduleResponse> {
@@ -93,6 +97,7 @@ fun ScheduleScreen(context: Context) {
             })
         }
     }
+}
 
     Box(
         modifier = Modifier
