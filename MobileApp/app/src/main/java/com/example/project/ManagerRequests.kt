@@ -54,7 +54,6 @@ private fun fetchRequests(token: String, context: Context, onResult: (List<Reque
             }
         })
 }
-
 @Composable
 fun ManagerRequests(context: Context) {
     var requests by remember { mutableStateOf(emptyList<Request>()) }
@@ -85,7 +84,6 @@ fun ManagerRequests(context: Context) {
         contentAlignment = Alignment.TopCenter
     ) {
         if (isLoading) {
-            // Show a loading spinner or message
             Text(
                 text = "Loading...",
                 fontSize = 18.sp,
@@ -93,7 +91,6 @@ fun ManagerRequests(context: Context) {
                 modifier = Modifier.align(Alignment.Center)
             )
         } else if (errorMessage != null) {
-            // Show the error message
             Text(
                 text = errorMessage!!,
                 fontSize = 18.sp,
@@ -109,7 +106,7 @@ fun ManagerRequests(context: Context) {
                     .verticalScroll(rememberScrollState()) // Enable vertical scrolling
             ) {
                 Text(
-                    text = "Manager Requests",
+                    text = "Requests",
                     fontSize = 35.sp,
                     color = Color.Black,
                     modifier = Modifier
@@ -126,8 +123,13 @@ fun ManagerRequests(context: Context) {
                 requests.forEachIndexed { index, request ->
                     ManagerRequestItem(
                         request = request,
-                        onApprove = { updatedRequest -> /* Handle approve action */ },
-                        onDeny = { updatedRequest -> /* Handle deny action */ }
+                        token = token!!,  // Pass the token to the composable
+                        context = context,
+                        onStatusChanged = { updatedRequest ->
+                            requests = requests.map {
+                                if (it.id == updatedRequest.id) updatedRequest else it
+                            }
+                        }
                     )
                     if (index < requests.size - 1) {
                         Divider(
@@ -143,53 +145,47 @@ fun ManagerRequests(context: Context) {
         }
     }
 }
-enum class Action {
-    APPROVE,
-    DENY
-}
 
 @Composable
 fun ManagerRequestItem(
     request: Request,
-    onApprove: (Request) -> Unit,
-    onDeny: (Request) -> Unit
+    token: String,
+    context: Context,
+    onStatusChanged: (Request) -> Unit
 ) {
     var showDialog by remember { mutableStateOf(false) }
     var currentAction by remember { mutableStateOf<Action?>(null) }
     var status by remember { mutableStateOf(request.status ?: RequestStatus.PENDING) }
 
     if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            title = { Text("Are you sure you want to ${currentAction?.name?.lowercase()} this request?") },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        when (currentAction) {
-                            Action.APPROVE -> {
-                                onApprove(request.copy(status = RequestStatus.APPROVED))
-                                status = RequestStatus.APPROVED
+        ConfirmationDialog(
+            action = currentAction,
+            onConfirm = { newStatus ->
+                val updatedRequest = request.copy(status = newStatus)
+
+                when (newStatus) {
+                    RequestStatus.APPROVED -> {
+                        acceptRequest(token, request.id, context) { success ->
+                            if (success) {
+                                onStatusChanged(updatedRequest)
+                                status = newStatus
                             }
-                            Action.DENY -> {
-                                onDeny(request.copy(status = RequestStatus.DENIED))
-                                status = RequestStatus.DENIED
-                            }
-                            else -> {}
                         }
-                        showDialog = false
                     }
-                ) {
-                    Text("Yes")
+                    RequestStatus.DENIED -> {
+                        rejectRequest(token, request.id, context) { success ->
+                            if (success) {
+                                onStatusChanged(updatedRequest)
+                                status = newStatus
+                            }
+                        }
+                    }
+                    else -> {}
                 }
+
+                showDialog = false
             },
-            dismissButton = {
-                Button(
-                    onClick = { showDialog = false },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
-                ) {
-                    Text("No")
-                }
-            }
+            onDismiss = { showDialog = false }
         )
     }
 
@@ -198,85 +194,212 @@ fun ManagerRequestItem(
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
-        Text(
-            text = request.userName ?: "No UserName available",
-            fontSize = 20.sp,
-            color = Color.Black,
-            modifier = Modifier.padding(bottom = 8.dp),
-        )
-        Text(
-            text = request.timeAgo ?: "Unknown time",
-            fontSize = 16.sp,
-            color = Color.Gray,
-            modifier = Modifier
-                .padding(bottom = 4.dp)
-                .alpha(0.5f)
-        )
+        RequestHeader(request = request)
         Text(
             text = request.description ?: "No description available",
             fontSize = 16.sp,
             color = Color.Black,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (status == RequestStatus.PENDING) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .size(40.dp)
-                            .clickable {
-                                currentAction = Action.DENY
-                                showDialog = true
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ghalat), // Replace with your deny icon resource ID
-                            contentDescription = "Deny",
-                            modifier = Modifier.size(40.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Box(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .size(40.dp)
-                            .clickable {
-                                currentAction = Action.APPROVE
-                                showDialog = true
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.sa7), // Replace with your approve icon resource ID
-                            contentDescription = "Approve",
-                            modifier = Modifier.size(45.dp)
-                        )
-                    }
-                }
-            } else {
-                Box(
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .background(
-                            color = if (status == RequestStatus.APPROVED) Color(0xFF00cc99) else Color(0xFFeb5757),
-                            shape = RoundedCornerShape(4.dp)
-                        )
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    Text(
-                        text = if (status == RequestStatus.APPROVED) "Approved" else "Denied",
-                        fontSize = 16.sp,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
+        ActionButtons(
+            status = status,
+            onApproveClick = {
+                currentAction = Action.APPROVE
+                showDialog = true
+            },
+            onDenyClick = {
+                currentAction = Action.DENY
+                showDialog = true
+            }
+        )
+    }
+}
+
+private fun acceptRequest(token: String, requestId: String, context: Context, onResult: (Boolean) -> Unit) {
+    val apiService = RetrofitClient.apiService
+    val requestIdBody = RequestId(requestId)
+
+    apiService.acceptRequest("Bearer $token", requestIdBody)
+        .enqueue(object : Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                if (response.isSuccessful) {
+                    Toast.makeText(context, "Request accepted", Toast.LENGTH_SHORT).show()
+                    onResult(true)
+                } else {
+                    val errorMessage = response.errorBody()?.string() ?: "Unknown error"
+                    Log.e("Request", "Error accepting request: $errorMessage")
+                    Toast.makeText(context, "Failed to accept request: $errorMessage", Toast.LENGTH_LONG).show()
+                    onResult(false)
                 }
             }
-        }
+
+            override fun onFailure(call: Call<Void>, t: Throwable) {
+                Log.e("Request", "Failure accepting request: ${t.localizedMessage}", t)
+                Toast.makeText(context, "Failed to accept request: ${t.localizedMessage}", Toast.LENGTH_LONG).show()
+                onResult(false)
+            }
+        })
+}
+
+private fun rejectRequest(token: String, requestId: String, context: Context, onResult: (Boolean) -> Unit) {
+    val apiService = RetrofitClient.apiService
+    val requestIdBody = RequestId(requestId)
+
+    apiService.rejectRequest("Bearer $token", requestIdBody)
+        .enqueue(object : Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                if (response.isSuccessful) {
+                    Toast.makeText(context, "Request rejected", Toast.LENGTH_SHORT).show()
+                    onResult(true)
+                } else {
+                    val errorMessage = response.errorBody()?.string() ?: "Unknown error"
+                    Log.e("Request", "Error rejecting request: $errorMessage")
+                    Toast.makeText(context, "Failed to reject request: $errorMessage", Toast.LENGTH_LONG).show()
+                    onResult(false)
+                }
+            }
+
+            override fun onFailure(call: Call<Void>, t: Throwable) {
+                Log.e("Request", "Failure rejecting request: ${t.localizedMessage}", t)
+                Toast.makeText(context, "Failed to reject request: ${t.localizedMessage}", Toast.LENGTH_LONG).show()
+                onResult(false)
+            }
+        })
+}
+enum class Action {
+    APPROVE,
+    DENY
+}
+
+@Composable
+fun RequestHeader(request: Request) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = request.userName ?: "No UserName available",
+            fontSize = 20.sp,
+            color = Color.Black,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        Text(
+            text = request.timeAgo ?: "Unknown time",
+            fontSize = 16.sp,
+            color = Color.Gray,
+            modifier = Modifier
+                .padding(bottom = 8.dp)
+                .alpha(0.5f)
+        )
     }
+}
+
+@Composable
+fun ActionButtons(
+    status: RequestStatus,
+    onApproveClick: () -> Unit,
+    onDenyClick: () -> Unit
+) {
+    if (status == RequestStatus.PENDING) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(
+                iconId = R.drawable.ghalat,
+                contentDescription = "Deny",
+                onClick = onDenyClick
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            IconButton(
+                iconId = R.drawable.sa7,
+                contentDescription = "Approve",
+                onClick = onApproveClick
+            )
+        }
+    } else {
+        StatusIndicator(status = status)
+    }
+}
+
+@Composable
+fun IconButton(
+    iconId: Int,
+    contentDescription: String,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .size(40.dp)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(id = iconId),
+            contentDescription = contentDescription,
+            modifier = Modifier.size(40.dp)
+        )
+    }
+}
+
+@Composable
+fun StatusIndicator(status: RequestStatus) {
+    val backgroundColor = when (status) {
+        RequestStatus.APPROVED -> Color(0xFF00cc99)
+        RequestStatus.DENIED -> Color(0xFFeb5757)
+        else -> Color.Gray
+    }
+
+    Box(
+        modifier = Modifier
+            .padding(top = 8.dp)
+            .background(color = backgroundColor, shape = RoundedCornerShape(4.dp))
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+    ) {
+        Text(
+            text = when (status) {
+                RequestStatus.APPROVED -> "Approved"
+                RequestStatus.DENIED -> "Denied"
+                else -> ""
+            },
+            fontSize = 16.sp,
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.align(Alignment.Center)
+        )
+    }
+}
+
+@Composable
+fun ConfirmationDialog(
+    action: Action?,
+    onConfirm: (RequestStatus) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Are you sure you want to ${action?.name?.lowercase()} this request?") },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val status = when (action) {
+                        Action.APPROVE -> RequestStatus.APPROVED
+                        Action.DENY -> RequestStatus.DENIED
+                        else -> return@Button // No action, so don't do anything
+                    }
+                    onConfirm(status)
+                }
+            ) {
+                Text("Yes")
+            }
+        },
+        dismissButton = {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+            ) {
+                Text("No")
+            }
+        }
+    )
 }
