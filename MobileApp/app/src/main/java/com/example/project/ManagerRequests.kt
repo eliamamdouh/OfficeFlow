@@ -34,7 +34,7 @@ private fun fetchRequests(token: String, context: Context, onResult: (List<Reque
     val apiService = RetrofitClient.apiService
     Log.d("Token in fetchRequests:", "$token")
 
-    apiService.viewRequests("Bearer $token")
+    apiService.getRequests("Bearer $token")
         .enqueue(object : Callback<List<Request>> {
             override fun onResponse(call: Call<List<Request>>, response: Response<List<Request>>) {
                 if (response.isSuccessful) {
