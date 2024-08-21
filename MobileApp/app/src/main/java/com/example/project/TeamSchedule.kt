@@ -47,7 +47,7 @@ fun ScheduleScreen(context: Context) {
     val token = PreferencesManager.getTokenFromPreferences(context)
     val managerId = token?.let { parseUserIdFromToken(it) }
 
-
+    // Fetch team members for the manager
     LaunchedEffect(managerId) {
         managerId?.let {
             Log.d("ScheduleScreen", "Manager ID: $it") // Log the managerId for debugging
@@ -70,36 +70,37 @@ fun ScheduleScreen(context: Context) {
             })
         }
     }
- if(selectedTeamMemberId != null){
-    // Fetch the selected team member's schedule
-    LaunchedEffect(selectedTeamMemberId) {
-        Log.d(
-            "ScheduleScreen",
-            "Employee ID: $selectedTeamMemberId"
-        ) // Log the EmployeeId for debugging
-        selectedTeamMemberId?.let {
-            val call = RetrofitClient.apiService.viewScheduleForTeamMembers("Bearer $token",
-                selectedTeamMemberId!!
-            )
-            call.enqueue(object : Callback<ScheduleResponse> {
-                override fun onResponse(
-                    call: Call<ScheduleResponse>,
-                    response: Response<ScheduleResponse>
-                ) {
-                    if (response.isSuccessful) {
-                        schedule = response.body()?.schedule
-                    } else {
-                        println("Error fetching schedule: ${response.errorBody()?.string()}")
-                    }
-                }
 
-                override fun onFailure(call: Call<ScheduleResponse>, t: Throwable) {
-                    println("Failed to fetch schedule: ${t.message}")
-                }
-            })
+    // Fetch the selected team member's schedule
+    if (selectedTeamMemberId != null) {
+        LaunchedEffect(selectedTeamMemberId) {
+            Log.d("ScheduleScreen", "Employee ID: $selectedTeamMemberId") // Log the EmployeeId for debugging
+            selectedTeamMemberId?.let { userId ->
+                val requestBody = mapOf("userId" to userId) // Create a JSON object with the userId
+
+                val call = RetrofitClient.apiService.viewScheduleForTeamMembers(
+                    "Bearer $token",
+                    requestBody.toString()
+                )
+                call.enqueue(object : Callback<ScheduleResponse> {
+                    override fun onResponse(
+                        call: Call<ScheduleResponse>,
+                        response: Response<ScheduleResponse>
+                    ) {
+                        if (response.isSuccessful) {
+                            schedule = response.body()?.schedule
+                        } else {
+                            println("Error fetching schedule: ${response.errorBody()?.string()}")
+                        }
+                    }
+
+                    override fun onFailure(call: Call<ScheduleResponse>, t: Throwable) {
+                        println("Failed to fetch schedule: ${t.message}")
+                    }
+                })
+            }
         }
     }
-}
 
     Box(
         modifier = Modifier
