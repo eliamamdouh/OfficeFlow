@@ -74,6 +74,7 @@ fun LoginScreen(navController: NavHostController, onLoginSuccess: (String) -> Un
         onLoginClick = {
             if (email.isNotBlank() && password.isNotBlank() && email.lowercase().contains("@deloitte.com")) {
                 val request = LoginRequest(email, password, deviceToken)
+                //val request = LoginRequest(email.lowercase(), password, deviceToken)
                 RetrofitClient.apiService.loginUser(request).enqueue(object : Callback<LoginResponse> {
                     override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
                         if (response.isSuccessful) {
