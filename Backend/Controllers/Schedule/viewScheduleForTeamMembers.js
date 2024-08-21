@@ -53,9 +53,11 @@ const viewTeamMembersSchedule = async (req, res) => {
 
     const userDoc = await db.collection("Users").doc(userId).get();
 
+    console.log("UserDoc 3moor");
     if (!userDoc.exists) {
       return res.status(StatusCodes.NOT_FOUND).send("User not found");
     }
+    console.log("UserDoc 3moor 2");
 
     const userData = userDoc.data();
     const schedule = userData.schedule;

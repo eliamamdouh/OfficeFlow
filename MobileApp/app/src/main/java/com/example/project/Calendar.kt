@@ -337,8 +337,6 @@ fun HomeScreen(context: Context) {
                     ) {
                         Text(text = "Submit", fontSize = 16.sp, color = Color.White)
                     }
-
-
                 }
             }
         }
