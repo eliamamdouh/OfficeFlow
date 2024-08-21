@@ -28,16 +28,14 @@ import retrofit2.HttpException
 import java.io.IOException
 
 @Composable
-fun NotificationPage(navController : NavController) {
+fun NotificationPage(navController: NavController) {
     val scrollState = rememberScrollState()
     var showScrollToTop by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
-    val apiService = RetrofitClient.apiService
     var notifications by remember { mutableStateOf<List<Notification>>(emptyList()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     val token = getTokenFromPreferences(context)
-    println(token)
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
@@ -45,8 +43,8 @@ fun NotificationPage(navController : NavController) {
                 val response = apiService.getNotifications("Bearer $token")
                 if (response.isSuccessful) {
                     notifications = response.body() ?: emptyList()
-                } else if(response.code() == 401 ) {
-                    Log.d("respCode:","$response.code()")
+                } else if (response.code() == 401) {
+                    Log.d("respCode:", "${response.code()}")
                     handleTokenExpiration(navController)
                 }
             } catch (e: Exception) {
@@ -62,9 +60,7 @@ fun NotificationPage(navController : NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF8F8F8))
-            .fillMaxHeight()
-            .fillMaxWidth(),
+            .background(Color(0xFFF8F8F8)),
         contentAlignment = Alignment.TopCenter
     ) {
         Column(
@@ -91,7 +87,8 @@ fun NotificationPage(navController : NavController) {
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
             } else if (notifications.isEmpty()) {
-                // Display a cute message when no notifications are found
+                // Center the "No notifications found!" text within the Column
+                Spacer(modifier = Modifier.weight(1f)) // Push content to the center
                 Text(
                     text = "No notifications found! 🎉\nEnjoy your day!",
                     fontSize = 18.sp,
@@ -99,17 +96,38 @@ fun NotificationPage(navController : NavController) {
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 16.dp)
                         .align(Alignment.CenterHorizontally)
+                        .padding(vertical = 16.dp)
                 )
+                Spacer(modifier = Modifier.weight(1f)) // Push content to the center
             } else {
                 notifications.forEach { notification ->
-                    NotificationCard(
-                        message = notification.text,
-                        backgroundColor = Color(0xFFFEE8E8),
-                        sidebarColor = Color(0xFFF44336),
-                        iconResId = R.drawable.sa7
-                    )
+                    val words = notification.text.split(" ")
+
+                    if (words.size > 1) {
+                        // Trim and lowercase to handle any issues with punctuation and case
+                        val secondWord = words[1].trim().lowercase()
+                        Log.d("NotificationWordCheck", secondWord)
+
+                        when (secondWord) {
+                            "accepted:" -> {
+                                NotificationCard(
+                                    message = notification.text,
+                                    backgroundColor = Color(0xFFE8F8F8), // Light green background
+                                    iconResId = R.drawable.sa7,
+                                    sidebarColor = Color(0xFF4CAF50) // Green sidebar
+                                )
+                            }
+                            "rejected:" -> {
+                                NotificationCard(
+                                    message = notification.text,
+                                    backgroundColor = Color(0xFFFEE8E8), // Light red background
+                                    iconResId = R.drawable.ghalat,
+                                    sidebarColor = Color(0xFFF44336) // Red sidebar
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -161,8 +179,11 @@ fun NotificationCard(
         )
         Row(
             modifier = Modifier
-                .padding(16.dp),
+                .padding(16.dp)
+                .offset(x=0.dp , y=9.dp),
             verticalAlignment = Alignment.CenterVertically
+
+
         ) {
             Image(
                 painter = painterResource(id = iconResId),
@@ -174,7 +195,7 @@ fun NotificationCard(
             Text(
                 text = message,
                 fontSize = 16.sp,
-                color = Color.Black
+                color = Color.Black,
             )
         }
     }
