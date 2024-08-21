@@ -56,31 +56,60 @@ fun CalendarContent(
     var schedule by remember { mutableStateOf<Map<String, List<ScheduleDay>>?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val token = PreferencesManager.getTokenFromPreferences(context)
+    val loggedInUserId = token?.let { parseUserIdFromToken(it) }
 
 
-    // Fetch schedule data
+// Fetch schedule data
     LaunchedEffect(userId) {
         println("Extracted User ID in Component: $userId")
-        userId.let { RetrofitClient.apiService.viewSchedule("Bearer $token") }
-            .enqueue(object : Callback<ScheduleResponse> {
-                override fun onResponse(
-                    call: Call<ScheduleResponse>,
-                    response: Response<ScheduleResponse>
-                ) {
-                    if (response.isSuccessful) {
-                        schedule = response.body()?.schedule
-                        println("Schedule fetched successfully: $schedule")
-                    } else {
-                        errorMessage = "Error fetching schedule: ${response.errorBody()?.string()}"
+
+        if (userId == loggedInUserId) {
+            // View the logged-in user's own schedule
+            RetrofitClient.apiService.viewSchedule("Bearer $token")
+                .enqueue(object : Callback<ScheduleResponse> {
+                    override fun onResponse(
+                        call: Call<ScheduleResponse>,
+                        response: Response<ScheduleResponse>
+                    ) {
+                        if (response.isSuccessful) {
+                            schedule = response.body()?.schedule
+                            println("Schedule fetched successfully: $schedule")
+                        } else {
+                            errorMessage =
+                                "Error fetching schedule: ${response.errorBody()?.string()}"
+                            println(errorMessage)
+                        }
+                    }
+
+                    override fun onFailure(call: Call<ScheduleResponse>, t: Throwable) {
+                        errorMessage = "Failed to fetch schedule: ${t.message}"
                         println(errorMessage)
                     }
-                }
+                })
+        } else {
+            // View the schedule for another user (employee)
+            RetrofitClient.apiService.viewScheduleForTeamMembers("Bearer $token", userId)
+                .enqueue(object : Callback<ScheduleResponse> {
+                    override fun onResponse(
+                        call: Call<ScheduleResponse>,
+                        response: Response<ScheduleResponse>
+                    ) {
+                        if (response.isSuccessful) {
+                            schedule = response.body()?.schedule
+                            println("Schedule fetched successfully: $schedule")
+                        } else {
+                            errorMessage =
+                                "Error fetching schedule: ${response.errorBody()?.string()}"
+                            println(errorMessage)
+                        }
+                    }
 
-                override fun onFailure(call: Call<ScheduleResponse>, t: Throwable) {
-                    errorMessage = "Failed to fetch schedule: ${t.message}"
-                    println(errorMessage)
-                }
-            })
+                    override fun onFailure(call: Call<ScheduleResponse>, t: Throwable) {
+                        errorMessage = "Failed to fetch schedule: ${t.message}"
+                        println(errorMessage)
+                    }
+                })
+        }
     }
 
     val currentMonth = YearMonth.now()

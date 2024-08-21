@@ -90,6 +90,12 @@ interface ApiService {
     @GET("users/schedule")
     fun viewSchedule(@Header("Authorization") token: String): Call<ScheduleResponse>
 
+    @POST("users/TeamSchedule")
+    fun viewScheduleForTeamMembers(
+        @Header("Authorization") token: String,
+        @Body userId: String
+        ): Call<ScheduleResponse>
+
     @GET("/getTeamMembers")
     fun getTeamMembers(
         @Header("Authorization") token: String

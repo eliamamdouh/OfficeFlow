@@ -78,7 +78,9 @@ fun ScheduleScreen(context: Context) {
             "Employee ID: $selectedTeamMemberId"
         ) // Log the EmployeeId for debugging
         selectedTeamMemberId?.let {
-            val call = RetrofitClient.apiService.viewSchedule("Bearer $token")
+            val call = RetrofitClient.apiService.viewScheduleForTeamMembers("Bearer $token",
+                selectedTeamMemberId!!
+            )
             call.enqueue(object : Callback<ScheduleResponse> {
                 override fun onResponse(
                     call: Call<ScheduleResponse>,
