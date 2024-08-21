@@ -6,7 +6,7 @@ require("dotenv").config();
 const viewTeamMembersSchedule = async (req, res) => {
   try {
     const { authorization } = req.headers;
-    const { userId } = req.body;
+    const { userId } = req.query;
 
     if (!authorization) {
       return res

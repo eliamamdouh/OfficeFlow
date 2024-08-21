@@ -73,14 +73,13 @@ fun ScheduleScreen(context: Context) {
 
     // Fetch the selected team member's schedule
     if (selectedTeamMemberId != null) {
+        // Fetch the selected team member's schedule
         LaunchedEffect(selectedTeamMemberId) {
-            Log.d("ScheduleScreen", "Employee ID: $selectedTeamMemberId") // Log the EmployeeId for debugging
-            selectedTeamMemberId?.let { userId ->
-                val requestBody = mapOf("userId" to userId) // Create a JSON object with the userId
-
+            Log.d("ScheduleScreen", "Employee ID: $selectedTeamMemberId")
+            selectedTeamMemberId?.let {
                 val call = RetrofitClient.apiService.viewScheduleForTeamMembers(
                     "Bearer $token",
-                    requestBody.toString()
+                    selectedTeamMemberId!!
                 )
                 call.enqueue(object : Callback<ScheduleResponse> {
                     override fun onResponse(
