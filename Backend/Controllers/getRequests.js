@@ -38,8 +38,8 @@ const getRequests = async (req, res) => {
         const requestsCollectionRef = db.collection('Requests');
         const userRequestsQuery = await requestsCollectionRef
             .where('projectId', '==', projectId)
+            .where('status', '==', 'Pending')
             //.where('status', '==', 'PENDING')
-            //.where('status' , '==' , 'pending')
             .get();
 
         if (userRequestsQuery.empty) {
