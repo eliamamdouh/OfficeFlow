@@ -87,6 +87,8 @@ fun NotificationPage(navController: NavController) {
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
             } else if (notifications.isEmpty()) {
+                // Center the "No notifications found!" text within the Column
+                Spacer(modifier = Modifier.weight(1f)) // Push content to the center
                 Text(
                     text = "No notifications found! 🎉\nEnjoy your day!",
                     fontSize = 18.sp,
@@ -94,9 +96,10 @@ fun NotificationPage(navController: NavController) {
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 16.dp)
                         .align(Alignment.CenterHorizontally)
+                        .padding(vertical = 16.dp)
                 )
+                Spacer(modifier = Modifier.weight(1f)) // Push content to the center
             } else {
                 notifications.forEach { notification ->
                     val words = notification.text.split(" ")
@@ -123,7 +126,6 @@ fun NotificationPage(navController: NavController) {
                                     sidebarColor = Color(0xFFF44336) // Red sidebar
                                 )
                             }
-
                         }
                     }
                 }
@@ -177,8 +179,11 @@ fun NotificationCard(
         )
         Row(
             modifier = Modifier
-                .padding(16.dp),
+                .padding(16.dp)
+                .offset(x=0.dp , y=9.dp),
             verticalAlignment = Alignment.CenterVertically
+
+
         ) {
             Image(
                 painter = painterResource(id = iconResId),
@@ -190,7 +195,7 @@ fun NotificationCard(
             Text(
                 text = message,
                 fontSize = 16.sp,
-                color = Color.Black
+                color = Color.Black,
             )
         }
     }
