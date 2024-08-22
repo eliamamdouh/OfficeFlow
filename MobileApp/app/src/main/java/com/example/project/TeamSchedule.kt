@@ -48,7 +48,7 @@ fun ScheduleScreen(context: Context, navController: NavController) {
     val token = PreferencesManager.getTokenFromPreferences(context)
     val managerId = token?.let { parseUserIdFromToken(it) }
 
-
+    // Fetch team members for the manager
     LaunchedEffect(managerId) {
         managerId?.let {
             Log.d("ScheduleScreen", "Manager ID: $it") // Log the managerId for debugging
@@ -78,30 +78,32 @@ fun ScheduleScreen(context: Context, navController: NavController) {
     }
 
     // Fetch the selected team member's schedule
-    LaunchedEffect(selectedTeamMemberId) {
-        selectedTeamMemberId?.let {
-            val call = RetrofitClient.apiService.viewSchedule("Bearer $token")
-            call.enqueue(object : Callback<ScheduleResponse> {
-                override fun onResponse(
-                    call: Call<ScheduleResponse>,
-                    response: Response<ScheduleResponse>
-                ) {
-                    if (response.isSuccessful) {
-                        schedule = response.body()?.schedule
-                    } else {
-                        if (response.code() == 401 ) {
-                            Log.d("respCode:","$response.code()")
-                            handleTokenExpiration(navController)
+    if (selectedTeamMemberId != null) {
+        // Fetch the selected team member's schedule
+        LaunchedEffect(selectedTeamMemberId) {
+            Log.d("ScheduleScreen", "Employee ID: $selectedTeamMemberId")
+            selectedTeamMemberId?.let {
+                val call = RetrofitClient.apiService.viewScheduleForTeamMembers(
+                    "Bearer $token",
+                    selectedTeamMemberId!!
+                )
+                call.enqueue(object : Callback<ScheduleResponse> {
+                    override fun onResponse(
+                        call: Call<ScheduleResponse>,
+                        response: Response<ScheduleResponse>
+                    ) {
+                        if (response.isSuccessful) {
+                            schedule = response.body()?.schedule
+                        } else {
+                            println("Error fetching schedule: ${response.errorBody()?.string()}")
                         }
-                        else{
-                            println("Error fetching team members: ${response.errorBody()?.string()}")
-                        }}
-                }
+                    }
 
-                override fun onFailure(call: Call<ScheduleResponse>, t: Throwable) {
-                    println("Failed to fetch schedule: ${t.message}")
-                }
-            })
+                    override fun onFailure(call: Call<ScheduleResponse>, t: Throwable) {
+                        println("Failed to fetch schedule: ${t.message}")
+                    }
+                })
+            }
         }
     }
 
