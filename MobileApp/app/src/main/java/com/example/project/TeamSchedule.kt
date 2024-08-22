@@ -182,7 +182,7 @@ fun ScheduleScreen(context: Context, navController: NavController) {
                                         )
                                         Spacer(modifier = Modifier.height(16.dp))
                                         Text(
-                                            "Days from Work:", fontSize = 16.sp, fontWeight = FontWeight.Bold
+                                            "Days from Office:", fontSize = 16.sp, fontWeight = FontWeight.Bold
                                         )
                                         OutlinedTextField(
                                             value = daysFromWork,
