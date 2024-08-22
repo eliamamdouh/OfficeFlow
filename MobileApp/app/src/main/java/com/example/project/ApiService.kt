@@ -108,13 +108,17 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Call<TeamMembersResponse>
 
-    @GET("requests/view-requests")
+    @GET("users/view-requests")
     fun viewRequests(@Header("Authorization") token: String): Call<List<Request>>
+    @GET("requests/view-requests")
+    fun getRequests(@Header("Authorization") token: String): Call<List<Request>>
+
     @POST("users/cancel-request")
     fun cancelRequest(
         @Header("Authorization") token: String,
         @Body requestId: RequestId
     ): Call<CancelRequestResponse>
+
     @GET("viewNotifications")
     suspend fun getNotifications(
         @Header("Authorization") token: String
@@ -123,8 +127,19 @@ interface ApiService {
     @GET("countUsers")
     fun countUsers(@Header("Authorization") token: String): Call<CountUsersResponse>
 
-}
 
+    @POST("users/accept-request")
+    fun acceptRequest(
+        @Header("Authorization") token: String,
+        @Body requestId: RequestId
+    ): Call<Void>
+
+    @POST("users/reject-request")
+    fun rejectRequest(
+        @Header("Authorization") token: String,
+        @Body requestId: RequestId
+    ): Call<Void>
+}
 
 
 data class RequestId(val requestId: String)

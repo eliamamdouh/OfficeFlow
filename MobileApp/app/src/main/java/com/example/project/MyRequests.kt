@@ -183,14 +183,14 @@ fun RequestItem(
             fontSize = 16.sp,
             color = Color.Gray,
             modifier = Modifier
-                .padding(bottom = 4.dp)
+                .padding(bottom = 14.dp)
                 .alpha(0.5f)
         )
         Text(
             text = request.description ?: "No description available",
-            fontSize = 16.sp,
+            fontSize = 18.sp,
             color = Color.Black,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 15.dp)
         )
         Row(
             verticalAlignment = Alignment.CenterVertically,

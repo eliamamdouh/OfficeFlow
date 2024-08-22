@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const { StatusCodes } = require("http-status-codes");
-const { use } = require("../Routes/userRoutes");
+//const { use } = require("../Routes/userRoutes");
 
 const createUser = async (req, res) => {
   try {
@@ -197,70 +197,65 @@ const generateUsers = async (numUsers) => {
 
 const login = async (req, res) => {
   try {
-    const { email, password, deviceToken } = req.body; // Include deviceToken in the request
+      const { email, password, deviceToken } = req.body;
 
-    if (!email || !password || !deviceToken) {
-      // Check if deviceToken is provided
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        errorMessage: "Email, password, and device token are required",
+      if (!email || !password || !deviceToken) {
+          return res.status(StatusCodes.BAD_REQUEST).json({ errorMessage: 'Email, password, and device token are required' });
+      }
+
+      let usersCollectionRef = db.collection('Users');
+      let userQuerySnapshot = await usersCollectionRef.get();
+
+      if (userQuerySnapshot.empty) {
+          return res.status(StatusCodes.UNAUTHORIZED).json({ errorMessage: 'Login failed: User not found' });
+      }
+
+      // Manually filter the users by case-insensitive email
+      let userDoc;
+      userQuerySnapshot.forEach(doc => {
+          if (doc.data().email.toLowerCase() === email.toLowerCase()) {
+              userDoc = doc;
+          }
       });
-    }
 
-    let usersCollectionRef = db.collection("Users");
-    let userQuerySnapshot = await usersCollectionRef
-      .where("email", "==", email)
-      .get();
+      if (!userDoc) {
+          return res.status(StatusCodes.UNAUTHORIZED).json({ errorMessage: 'Login failed: User not found' });
+      }
 
-    if (userQuerySnapshot.empty) {
-      return res
-        .status(StatusCodes.UNAUTHORIZED)
-        .json({ errorMessage: "Login failed: User not found" });
-    }
+      const userData = userDoc.data();
+      
+      const isPasswordValid = await bcrypt.compare(password, userData.password);
 
-    const userDoc = userQuerySnapshot.docs[0];
-    const userData = userDoc.data();
+      if (!isPasswordValid) {
+          return res.status(StatusCodes.UNAUTHORIZED).json({ errorMessage: 'Login failed: Password does not match' });
+      }
 
-    const isPasswordValid = await bcrypt.compare(password, userData.password);
+      const userId = userDoc.id;
+      const role = userData.role;
 
-    if (!isPasswordValid) {
-      return res
-        .status(StatusCodes.UNAUTHORIZED)
-        .json({ errorMessage: "Login failed: Password does not match" });
-    }
+      // Update the user's document with the device token
+      await usersCollectionRef.doc(userId).update({
+          deviceToken: deviceToken
+      });
 
-    const userId = userDoc.id;
-    const role = userData.role;
-    console.log("Engy betdawar 3ala dah: " + role);
+      const token = jwt.sign(
+          { userId: userId, username: userData.username, email: userData.email, role: role },
+          process.env.JWT_SECRET_KEY,
+          { expiresIn: '1h' }
+      );
 
-    // Update the user's document with the device token
-    await usersCollectionRef.doc(userId).update({
-      deviceToken: deviceToken,
-    });
-
-    const token = jwt.sign(
-      {
-        userId: userId,
-        username: userData.username,
-        email: userData.email,
-        role: role,
-      },
-      process.env.JWT_SECRET_KEY,
-      { expiresIn: "1h" }
-    );
-    console.log(token);
-    res.status(StatusCodes.OK).json({
-      message: "Login successful",
-      userId: userId,
-      role: role,
-      token: token,
-    });
+      res.status(StatusCodes.OK).json({
+          message: 'Login successful',
+          userId: userId,
+          role: role, 
+          token: token,
+      });
   } catch (error) {
-    console.error("Error during login:", error);
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ errorMessage: "Server error", details: error.message });
+      console.error("Error during login:", error);
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ errorMessage: 'Server error', details: error.message });
   }
 };
+
 const getUserInfo = async (req, res) => {
   try {
     const userId = req.params.userId;

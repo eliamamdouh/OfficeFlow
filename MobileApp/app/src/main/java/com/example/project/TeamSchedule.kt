@@ -1,8 +1,8 @@
 package com.example.project
-//FIX PACKAGE
 
-
+import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Base64
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -24,34 +24,70 @@ import com.example.project.components.DropdownList
 import com.example.project.components.LegendItem
 import com.example.project.components.parseUserIdFromToken
 import com.example.project.ui.theme.BackgroundGray
-import kotlinx.coroutines.delay
-import java.time.YearMonth
 import com.example.project.ui.theme.DarkGrassGreen2
 import com.example.project.ui.theme.DarkTeal2
-
-
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.tasks.await
+import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.time.YearMonth
 
-
+// Function to parse email from JWT token
+fun parseEmailFromToken(token: String): String? {
+    return try {
+        val parts = token.split(".")
+        if (parts.size == 3) {
+            val payload = String(Base64.decode(parts[1], Base64.URL_SAFE))
+            val jsonObject = JSONObject(payload)
+            jsonObject.getString("email") // Assumes the token has an "email" field in the payload
+        } else {
+            null
+        }
+    } catch (e: Exception) {
+        null
+    }
+}
 
 @Composable
 fun ScheduleScreen(context: Context, navController: NavController) {
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
-    var selectedTeamMemberId by remember { mutableStateOf<String?>(null) } // Stores the selected team member's userId
-    var teamMembers by remember { mutableStateOf<List<TeamMember>>(emptyList()) } // List of team members
+    var selectedTeamMemberId by remember { mutableStateOf<String?>(null) }
+    var teamMembers by remember { mutableStateOf<List<TeamMember>>(emptyList()) }
     var showPopup by remember { mutableStateOf(false) }
     var schedule by remember { mutableStateOf<Map<String, List<ScheduleDay>>?>(null) }
+    var showSuperManagerOptions by remember { mutableStateOf(false) }
+    var showManagerOptions by remember { mutableStateOf(false) }
+    var daysFromHome by remember { mutableStateOf("") }
+    var daysFromWork by remember { mutableStateOf("") }
+    var officeCapacity by remember { mutableStateOf<Int?>(null) }
+    var selectedDate by remember { mutableStateOf<String?>(null) }
 
     // User Data
     val token = PreferencesManager.getTokenFromPreferences(context)
     val managerId = token?.let { parseUserIdFromToken(it) }
+    val email = token?.let { parseEmailFromToken(it) }
 
+    // Check if the logged-in user is the SuperManager
+    LaunchedEffect(email) {
+        if (email == "SuperManager@Deloitte.com") {
+            showSuperManagerOptions = true
+        }
+    }
+
+    LaunchedEffect(selectedDate) {
+        selectedDate?.let { date ->
+            officeCapacity = fetchOfficeCapacity(date)
+        }
+    }
+    
     // Fetch team members for the manager
+
     LaunchedEffect(managerId) {
         managerId?.let {
-            Log.d("ScheduleScreen", "Manager ID: $it") // Log the managerId for debugging
+            Log.d("ScheduleScreen", "Manager ID: $it")
             val call = RetrofitClient.apiService.getTeamMembers("Bearer $token")
             call.enqueue(object : Callback<TeamMembersResponse> {
                 override fun onResponse(
@@ -61,13 +97,13 @@ fun ScheduleScreen(context: Context, navController: NavController) {
                     if (response.isSuccessful) {
                         teamMembers = response.body()?.teamMembers ?: emptyList()
                     } else {
-                        if (response.code() == 401 ) {
-                            Log.d("respCode:","$response.code()")
+                        if (response.code() == 401) {
+                            Log.d("respCode:", "$response.code()")
                             handleTokenExpiration(navController)
+                        } else {
+                            println("Error fetching team members: ${response.errorBody()?.string()}")
                         }
-                        else{
-                        println("Error fetching team members: ${response.errorBody()?.string()}")
-                    }}
+                    }
                 }
 
                 override fun onFailure(call: Call<TeamMembersResponse>, t: Throwable) {
@@ -110,15 +146,15 @@ fun ScheduleScreen(context: Context, navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundGray) // Screen background grey
+            .background(BackgroundGray)
             .padding(top = 20.dp, bottom = 100.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 0.dp) // Padding on left and right
-                .background(Color.White, RoundedCornerShape(36.dp)) // Box background white
-                .padding(16.dp) // Internal padding
+                .padding(horizontal = 0.dp)
+                .background(Color.White, RoundedCornerShape(36.dp))
+                .padding(16.dp)
         ) {
             LazyColumn(
                 verticalArrangement = Arrangement.Top,
@@ -142,13 +178,80 @@ fun ScheduleScreen(context: Context, navController: NavController) {
                             )
 
                             DropdownList(
-                                itemList = teamMembers.map { it.name ?: "Unknown" }, // if returned Unknown then this means something wrong with retrieving it from the back
+                                itemList = teamMembers.map { it.name ?: "Unknown" },
                                 selectedIndex = teamMembers.indexOfFirst { it.userId == selectedTeamMemberId },
                                 onItemClick = { selectedTeamMemberId = teamMembers[it].userId },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(bottom = 16.dp)
                             )
+
+                            if (showSuperManagerOptions) {
+                                DropdownList(
+                                    itemList = listOf("Super Manager Options"),
+                                    selectedIndex = 0,
+                                    onItemClick = { showManagerOptions = !showManagerOptions },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 16.dp)
+                                )
+
+                                if (showManagerOptions) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp)
+                                    ) {
+                                        // Fields for Days from Home and Days from Work
+                                        Text(
+                                            "Days from Home:", fontSize = 16.sp, fontWeight = FontWeight.Bold
+                                        )
+                                        OutlinedTextField(
+                                            value = daysFromHome,
+                                            onValueChange = { daysFromHome = it },
+                                            label = { Text("Enter number of days") },
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Text(
+                                            "Days from Work:", fontSize = 16.sp, fontWeight = FontWeight.Bold
+                                        )
+                                        OutlinedTextField(
+                                            value = daysFromWork,
+                                            onValueChange = { daysFromWork = it },
+                                            label = { Text("Enter number of days") },
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Button(
+                                            onClick = { /* Handle save changes logic */ },
+                                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                                        ) {
+                                            Text("Save Changes")
+                                        }
+
+                                        // Display office capacity
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(top = 16.dp)
+                                                .background(
+                                                    color = Color(0xFFD6D6D6),
+                                                    shape = RoundedCornerShape(8.dp)
+                                                )
+                                                .padding(16.dp)
+                                        ) {
+                                            Text(
+                                                text = "Office Capacity Today: ${officeCapacity ?: "Loading..."} people",
+                                                fontSize = 16.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color.Black,
+                                                modifier = Modifier.align(Alignment.Center)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
 
                             if (selectedTeamMemberId != null && schedule != null) {
                                 Text(
@@ -171,7 +274,7 @@ fun ScheduleScreen(context: Context, navController: NavController) {
                                 CalendarContent(
                                     context = context,
                                     userId = selectedTeamMemberId!!,
-                                    onDateSelected = {},
+                                    onDateSelected = { selectedDate = it.toString() },
                                     showMonthNavigation = true,
                                     onPreviousMonth = { currentMonth = currentMonth.minusMonths(1) },
                                     onNextMonth = { currentMonth = currentMonth.plusMonths(1) },
@@ -209,3 +312,24 @@ fun ScheduleScreen(context: Context, navController: NavController) {
         }
     }
 }
+
+
+// Firebase Firestore instance
+@SuppressLint("StaticFieldLeak")
+val db = FirebaseFirestore.getInstance()
+
+// Fetch office capacity directly from Firestore
+suspend fun fetchOfficeCapacity(date: String): Int? {
+    return try {
+        val capacityDocRef = db.collection("OfficeCapacity").document(date).get().await()
+        if (capacityDocRef.exists()) {
+            capacityDocRef.getLong("count")?.toInt()
+        } else {
+            0 // Return 0 if the document doesn't exist, meaning no one is in the office
+        }
+    } catch (e: Exception) {
+        Log.e("fetchOfficeCapacity", "Error fetching capacity: ${e.message}")
+        null
+    }
+}
+
