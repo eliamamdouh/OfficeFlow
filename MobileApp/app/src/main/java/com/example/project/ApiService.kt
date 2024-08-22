@@ -39,8 +39,10 @@ data class SubmitRequestResponse(
 )
 
 data class ScheduleResponse(
-    val schedule: Map<String, List<ScheduleDay>>
+    val message: String,
+    val schedule: Map<String, Map<String, List<ScheduleDay>>>
 )
+
 
 data class ScheduleDay(
     val day: String,
