@@ -3,7 +3,7 @@ const express = require("express");
 const { db } = require("./firebase-init"); // Import the Firebase init file to ensure the connection is established
 
 const app = express();
-const DEFAULT_PORT = 3000;
+const DEFAULT_PORT = 3000; //42192;
 const DEFAULT_HOST = "0.0.0.0";
 const userRoutes = require("./Routes/userRoutes.js");
 const requestRoutes = require("./Routes/requestRoutes.js");
@@ -28,7 +28,7 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-app.get("/getTeamMembers", getTeamMembers);
+app.get("/getTeamMemers", getTeamMembers);
 app.get("/changeSchedule", changeSchedule);
 app.get("/api/viewNotifications", viewNotifications);
 app.get("/countUsers", countUsersByLocationOnCurrentDate);

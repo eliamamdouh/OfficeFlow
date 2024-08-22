@@ -74,6 +74,12 @@ data class Notification(
     val text: String,
 )
 
+data class CountUsersResponse(
+    val homeCount: Int,
+    val officeCount: Int,
+    val officeCapacity: Int
+)
+
 
 interface ApiService {
     @POST("users/login")
@@ -113,6 +119,9 @@ interface ApiService {
     suspend fun getNotifications(
         @Header("Authorization") token: String
     ): Response<List<Notification>>
+
+    @GET("countUsers")
+    fun countUsers(@Header("Authorization") token: String): Call<CountUsersResponse>
 
 }
 
