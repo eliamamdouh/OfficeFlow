@@ -24,7 +24,7 @@ const getRequests = async (req, res) => {
             decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
         } catch (error) {
             if (error.name === 'TokenExpiredError') {
-                return res.status(401).json({
+                return res.status(StatusCodes.UNAUTHORIZED).json({
                     message: 'Token expired'
                 });
             }
@@ -45,16 +45,18 @@ const getRequests = async (req, res) => {
 
         // Check if the user is a Super Manager by role
         if (managerData.role === 'SuperManager') {
-            // Fetch all requests without filtering
-            const allRequestsQuery = await db.collection('Requests').get();
+            // Fetch only requests with 'Pending' status
+            const pendingRequestsQuery = await db.collection('Requests')
+                .where('status', '==', 'Pending')
+                .get();
 
-            if (allRequestsQuery.empty) {
-                return res.status(StatusCodes.NOT_FOUND).send('No requests found');
+            if (pendingRequestsQuery.empty) {
+                return res.status(StatusCodes.NOT_FOUND).send('No pending requests found');
             }
 
-            const allRequests = [];
+            const pendingRequests = [];
 
-            for (const doc of allRequestsQuery.docs) {
+            for (const doc of pendingRequestsQuery.docs) {
                 const data = doc.data();
                 const requestDate = moment(data.requestDate);
                 const timeAgo = requestDate.fromNow();
@@ -70,10 +72,10 @@ const getRequests = async (req, res) => {
                     userName: userFullname,
                     status: data.status,
                 };
-                allRequests.push(request);
+                pendingRequests.push(request);
             }
 
-            return res.status(StatusCodes.OK).json(allRequests);
+            return res.status(StatusCodes.OK).json(pendingRequests);
         } else {
             // Get manager's project ID
             const projectId = managerData.projectId;
@@ -86,7 +88,7 @@ const getRequests = async (req, res) => {
                 .get();
 
             if (userRequestsQuery.empty) {
-                return res.status(StatusCodes.NOT_FOUND).send('No requests found for this project');
+                return res.status(StatusCodes.NOT_FOUND).send('No pending requests found for this project');
             }
 
             const userRequests = [];

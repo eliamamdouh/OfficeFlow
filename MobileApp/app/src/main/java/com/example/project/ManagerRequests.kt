@@ -39,21 +39,24 @@ private fun fetchRequests(token: String, context: Context, onResult: (List<Reque
             override fun onResponse(call: Call<List<Request>>, response: Response<List<Request>>) {
                 if (response.isSuccessful) {
                     val requests = response.body() ?: emptyList()
-                    onResult(requests)
+                    onResult(requests) // Pass the fetched requests to the callback
                     Log.d("Fetched Requests:", "$requests")
                 } else {
                     val errorMessage = response.errorBody()?.string() ?: "Unknown error occurred"
                     Log.e("Requests", "Error fetching requests: $errorMessage")
                     Toast.makeText(context, "Failed to fetch requests: $errorMessage", Toast.LENGTH_LONG).show()
+                    onResult(emptyList()) // Invoke onResult with an empty list on failure
                 }
             }
 
             override fun onFailure(call: Call<List<Request>>, t: Throwable) {
                 Log.e("Requests", "Failure fetching requests: ${t.localizedMessage}", t)
                 Toast.makeText(context, "Failed to fetch requests: ${t.localizedMessage}", Toast.LENGTH_LONG).show()
+                onResult(emptyList()) // Invoke onResult with an empty list on failure
             }
         })
 }
+
 
 
 @Composable
@@ -69,7 +72,11 @@ fun ManagerRequests(context: Context) {
     LaunchedEffect(Unit) {
         if (token != null) {
             fetchRequests(token, context) { fetchedRequests ->
-                requests = fetchedRequests
+                if (fetchedRequests.isEmpty()) {
+                    errorMessage = "No requests available"
+                } else {
+                    requests = fetchedRequests
+                }
                 isLoading = false
             }
         } else {
@@ -85,21 +92,44 @@ fun ManagerRequests(context: Context) {
             .fillMaxWidth(),
         contentAlignment = Alignment.TopCenter
     ) {
-        if (isLoading) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White, RoundedCornerShape(35.dp))
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
             Text(
-                text = "Loading...",
-                fontSize = 18.sp,
-                color = Color.Gray,
-                modifier = Modifier.align(Alignment.Center)
+                text = "Requests",
+                fontSize = 35.sp,
+                color = Color.Black,
+                modifier = Modifier
+                    .padding(bottom = 8.dp)
+                    .align(Alignment.CenterHorizontally)
             )
-        } else {
+            Divider(
+                color = Color.Gray.copy(alpha = 0.5f),
+                thickness = 1.dp,
+                modifier = Modifier
+                    .padding(bottom = 16.dp)
+                    .alpha(0.5f)
+            )
+
             when {
+                isLoading -> {
+                    Text(
+                        text = "Loading...",
+                        fontSize = 18.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                }
                 errorMessage != null -> {
                     Text(
                         text = errorMessage!!,
                         fontSize = 18.sp,
                         color = Color.Red,
-                        modifier = Modifier.align(Alignment.Center)
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
                 }
                 requests.isEmpty() -> {
@@ -107,54 +137,31 @@ fun ManagerRequests(context: Context) {
                         text = "No requests available",
                         fontSize = 18.sp,
                         color = Color.Gray,
-                        modifier = Modifier.align(Alignment.Center)
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
                 }
                 else -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color.White, RoundedCornerShape(35.dp))
-                            .padding(16.dp)
-                            .verticalScroll(rememberScrollState())
-                    ) {
-                        Text(
-                            text = "Requests",
-                            fontSize = 35.sp,
-                            color = Color.Black,
-                            modifier = Modifier
-                                .padding(bottom = 8.dp)
-                                .align(Alignment.CenterHorizontally)
-                        )
-                        Divider(
-                            color = Color.Gray.copy(alpha = 0.5f),
-                            thickness = 1.dp,
-                            modifier = Modifier
-                                .padding(bottom = 16.dp)
-                                .alpha(0.5f)
-                        )
-                        requests.forEachIndexed { index, request ->
-                            if (token != null) {
-                                ManagerRequestItem(
-                                    request = request,
-                                    token = token,
-                                    context = context,
-                                    onStatusChanged = { updatedRequest ->
-                                        requests = requests.map {
-                                            if (it.id == updatedRequest.id) updatedRequest else it
-                                        }
+                    requests.forEachIndexed { index, request ->
+                        if (token != null) {
+                            ManagerRequestItem(
+                                request = request,
+                                token = token,
+                                context = context,
+                                onStatusChanged = { updatedRequest ->
+                                    requests = requests.map {
+                                        if (it.id == updatedRequest.id) updatedRequest else it
                                     }
-                                )
-                            }
-                            if (index < requests.size - 1) {
-                                Divider(
-                                    modifier = Modifier
-                                        .padding(vertical = 8.dp)
-                                        .alpha(0.5f),
-                                    thickness = 1.dp,
-                                    color = Color.Gray.copy(alpha = 0.5f)
-                                )
-                            }
+                                }
+                            )
+                        }
+                        if (index < requests.size - 1) {
+                            Divider(
+                                modifier = Modifier
+                                    .padding(vertical = 8.dp)
+                                    .alpha(0.5f),
+                                thickness = 1.dp,
+                                color = Color.Gray.copy(alpha = 0.5f)
+                            )
                         }
                     }
                 }
@@ -162,6 +169,7 @@ fun ManagerRequests(context: Context) {
         }
     }
 }
+
 
 @Composable
 fun ManagerRequestItem(
