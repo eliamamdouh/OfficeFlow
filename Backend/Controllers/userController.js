@@ -9,46 +9,55 @@ const createUser = async (req, res) => {
   try {
     const { Fullname, username, password, email, role } = req.body;
 
-        if (!username || !password || !email) {
-            return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Username, password, and email are required' });
-        }
-
-        const usersCollectionRef = db.collection('Users');
-        const existingUserQuery = await usersCollectionRef.where('email', '==', email).get();
-
-        if (!existingUserQuery.empty) {
-            return res.status(StatusCodes.BAD_REQUEST).json({ message: 'User already exists' });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const userDocRef = usersCollectionRef.doc(); // Auto-generate a document ID
-
-        const createdAt = new Date().toISOString();
-        const updatedAt = createdAt;
-        const projectId = 0;
-        const schedule = await generateScheduleForProject(projectId);
-
-        const userData = {
-            Fullname,
-            username,
-            email,
-            role,
-            password: hashedPassword,
-            createdAt,
-            updatedAt,
-            schedule,
-            projectId
-        };
-
-
-        await userDocRef.set(userData);
-
-        res.status(StatusCodes.CREATED).json({ message: 'User created successfully', userId: userDocRef.id });
-    } catch (error) {
-        console.error("Error creating user:", error);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Server error', error: error.message });
+    if (!username || !password || !email) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: "Username, password, and email are required" });
     }
+
+    const usersCollectionRef = db.collection("Users");
+    const existingUserQuery = await usersCollectionRef
+      .where("email", "==", email)
+      .get();
+
+    if (!existingUserQuery.empty) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: "User already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const userDocRef = usersCollectionRef.doc(); // Auto-generate a document ID
+
+    const createdAt = new Date().toISOString();
+    const updatedAt = createdAt;
+    const projectId = 0;
+    const schedule = await generateScheduleForProject(projectId);
+
+    const userData = {
+      Fullname,
+      username,
+      email,
+      role,
+      password: hashedPassword,
+      createdAt,
+      updatedAt,
+      schedule,
+      projectId,
+    };
+
+    await userDocRef.set(userData);
+
+    res
+      .status(StatusCodes.CREATED)
+      .json({ message: "User created successfully", userId: userDocRef.id });
+  } catch (error) {
+    console.error("Error creating user:", error);
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: "Server error", error: error.message });
+  }
 };
 
 const generateScheduleForProject = async (projectId) => {
@@ -165,23 +174,23 @@ const incrementOfficeCapacity = async (date) => {
   });
 };
 const generateUsers = async (numUsers) => {
-    for (let i = 0; i < numUsers; i++) {
-        const req = {
-            body: {
-                Fullname: `SuperManager`,
-                username: `SuperManager`,
-                password: `password@123`,
-                email: `SuperManager@Deloitte.com`,
-                role: 'Manager',
-            }
-        };
-        const res = {
-            status: (statusCode) => ({
-                json: (data) => console.log(`Status: ${statusCode}`, data)
-            })
-        };
-        await createUser(req, res);
-    }
+  for (let i = 0; i < numUsers; i++) {
+    const req = {
+      body: {
+        Fullname: `SuperManager`,
+        username: `SuperManager`,
+        password: `password@123`,
+        email: `SuperManager@Deloitte.com`,
+        role: "Manager",
+      },
+    };
+    const res = {
+      status: (statusCode) => ({
+        json: (data) => console.log(`Status: ${statusCode}`, data),
+      }),
+    };
+    await createUser(req, res);
+  }
 };
 
 // generateUsers(1); // Adjust the number as needed
@@ -325,12 +334,14 @@ const countUsersByRole = async () => {
 // Example usage
 // countUsersByRole();
 
-const getTeamMembers = async (req, res) => {
+const countUsersByLocationOnCurrentDate = async (req, res) => {
   try {
     const { authorization } = req.headers;
 
     if (!authorization) {
-      return res.status(StatusCodes.BAD_REQUEST).send("Authorization header is missing");
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .send("Authorization header is missing");
     }
 
     const token = authorization.split(" ")[1];
@@ -342,6 +353,94 @@ const getTeamMembers = async (req, res) => {
 
     const managerId = decoded.userId;
 
+    // Retrieve the manager's document based on managerId
+    const userDoc = await db.collection("Users").doc(managerId).get();
+
+    if (!userDoc.exists) {
+      return res.status(StatusCodes.NOT_FOUND).send("User not found");
+    }
+
+    const usersCollectionRef = db.collection("Users");
+    const snapshot = await usersCollectionRef.get();
+
+    // Get today's date and day of the week
+    const today = new Date().toISOString().split("T")[0];
+    const todayDayOfWeek = new Date().getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+
+    // Check if today is a weekend (Saturday or Sunday)
+    if (todayDayOfWeek === 0 || todayDayOfWeek === 6) {
+      console.log("No one is working today because it's the weekend.");
+      return res
+        .status(StatusCodes.OK)
+        .send("No one is working today because it's the weekend.");
+    }
+
+    let homeCount = 0;
+    let officeCount = 0;
+
+    snapshot.forEach((doc) => {
+      const userData = doc.data();
+      const schedule = userData.schedule;
+
+      // Loop through the schedule to find today's schedule
+      for (const week in schedule) {
+        const days = schedule[week];
+        const todaySchedule = days.find((day) => day.day === today);
+
+        if (todaySchedule) {
+          if (todaySchedule.location === "Home") {
+            homeCount++;
+          } else if (todaySchedule.location === "Office") {
+            officeCount++;
+          }
+          break; // Exit loop once today's schedule is found
+        }
+      }
+    });
+
+    // Get the office capacity for today
+    const officeCapacityDocRef = db.collection("OfficeCapacity").doc(today);
+    const officeCapacityDoc = await officeCapacityDocRef.get();
+    const officeCapacity = officeCapacityDoc.exists
+      ? officeCapacityDoc.data().count
+      : 0;
+
+    console.log(`Number of users working from Home today: ${homeCount}`);
+    console.log(`Number of users working from Office today: ${officeCount}`);
+    console.log(`Office capacity for today: ${officeCapacity}`);
+
+    return res
+      .status(StatusCodes.OK)
+      .json({ homeCount, officeCount, officeCapacity });
+  } catch (error) {
+    console.error("Error counting users by location:", error);
+    return res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .send("Internal server error");
+  }
+};
+
+// Example usage
+// countUsersByLocationOnCurrentDate();
+
+const getTeamMembers = async (req, res) => {
+  try {
+    const { authorization } = req.headers;
+
+    if (!authorization) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .send("Authorization header is missing");
+    }
+
+    const token = authorization.split(" ")[1];
+    if (!token) {
+      return res.status(StatusCodes.UNAUTHORIZED).send("No token provided");
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+
+    const managerId = decoded.userId;
 
     // Retrieve the manager's document based on managerId
     const userDoc = await db.collection("Users").doc(managerId).get();
@@ -353,14 +452,23 @@ const getTeamMembers = async (req, res) => {
     const userData = userDoc.data();
     const projectId = userData.projectId;
 
-    // Get all users with the same projectId
-    const usersSnapshot = await db
-      .collection("Users")
-      .where("projectId", "==", projectId)
-      .get();
+    let usersSnapshot;
+
+    // If the username is SuperManager, retrieve all users
+    if (userData.username === "SuperManager") { // change later to role
+      usersSnapshot = await db.collection("Users").get();
+    } else {
+      // Get all users with the same projectId
+      usersSnapshot = await db
+        .collection("Users")
+        .where("projectId", "==", projectId)
+        .get();
+    }
 
     if (usersSnapshot.empty) {
-      return res.status(StatusCodes.NOT_FOUND).send("No team members found for this project");
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .send("No team members found for this project");
     }
 
     // Prepare a list to store team members and their schedules
@@ -383,8 +491,16 @@ const getTeamMembers = async (req, res) => {
     return res.status(StatusCodes.OK).json({ teamMembers });
   } catch (error) {
     console.error("Error fetching team members:", error);
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send("Internal server error");
+    return res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .send("Internal server error");
   }
 };
 
-module.exports = { createUser, login, getUserInfo, getTeamMembers };
+module.exports = {
+  createUser,
+  login,
+  getUserInfo,
+  getTeamMembers,
+  countUsersByLocationOnCurrentDate,
+};

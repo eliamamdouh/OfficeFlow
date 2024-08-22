@@ -71,7 +71,7 @@ fun ScheduleScreen(context: Context, navController: NavController) {
     var selectedTeamMemberId by remember { mutableStateOf<String?>(null) }
     var teamMembers by remember { mutableStateOf<List<TeamMember>>(emptyList()) }
     var showPopup by remember { mutableStateOf(false) }
-    var schedule by remember { mutableStateOf<Map<String, List<ScheduleDay>>?>(null) }
+    var schedule by remember { mutableStateOf<Map<String, Map<String, List<ScheduleDay>>>?>(null) }
     var showSuperManagerOptions by remember { mutableStateOf(false) }
     var showManagerOptions by remember { mutableStateOf(false) }
     var selectedDate by remember { mutableStateOf<String?>(null) }
@@ -113,6 +113,36 @@ fun ScheduleScreen(context: Context, navController: NavController) {
                     println("Failed to fetch team members: ${t.message}")
                 }
             })
+        }
+    }
+
+    // Fetch the selected team member's schedule
+    if (selectedTeamMemberId != null) {
+        // Fetch the selected team member's schedule
+        LaunchedEffect(selectedTeamMemberId) {
+            Log.d("ScheduleScreen", "Employee ID: $selectedTeamMemberId")
+            selectedTeamMemberId?.let {
+                val call = RetrofitClient.apiService.viewScheduleForTeamMembers(
+                    "Bearer $token",
+                    selectedTeamMemberId!!
+                )
+                call.enqueue(object : Callback<ScheduleResponse> {
+                    override fun onResponse(
+                        call: Call<ScheduleResponse>,
+                        response: Response<ScheduleResponse>
+                    ) {
+                        if (response.isSuccessful) {
+                            schedule = response.body()?.schedule
+                        } else {
+                            println("Error fetching schedule: ${response.errorBody()?.string()}")
+                        }
+                    }
+
+                    override fun onFailure(call: Call<ScheduleResponse>, t: Throwable) {
+                        println("Failed to fetch schedule: ${t.message}")
+                    }
+                })
+            }
         }
     }
 
@@ -190,7 +220,7 @@ fun ScheduleScreen(context: Context, navController: NavController) {
                                         )
                                         Spacer(modifier = Modifier.height(16.dp))
                                         Text(
-                                            "Days from Work:", fontSize = 16.sp, fontWeight = FontWeight.Bold
+                                            "Days from Office:", fontSize = 16.sp, fontWeight = FontWeight.Bold
                                         )
                                         OutlinedTextField(
                                             value = "",

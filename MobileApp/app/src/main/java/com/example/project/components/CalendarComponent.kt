@@ -40,7 +40,6 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-
 @Composable
 fun CalendarContent(
     context: Context,
@@ -53,46 +52,55 @@ fun CalendarContent(
     restrictDateSelection: Boolean = false,
     isDialog: Boolean = false
 ) {
-    var schedule by remember { mutableStateOf<Map<String, List<ScheduleDay>>?>(null) }
+    var currentMonth by remember { mutableStateOf(YearMonth.now()) }
+    var schedule by remember { mutableStateOf<Map<String, Map<String, List<ScheduleDay>>>?>(null) }
+    var nextMonthSchedule by remember { mutableStateOf<Map<String, Map<String, List<ScheduleDay>>>?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val token = PreferencesManager.getTokenFromPreferences(context)
+    val loggedInUserId = token?.let { parseUserIdFromToken(it) }
 
 
     // Fetch schedule data
-    LaunchedEffect(userId) {
-        println("Extracted User ID in Component: $userId")
-        userId.let { RetrofitClient.apiService.viewSchedule("Bearer $token") }
-            .enqueue(object : Callback<ScheduleResponse> {
-                override fun onResponse(
-                    call: Call<ScheduleResponse>,
-                    response: Response<ScheduleResponse>
-                ) {
-                    if (response.isSuccessful) {
-                        schedule = response.body()?.schedule
-                        println("Schedule fetched successfully: $schedule")
-                    } else {
-                        errorMessage = "Error fetching schedule: ${response.errorBody()?.string()}"
-                        println(errorMessage)
+    fun fetchSchedule(yearMonth: YearMonth) {
+        RetrofitClient.apiService.viewSchedule("Bearer $token").enqueue(object : Callback<ScheduleResponse> {
+            override fun onResponse(
+                call: Call<ScheduleResponse>,
+                response: Response<ScheduleResponse>
+            ) {
+                if (response.isSuccessful) {
+                    val fetchedSchedule = response.body()?.schedule
+                    if (yearMonth == currentMonth) {
+                        schedule = fetchedSchedule
+                    } else if (yearMonth == currentMonth.plusMonths(1)) {
+                        nextMonthSchedule = fetchedSchedule
                     }
+                } else {
+                    errorMessage = "Error fetching schedule: ${response.errorBody()?.string()}"
                 }
+            }
 
-                override fun onFailure(call: Call<ScheduleResponse>, t: Throwable) {
-                    errorMessage = "Failed to fetch schedule: ${t.message}"
-                    println(errorMessage)
-                }
-            })
+            override fun onFailure(call: Call<ScheduleResponse>, t: Throwable) {
+                errorMessage = "Failed to fetch schedule: ${t.message}"
+            }
+        })
     }
 
-    val currentMonth = YearMonth.now()
+    // Initial fetch for the current month and next month
+    LaunchedEffect(userId) {
+        fetchSchedule(currentMonth)
+        fetchSchedule(currentMonth.plusMonths(1))
+
+    }
+
     val daysOfWeek = listOf(
         DayOfWeek.SUNDAY, DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
         DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY
     )
 
     val today = LocalDate.now()
-    val nextMonth = YearMonth.now().plusMonths(1)
+    val nextMonth = currentMonth.plusMonths(1)
     val isCurrentMonth = currentMonth == YearMonth.now()
-    val isNextMonth = currentMonth == nextMonth
+    val isNextMonth = nextMonth == YearMonth.now()
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -105,7 +113,12 @@ fun CalendarContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (!isDialog || (isDialog && !isCurrentMonth)) {
-                    IconButton(onClick = { onPreviousMonth?.invoke() }) {
+                    IconButton(onClick = {
+                        currentMonth = currentMonth.minusMonths(1)
+                        fetchSchedule(currentMonth)
+                        fetchSchedule(currentMonth.plusMonths(1))
+                        onPreviousMonth?.invoke()
+                    }) {
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowLeft,
                             contentDescription = "Previous Month",
@@ -122,7 +135,12 @@ fun CalendarContent(
                 )
 
                 if (!isDialog || (isDialog && !isNextMonth)) {
-                    IconButton(onClick = { onNextMonth?.invoke() }) {
+                    IconButton(onClick = {
+                        currentMonth = currentMonth.plusMonths(1)
+                        fetchSchedule(currentMonth)
+                        fetchSchedule(currentMonth.plusMonths(1))
+                        onNextMonth?.invoke()
+                    }) {
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowRight,
                             contentDescription = "Next Month",
@@ -161,14 +179,16 @@ fun CalendarContent(
                     val dayOfMonth = week * 7 + day - offset
                     val date = if (dayOfMonth in 1..totalDaysInMonth) currentMonth.atDay(dayOfMonth) else null
 
-                    val isWeekend = date?.dayOfWeek == DayOfWeek.SATURDAY || date?.dayOfWeek == DayOfWeek.SUNDAY
-                    val isWorkFromHome = schedule?.values?.flatten()?.any { it.day == date.toString() && it.location == "Home" } == true
-                    val isWorkFromOffice = schedule?.values?.flatten()?.any { it.day == date.toString() && it.location == "Office" } == true
-
-                    // Debug print to check schedule data
-                    if (date != null) {
-                        println("Date: $date, Home: $isWorkFromHome, Office: $isWorkFromOffice, Schedule: ${schedule?.get(date.toString())}")
+                    // Flatten the schedule data correctly
+                    val flattenedSchedule = when {
+                        date?.month == currentMonth.month -> schedule?.values?.flatMap { it.values.flatten() }
+                        date?.month == nextMonth.month -> nextMonthSchedule?.values?.flatMap { it.values.flatten() }
+                        else -> null
                     }
+
+                    val isWeekend = date?.dayOfWeek == DayOfWeek.SATURDAY || date?.dayOfWeek == DayOfWeek.SUNDAY
+                    val isWorkFromHome = flattenedSchedule?.any { it.day == date.toString() && it.location == "Home" } == true
+                    val isWorkFromOffice = flattenedSchedule?.any { it.day == date.toString() && it.location == "Office" } == true
 
                     val textColor = when {
                         isWorkFromHome -> DarkGrassGreen2
@@ -225,6 +245,7 @@ fun CalendarContent(
         }
     }
 }
+
 @Composable
 fun CalendarView(context: Context, userId: String?) {
     userId?.let {

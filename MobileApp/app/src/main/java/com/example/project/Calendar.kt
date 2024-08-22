@@ -342,8 +342,6 @@ fun HomeScreen(context: Context, navController: NavController) {
                     ) {
                         Text(text = "Submit", fontSize = 16.sp, color = Color.White)
                     }
-
-
                 }
             }
         }
