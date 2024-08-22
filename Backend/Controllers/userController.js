@@ -270,15 +270,12 @@ const getUserInfo = async (req, res) => {
     const currentDate = new Date().toISOString().split("T")[0];
 
     let todaySchedule = null;
-    Object.keys(userData.schedule).forEach((month) => {
-      const monthSchedule = userData.schedule[month];
-      Object.keys(monthSchedule).forEach((week) => {
-        const weekSchedule = monthSchedule[week];
-        weekSchedule.forEach((day) => {
-          if (day.day === currentDate) {
-            todaySchedule = day.location;
-          }
-        });
+    Object.keys(userData.schedule).forEach((week) => {
+      const weekSchedule = userData.schedule[week];
+      weekSchedule.forEach((day) => {
+        if (day.day === currentDate) {
+          todaySchedule = day.location;
+        }
       });
     });
 

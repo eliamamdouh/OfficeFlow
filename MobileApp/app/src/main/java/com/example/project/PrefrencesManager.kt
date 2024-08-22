@@ -41,13 +41,6 @@ object PreferencesManager {
         val sharedPreferences: SharedPreferences = context.getSharedPreferences(PREFERENCES_FILE_KEY, Context.MODE_PRIVATE)
         return sharedPreferences.getString(TOKEN_KEY, null)
     }
-
-    fun clearAll(context: Context) {
-        val sharedPreferences = context.getSharedPreferences(PREFERENCES_FILE_KEY, Context.MODE_PRIVATE)
-        val editor = sharedPreferences.edit()
-        editor.clear()
-        editor.apply()
-    }
 }
 
 
