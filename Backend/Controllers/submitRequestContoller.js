@@ -7,13 +7,16 @@ const getLocationForDate = (schedule, date) => {
 
     console.log("Searching for date:", date);  // Log the date being searched for
 
-    Object.keys(schedule).forEach(week => {
-        schedule[week].forEach(day => {
-            console.log(`Checking date ${day.day} in week ${week}`);  // Log the current day being checked
-            if (day.day === date) {
-                location = day.location;
-                console.log(`Match found: ${location} for date ${date}`);
-            }
+    Object.keys(schedule).forEach(month => {
+        const monthSchedule = schedule[month];
+        Object.keys(monthSchedule).forEach(week => {
+            monthSchedule[week].forEach(day => {
+                console.log(`Checking date ${day.day} in week ${week} of month ${month}`);  // Log the current day being checked
+                if (day.day === date) {
+                    location = day.location;
+                    console.log(`Match found: ${location} for date ${date}`);
+                }
+            });
         });
     });
     return location;
