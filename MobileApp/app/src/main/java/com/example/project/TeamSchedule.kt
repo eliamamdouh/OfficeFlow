@@ -82,6 +82,8 @@ fun ScheduleScreen(context: Context, navController: NavController) {
             officeCapacity = fetchOfficeCapacity(date)
         }
     }
+    
+    // Fetch team members for the manager
 
     LaunchedEffect(managerId) {
         managerId?.let {
@@ -108,6 +110,36 @@ fun ScheduleScreen(context: Context, navController: NavController) {
                     println("Failed to fetch team members: ${t.message}")
                 }
             })
+        }
+    }
+
+    // Fetch the selected team member's schedule
+    if (selectedTeamMemberId != null) {
+        // Fetch the selected team member's schedule
+        LaunchedEffect(selectedTeamMemberId) {
+            Log.d("ScheduleScreen", "Employee ID: $selectedTeamMemberId")
+            selectedTeamMemberId?.let {
+                val call = RetrofitClient.apiService.viewScheduleForTeamMembers(
+                    "Bearer $token",
+                    selectedTeamMemberId!!
+                )
+                call.enqueue(object : Callback<ScheduleResponse> {
+                    override fun onResponse(
+                        call: Call<ScheduleResponse>,
+                        response: Response<ScheduleResponse>
+                    ) {
+                        if (response.isSuccessful) {
+                            schedule = response.body()?.schedule
+                        } else {
+                            println("Error fetching schedule: ${response.errorBody()?.string()}")
+                        }
+                    }
+
+                    override fun onFailure(call: Call<ScheduleResponse>, t: Throwable) {
+                        println("Failed to fetch schedule: ${t.message}")
+                    }
+                })
+            }
         }
     }
 

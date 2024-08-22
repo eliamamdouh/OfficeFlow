@@ -57,6 +57,8 @@ fun CalendarContent(
     var nextMonthSchedule by remember { mutableStateOf<Map<String, Map<String, List<ScheduleDay>>>?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val token = PreferencesManager.getTokenFromPreferences(context)
+    val loggedInUserId = token?.let { parseUserIdFromToken(it) }
+
 
     // Fetch schedule data
     fun fetchSchedule(yearMonth: YearMonth) {
@@ -87,6 +89,7 @@ fun CalendarContent(
     LaunchedEffect(userId) {
         fetchSchedule(currentMonth)
         fetchSchedule(currentMonth.plusMonths(1))
+
     }
 
     val daysOfWeek = listOf(

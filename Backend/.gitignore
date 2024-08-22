@@ -9,3 +9,6 @@ Backend/firebase-init.json
 package-lock.json
 yarn.lock
 firebase-init.json
+Dockerfile
+.dockerignore
+
