@@ -57,7 +57,7 @@ fun ScheduleScreen(context: Context, navController: NavController) {
     var selectedTeamMemberId by remember { mutableStateOf<String?>(null) }
     var teamMembers by remember { mutableStateOf<List<TeamMember>>(emptyList()) }
     var showPopup by remember { mutableStateOf(false) }
-    var schedule by remember { mutableStateOf<Map<String, List<ScheduleDay>>?>(null) }
+    var schedule by remember { mutableStateOf<Map<String, Map<String, List<ScheduleDay>>>?>(null) }
     var showSuperManagerOptions by remember { mutableStateOf(false) }
     var showManagerOptions by remember { mutableStateOf(false) }
     var daysFromHome by remember { mutableStateOf("") }
