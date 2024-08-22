@@ -1,15 +1,31 @@
 package com.example.project
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Base64
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -26,9 +42,7 @@ import com.example.project.components.parseUserIdFromToken
 import com.example.project.ui.theme.BackgroundGray
 import com.example.project.ui.theme.DarkGrassGreen2
 import com.example.project.ui.theme.DarkTeal2
-import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.tasks.await
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
@@ -60,9 +74,6 @@ fun ScheduleScreen(context: Context, navController: NavController) {
     var schedule by remember { mutableStateOf<Map<String, Map<String, List<ScheduleDay>>>?>(null) }
     var showSuperManagerOptions by remember { mutableStateOf(false) }
     var showManagerOptions by remember { mutableStateOf(false) }
-    var daysFromHome by remember { mutableStateOf("") }
-    var daysFromWork by remember { mutableStateOf("") }
-    var officeCapacity by remember { mutableStateOf<Int?>(null) }
     var selectedDate by remember { mutableStateOf<String?>(null) }
 
     // User Data
@@ -76,14 +87,6 @@ fun ScheduleScreen(context: Context, navController: NavController) {
             showSuperManagerOptions = true
         }
     }
-
-    LaunchedEffect(selectedDate) {
-        selectedDate?.let { date ->
-            officeCapacity = fetchOfficeCapacity(date)
-        }
-    }
-    
-    // Fetch team members for the manager
 
     LaunchedEffect(managerId) {
         managerId?.let {
@@ -187,14 +190,17 @@ fun ScheduleScreen(context: Context, navController: NavController) {
                             )
 
                             if (showSuperManagerOptions) {
-                                DropdownList(
-                                    itemList = listOf("Super Manager Options"),
-                                    selectedIndex = 0,
-                                    onItemClick = { showManagerOptions = !showManagerOptions },
+                                Button(
+                                    onClick = { showManagerOptions = !showManagerOptions },
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(bottom = 16.dp)
-                                )
+                                        .padding(bottom = 16.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF4CAF50) // Green color for the button
+                                    )
+                                ) {
+                                    Text(text = "Change Schedule Algorithm", color = Color.White)
+                                }
 
                                 if (showManagerOptions) {
                                     Column(
@@ -207,8 +213,8 @@ fun ScheduleScreen(context: Context, navController: NavController) {
                                             "Days from Home:", fontSize = 16.sp, fontWeight = FontWeight.Bold
                                         )
                                         OutlinedTextField(
-                                            value = daysFromHome,
-                                            onValueChange = { daysFromHome = it },
+                                            value = "",
+                                            onValueChange = { /* Handle input */ },
                                             label = { Text("Enter number of days") },
                                             modifier = Modifier.fillMaxWidth()
                                         )
@@ -217,37 +223,22 @@ fun ScheduleScreen(context: Context, navController: NavController) {
                                             "Days from Office:", fontSize = 16.sp, fontWeight = FontWeight.Bold
                                         )
                                         OutlinedTextField(
-                                            value = daysFromWork,
-                                            onValueChange = { daysFromWork = it },
+                                            value = "",
+                                            onValueChange = { /* Handle input */ },
                                             label = { Text("Enter number of days") },
                                             modifier = Modifier.fillMaxWidth()
                                         )
                                         Spacer(modifier = Modifier.height(16.dp))
                                         Button(
                                             onClick = { /* Handle save changes logic */ },
-                                            modifier = Modifier.align(Alignment.CenterHorizontally)
-                                        ) {
-                                            Text("Save Changes")
-                                        }
-
-                                        // Display office capacity
-                                        Box(
                                             modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(top = 16.dp)
-                                                .background(
-                                                    color = Color(0xFFD6D6D6),
-                                                    shape = RoundedCornerShape(8.dp)
-                                                )
-                                                .padding(16.dp)
-                                        ) {
-                                            Text(
-                                                text = "Office Capacity Today: ${officeCapacity ?: "Loading..."} people",
-                                                fontSize = 16.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color.Black,
-                                                modifier = Modifier.align(Alignment.Center)
+                                                .align(Alignment.CenterHorizontally)
+                                                .padding(vertical = 8.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = Color(0xFF4CAF50) // Green color for the button
                                             )
+                                        ) {
+                                            Text("Save Changes", color = Color.White) // White text color
                                         }
                                     }
                                 }
@@ -312,24 +303,3 @@ fun ScheduleScreen(context: Context, navController: NavController) {
         }
     }
 }
-
-
-// Firebase Firestore instance
-@SuppressLint("StaticFieldLeak")
-val db = FirebaseFirestore.getInstance()
-
-// Fetch office capacity directly from Firestore
-suspend fun fetchOfficeCapacity(date: String): Int? {
-    return try {
-        val capacityDocRef = db.collection("OfficeCapacity").document(date).get().await()
-        if (capacityDocRef.exists()) {
-            capacityDocRef.getLong("count")?.toInt()
-        } else {
-            0 // Return 0 if the document doesn't exist, meaning no one is in the office
-        }
-    } catch (e: Exception) {
-        Log.e("fetchOfficeCapacity", "Error fetching capacity: ${e.message}")
-        null
-    }
-}
-

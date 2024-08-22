@@ -29,6 +29,7 @@ fun AppNavigation(apiService: ApiService, modifier: Modifier = Modifier) {
                 when (userRole) {
                     "Employee" -> BottomNavBar(navController)
                     "Manager" -> ManagerNavBar(navController)
+                    "SuperManager" -> SuperManagerNavBar(navController)
                     else -> {}
                 }
             }
@@ -55,6 +56,7 @@ fun AppNavigation(apiService: ApiService, modifier: Modifier = Modifier) {
             composable("page4") { NotificationPage(navController) }
             composable("page5") { ManagerRequests(navController.context) }
             composable("page6") { ScheduleScreen(navController.context, navController) }
+            composable("page7") { AnalyticsScreen(navController)}//give navcontroller.
         }
     }
 }
