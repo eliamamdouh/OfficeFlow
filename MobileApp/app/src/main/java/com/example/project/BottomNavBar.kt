@@ -50,6 +50,21 @@ fun ManagerNavBar(navController: NavHostController) {
 }
 
 @Composable
+fun SuperManagerNavBar(navController: NavHostController) {
+    val navItems = listOf(
+        NavBarItem("page1", R.drawable.graynotes, R.drawable.greennotes),
+        NavBarItem("page2", R.drawable.graycomment, R.drawable.greencomment),
+        NavBarItem("page6", R.drawable.mgrgray, R.drawable.mgrgreen),
+        NavBarItem("page5", R.drawable.graymessagealertsquare, R.drawable.greenmessagealertsquare),
+        NavBarItem("page4", R.drawable.graybell, R.drawable.greenbell),
+        NavBarItem("page7", R.drawable.analyticsgray, R.drawable.analyticsgreen)
+    )
+
+    CommonNavBar(navController = navController, navItems = navItems)
+}
+
+
+@Composable
 fun CommonNavBar(navController: NavHostController, navItems: List<NavBarItem>) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route

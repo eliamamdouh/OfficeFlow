@@ -54,6 +54,8 @@ private fun fetchRequests(token: String, context: Context, onResult: (List<Reque
             }
         })
 }
+
+
 @Composable
 fun ManagerRequests(context: Context) {
     var requests by remember { mutableStateOf(emptyList<Request>()) }
@@ -65,12 +67,12 @@ fun ManagerRequests(context: Context) {
 
     // Fetch requests when the composable is first launched
     LaunchedEffect(Unit) {
-        token?.let {
-            fetchRequests(it, context) { fetchedRequests ->
+        if (token != null) {
+            fetchRequests(token, context) { fetchedRequests ->
                 requests = fetchedRequests
                 isLoading = false
             }
-        } ?: run {
+        } else {
             isLoading = false
             errorMessage = "No token found"
         }
@@ -90,55 +92,70 @@ fun ManagerRequests(context: Context) {
                 color = Color.Gray,
                 modifier = Modifier.align(Alignment.Center)
             )
-        } else if (errorMessage != null) {
-            Text(
-                text = errorMessage!!,
-                fontSize = 18.sp,
-                color = Color.Red,
-                modifier = Modifier.align(Alignment.Center)
-            )
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White, RoundedCornerShape(35.dp))
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState()) // Enable vertical scrolling
-            ) {
-                Text(
-                    text = "Requests",
-                    fontSize = 35.sp,
-                    color = Color.Black,
-                    modifier = Modifier
-                        .padding(bottom = 8.dp)
-                        .align(Alignment.CenterHorizontally)
-                )
-                Divider(
-                    color = Color.Gray.copy(alpha = 0.5f),
-                    thickness = 1.dp,
-                    modifier = Modifier
-                        .padding(bottom = 16.dp)
-                        .alpha(0.5f)
-                )
-                requests.forEachIndexed { index, request ->
-                    ManagerRequestItem(
-                        request = request,
-                        token = token!!,  // Pass the token to the composable
-                        context = context,
-                        onStatusChanged = { updatedRequest ->
-                            requests = requests.map {
-                                if (it.id == updatedRequest.id) updatedRequest else it
+            when {
+                errorMessage != null -> {
+                    Text(
+                        text = errorMessage!!,
+                        fontSize = 18.sp,
+                        color = Color.Red,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+                requests.isEmpty() -> {
+                    Text(
+                        text = "No requests available",
+                        fontSize = 18.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+                else -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.White, RoundedCornerShape(35.dp))
+                            .padding(16.dp)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        Text(
+                            text = "Requests",
+                            fontSize = 35.sp,
+                            color = Color.Black,
+                            modifier = Modifier
+                                .padding(bottom = 8.dp)
+                                .align(Alignment.CenterHorizontally)
+                        )
+                        Divider(
+                            color = Color.Gray.copy(alpha = 0.5f),
+                            thickness = 1.dp,
+                            modifier = Modifier
+                                .padding(bottom = 16.dp)
+                                .alpha(0.5f)
+                        )
+                        requests.forEachIndexed { index, request ->
+                            if (token != null) {
+                                ManagerRequestItem(
+                                    request = request,
+                                    token = token,
+                                    context = context,
+                                    onStatusChanged = { updatedRequest ->
+                                        requests = requests.map {
+                                            if (it.id == updatedRequest.id) updatedRequest else it
+                                        }
+                                    }
+                                )
+                            }
+                            if (index < requests.size - 1) {
+                                Divider(
+                                    modifier = Modifier
+                                        .padding(vertical = 8.dp)
+                                        .alpha(0.5f),
+                                    thickness = 1.dp,
+                                    color = Color.Gray.copy(alpha = 0.5f)
+                                )
                             }
                         }
-                    )
-                    if (index < requests.size - 1) {
-                        Divider(
-                            modifier = Modifier
-                                .padding(vertical = 8.dp)
-                                .alpha(0.5f),
-                            thickness = 1.dp,
-                            color = Color.Gray.copy(alpha = 0.5f)
-                        )
                     }
                 }
             }
