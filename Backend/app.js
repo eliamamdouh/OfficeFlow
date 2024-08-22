@@ -23,7 +23,7 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-app.get("/getTeamMemers", getTeamMembers);
+app.get("/getTeamMembers", getTeamMembers);
 app.get("/changeSchedule", changeSchedule);
 app.get("/api/viewNotifications", viewNotifications);
 app.get("/countUsers", countUsersByLocationOnCurrentDate);

@@ -55,7 +55,8 @@ data class TeamMember(
     val userId: String,
     val name: String,
     val role: String,
-    val schedules: Map<String, List<ScheduleDay>>
+    val schedules: Map<String, Map<String, List<ScheduleDay>>>
+
 )
 data class Request(
     val id: String,
