@@ -16,3 +16,6 @@ val DarkTeal2 = Color(0xFF036B80)
 //val DarkGrassGreen = Color(0xFF006400)
 val DarkGrassGreen2 = Color(0xFF2C8431)
 val BackgroundGray = Color(0xFFF6F6F6)
+val darkGreen2 = Color(0xFF5CB373)
+val placeholderBackground2 = Color(0xFFBDBDBD)
+val lighterGray2 = Color(0xFFEBEBEB) // Lighter grey
