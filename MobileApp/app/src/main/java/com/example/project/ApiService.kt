@@ -83,6 +83,16 @@ data class CountUsersResponse(
     val officeCapacity: Int
 )
 
+data class GenerateScheduleRequest(
+    val oddWeekOfficeDays: String,
+    val evenWeekOfficeDays: String
+)
+
+data class GenerateScheduleResponse(
+    val message: String
+)
+
+
 data class CountRequestsResponse(
     val totalRequests: Int,
     val acceptedCount: Int,
@@ -92,6 +102,7 @@ data class CountRequestsResponse(
     val rejectedPercentage: String,
     val pendingPercentage: String
 )
+
 
 
 interface ApiService {
@@ -155,6 +166,14 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body requestId: RequestId
     ): Call<Void>
+
+    @POST("users/generate-dynamicSchedule")
+    fun generateDynamicSchedule(
+        @Header("Authorization") token: String,
+        @Body request: GenerateScheduleRequest
+    ): Call<GenerateScheduleResponse>
+
+
 }
 
 
