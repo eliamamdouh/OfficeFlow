@@ -6,114 +6,100 @@ const { StatusCodes } = require('http-status-codes');
 
 
 const generateDynamicSchedule = async (req, res) => {
-    try {
-        const { authorization } = req.headers;
-        if (!authorization) {
-            return res.status(StatusCodes.BAD_REQUEST).send('Authorization header is missing');
-        }
-        const token = authorization.split(' ')[1];
-        if (!token) {
-            return res.status(StatusCodes.UNAUTHORIZED).send('No token provided');
-        }
-        let decoded;
-        try {
-            decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-        } catch (error) {
-            if (error.name === 'TokenExpiredError') {
-                return res.status(StatusCodes.UNAUTHORIZED).json({
-                    message: 'Token expired'
-                });
-            }
-            throw error;
-        }
+  try {
+      const { authorization } = req.headers;
+      if (!authorization) {
+          return res.status(StatusCodes.BAD_REQUEST).send('Authorization header is missing');
+      }
+      const token = authorization.split(' ')[1];
+      if (!token) {
+          return res.status(StatusCodes.UNAUTHORIZED).send('No token provided');
+      }
+      let decoded;
+      try {
+          decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+      } catch (error) {
+          if (error.name === 'TokenExpiredError') {
+              return res.status(StatusCodes.UNAUTHORIZED).json({
+                  message: 'Token expired'
+              });
+          }
+          throw error;
+      }
 
-        const managerId = decoded.userId;
-        const managerDoc = await db.collection('Users').doc(managerId).get();
+      const managerId = decoded.userId;
+      const managerDoc = await db.collection('Users').doc(managerId).get();
 
-        if (!managerDoc.exists) {
-            return res.status(StatusCodes.NOT_FOUND).send('Manager not found');
-        }
+      if (!managerDoc.exists) {
+          return res.status(StatusCodes.NOT_FOUND).send('Manager not found');
+      }
 
-        const managerData = managerDoc.data();
+      const managerData = managerDoc.data();
 
-        if (managerData.username !== 'SuperManager' && managerData.email !== 'SuperManager@Deloitte.com') {
-            return res.status(StatusCodes.FORBIDDEN).json({
-                message: 'Only the Super Manager can generate dynamic schedules'
-            });
-        }
+      if (managerData.username !== 'SuperManager' && managerData.email !== 'SuperManager@Deloitte.com') {
+          return res.status(StatusCodes.FORBIDDEN).json({
+              message: 'Only the Super Manager can generate dynamic schedules'
+          });
+      }
 
-        const { oddWeekOfficeDays, evenWeekOfficeDays } = req.body;
-        if (!oddWeekOfficeDays || !evenWeekOfficeDays) {
-            return res.status(StatusCodes.BAD_REQUEST).send('Missing number of office days for odd or even weeks');
-        }
+      const { oddWeekOfficeDays, evenWeekOfficeDays } = req.body;
+      if (!oddWeekOfficeDays || !evenWeekOfficeDays) {
+          return res.status(StatusCodes.BAD_REQUEST).send('Missing number of office days for odd or even weeks');
+      }
 
-        // Determine if the schedule should be for the next month
-        const currentDate = new Date();
-        let year = currentDate.getFullYear();
-        let month = currentDate.getMonth(); // 0-based, so 7 = August
-        
-//comment if this month
-        if (currentDate.getDate() !== 1) {
-            // If it's not the first day of the month, generate the schedule for the next month
-            month += 1;
-            if (month > 11) {
-                month = 0; // Wrap around to January
-                year += 1;
-            }
-        }
+      // Determine if the schedule should be for the next month
+      const currentDate = new Date();
+      let year = currentDate.getFullYear();
+      let month = currentDate.getMonth(); // 0-based, so 7 = August
 
-        // Generate the schedule for the specified month and year
-        const schedule = await generateAlternatingUserSchedule({
-            year,
-            month,
-            oddWeekOfficeDays,
-            evenWeekOfficeDays,
-            projectId: decoded.projectId,
-        });
+      // //comment if this month
+      // if (currentDate.getDate() !== 1) {
+      //     month += 1;
+      //     if (month > 11) {
+      //         month = 0;
+      //         year += 1;
+      //     }
+      // }
 
-        // Fetch all users from the database
-        const usersSnapshot = await db.collection('Users').get();
-        if (usersSnapshot.empty) {
-            return res.status(StatusCodes.NOT_FOUND).send('No users found in the database');
-        }
+      const schedule = await generateAlternatingUserSchedule({
+          year,
+          month,
+          oddWeekOfficeDays,
+          evenWeekOfficeDays,
+          projectId: decoded.projectId,
+      });
 
-        // Map the generated schedule to all users, appending it to the existing schedule
-        const batch = db.batch();
-        usersSnapshot.forEach((userDoc) => {
-            const userRef = db.collection('Users').doc(userDoc.id);
-            const userSchedule = userDoc.data().schedule || {}; // Fetch the existing schedule
+      const usersSnapshot = await db.collection('Users').get();
+      if (usersSnapshot.empty) {
+          return res.status(StatusCodes.NOT_FOUND).send('No users found in the database');
+      }
 
-            // Create a new month entry in the schedule if it doesn't exist
-            const monthKey = `Month ${month + 1}-${year}`; // Example: Month 8-2024 for August 2024
+      const batch = db.batch();
+      usersSnapshot.forEach((userDoc) => {
+          const userRef = db.collection('Users').doc(userDoc.id);
+          const userSchedule = userDoc.data().schedule || {}; 
 
-            if (!userSchedule[monthKey]) {
-                userSchedule[monthKey] = {};
-            }
+          const monthKey = `Month ${month + 1}-${year}`; 
 
-            // Append the new schedule to the user's existing schedule
-            for (const [week, days] of Object.entries(schedule)) {
-                if (!userSchedule[monthKey][week]) {
-                    userSchedule[monthKey][week] = [];
-                }
-                userSchedule[monthKey][week] = [...userSchedule[monthKey][week], ...days];
-            }
+          // Replace the schedule for the month if it exists
+          userSchedule[monthKey] = schedule;
 
-            batch.update(userRef, { schedule: userSchedule });
-        });
+          batch.update(userRef, { schedule: userSchedule });
+      });
 
-        await batch.commit();
+      await batch.commit();
 
-        return res.status(StatusCodes.OK).json({
-            message: 'Schedule successfully generated and assigned to all employees',
-            schedule: schedule,
-        });
-    } catch (error) {
-        console.error('Error generating dynamic schedule:', error);
-        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
-            message: 'Server error',
-            error: error.message,
-        });
-    }
+      return res.status(StatusCodes.OK).json({
+          message: 'Schedule successfully generated and assigned to all employees',
+          schedule: schedule,
+      });
+  } catch (error) {
+      console.error('Error generating dynamic schedule:', error);
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+          message: 'Server error',
+          error: error.message,
+      });
+  }
 };
 
 const generateAlternatingUserSchedule = async ({ year, month, oddWeekOfficeDays, evenWeekOfficeDays, projectId }) => {

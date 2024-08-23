@@ -3,6 +3,7 @@ package com.example.project
 import android.content.Context
 import android.util.Base64
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -75,6 +76,8 @@ fun ScheduleScreen(context: Context, navController: NavController) {
     var showSuperManagerOptions by remember { mutableStateOf(false) }
     var showManagerOptions by remember { mutableStateOf(false) }
     var selectedDate by remember { mutableStateOf<String?>(null) }
+    var daysFromOfficeInOddWeeks by remember { mutableStateOf("") }
+    var daysFromOfficeInEvenWeeks by remember { mutableStateOf("") }
 
     // User Data
     val token = PreferencesManager.getTokenFromPreferences(context)
@@ -207,30 +210,87 @@ fun ScheduleScreen(context: Context, navController: NavController) {
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .padding(16.dp)
-                                    ) {
-                                        // Fields for Days from Home and Days from Work
+                                    ){
+                                        // Days from Office in Odd Weeks
                                         Text(
-                                            "Days from Home:", fontSize = 16.sp, fontWeight = FontWeight.Bold
+                                            "Days from Office in Odd Weeks:",
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold
                                         )
                                         OutlinedTextField(
-                                            value = "",
-                                            onValueChange = { /* Handle input */ },
+                                            value = daysFromOfficeInOddWeeks,
+                                            onValueChange = { newValue -> daysFromOfficeInOddWeeks = newValue },
                                             label = { Text("Enter number of days") },
                                             modifier = Modifier.fillMaxWidth()
                                         )
+
                                         Spacer(modifier = Modifier.height(16.dp))
+
+                                        // Days from Office in Even Weeks
                                         Text(
-                                            "Days from Office:", fontSize = 16.sp, fontWeight = FontWeight.Bold
+                                            "Days from Office in Even Weeks:",
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold
                                         )
                                         OutlinedTextField(
-                                            value = "",
-                                            onValueChange = { /* Handle input */ },
+                                            value = daysFromOfficeInEvenWeeks,
+                                            onValueChange = { newValue -> daysFromOfficeInEvenWeeks = newValue },
                                             label = { Text("Enter number of days") },
                                             modifier = Modifier.fillMaxWidth()
                                         )
+
                                         Spacer(modifier = Modifier.height(16.dp))
+                                        // Inside the if (showSuperManagerOptions) block
                                         Button(
-                                            onClick = { /* Handle save changes logic */ },
+                                            onClick = {
+                                                // Create a request object for dynamic schedule generation
+                                                val request = GenerateScheduleRequest(
+                                                    oddWeekOfficeDays = daysFromOfficeInOddWeeks,
+                                                    evenWeekOfficeDays = daysFromOfficeInEvenWeeks
+                                                )
+
+                                                if (token != null) {
+                                                    // Log the request details if needed
+                                                    Log.d("DynamicScheduleRequest", "Request: ${request}")
+
+                                                    // Make the API call using Retrofit to generate the dynamic schedule
+                                                    RetrofitClient.apiService.generateDynamicSchedule("Bearer $token", request)
+                                                        .enqueue(object : Callback<GenerateScheduleResponse> {
+                                                            override fun onResponse(call: Call<GenerateScheduleResponse>, response: Response<GenerateScheduleResponse>) {
+                                                                if (response.isSuccessful) {
+                                                                    val dynamicScheduleResponse = response.body()
+                                                                    if (dynamicScheduleResponse != null) {
+                                                                        // Handle successful schedule generation
+                                                                        Toast.makeText(context, "Schedule updated successfully", Toast.LENGTH_LONG).show()
+                                                                    } else {
+                                                                        // Handle null response body
+                                                                        Toast.makeText(context, "Failed to update schedule", Toast.LENGTH_LONG).show()
+                                                                        Log.e("DynamicSchedule", "Response was null")
+                                                                    }
+                                                                } else {
+                                                                    if (response.code() == 401) {
+                                                                        Log.d("respCode:", "$response.code()")
+                                                                        handleTokenExpiration(navController)
+                                                                    } else {
+                                                                        val errorMessage = response.errorBody()?.string() ?: "Failed to update schedule"
+                                                                        Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+                                                                        Log.e("DynamicSchedule", "Update failed: ${response.message()}, Raw error body: $errorMessage")
+                                                                    }
+                                                                }
+                                                            }
+
+                                                            override fun onFailure(call: Call<GenerateScheduleResponse>, t: Throwable) {
+                                                                // Handle API call failure
+                                                                Toast.makeText(context, "Failed to update schedule: ${t.message}", Toast.LENGTH_LONG).show()
+                                                                Log.e("DynamicSchedule", "API call failed: ${t.message}")
+                                                            }
+                                                        })
+                                                } else {
+                                                    // Handle missing token
+                                                    Toast.makeText(context, "Token is missing from SharedPreferences", Toast.LENGTH_LONG).show()
+                                                    Log.e("DynamicSchedule", "Token is missing from SharedPreferences")
+                                                }
+                                            },
                                             modifier = Modifier
                                                 .align(Alignment.CenterHorizontally)
                                                 .padding(vertical = 8.dp),
@@ -240,6 +300,8 @@ fun ScheduleScreen(context: Context, navController: NavController) {
                                         ) {
                                             Text("Save Changes", color = Color.White) // White text color
                                         }
+
+
                                     }
                                 }
                             }
