@@ -83,6 +83,16 @@ data class CountUsersResponse(
     val officeCapacity: Int
 )
 
+data class CountRequestsResponse(
+    val totalRequests: Int,
+    val acceptedCount: Int,
+    val rejectedCount: Int,
+    val pendingCount: Int,
+    val acceptedPercentage: String,
+    val rejectedPercentage: String,
+    val pendingPercentage: String
+)
+
 
 interface ApiService {
     @POST("users/login")
@@ -129,6 +139,9 @@ interface ApiService {
 
     @GET("countUsers")
     fun countUsers(@Header("Authorization") token: String): Call<CountUsersResponse>
+
+    @GET("requests/countRequests")
+    fun countRequests(@Header("Authorization") token: String): Call<CountRequestsResponse>
 
 
     @POST("users/accept-request")
