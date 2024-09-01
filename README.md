@@ -7,6 +7,7 @@ A mobile application that automates work schedules, sends reminders, handles sch
 [![Kotlin](https://img.shields.io/badge/kotlin-%237F52FF.svg?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-%4285F4.svg?style=for-the-badge&logo=JetpackCompose&logoColor=white)](https://www.jetpackcompose.net/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-yellow?style=for-the-badge&logo=JavaScript&logoColor=white)](https://www.javascript.com/)
+[![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/en/)
 [![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=white)](https://www.python.com/)
 [![Firebase](https://img.shields.io/badge/firebase-a08021?style=for-the-badge&logo=firebase&logoColor=white)](https://prettier.io)
 [![ChatGPT API](https://img.shields.io/badge/chatGPT_API-74aa9c?style=for-the-badge&logo=openai&logoColor=white)](https://chatgpt.com)
