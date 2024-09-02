@@ -14,12 +14,23 @@ A mobile application that automates work schedules, sends reminders, handles sch
 [![Git](https://img.shields.io/badge/git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white)](https://git-scm.com)
 [![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.com)
 [![JWT](https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=JSON%20web%20tokens)](https://jwt.io)
+[![Gradle](https://img.shields.io/badge/Gradle-02303A.svg?style=for-the-badge&logo=Gradle&logoColor=white)](https://prettier.io)
+[![NPM](https://img.shields.io/badge/NPM-%23CB3837.svg?style=for-the-badge&logo=npm&logoColor=white)](https://prettier.io)
+[![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)](https://prettier.io)
+[![Nodemon](https://img.shields.io/badge/NODEMON-%23323330.svg?style=for-the-badge&logo=nodemon&logoColor=%BBDEAD)](https://prettier.io)
+[![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)](https://prettier.io)
 [![VSCode](https://custom-icon-badges.demolab.com/badge/-VSCode-blue?style=for-the-badge&logo=vscode-alt&logoColor=white)](https://code.visualstudio.com/)
 [![Android Studio](https://img.shields.io/badge/android%20studio-346ac1?style=for-the-badge&logo=android%20studio&logoColor=white)](https://prettier.io)
 [![Postman](https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white)](https://prettier.io)
+[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://prettier.io)
+[![Microsoft Azure](https://custom-icon-badges.demolab.com/badge/-Microsoft_Azure-0080ff?style=for-the-badge&logo=azure-2&logoColor=white)](https://code.visualstudio.com/)
 [![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)](https://prettier.io)
+[![Figma](https://img.shields.io/badge/figma-%23F24E1E.svg?style=for-the-badge&logo=figma&logoColor=white)](https://www.figma.com/)
+[![Canva](https://img.shields.io/badge/Canva-%2300C4CC.svg?style=for-the-badge&logo=Canva&logoColor=white)](https://www.canva.com/)
 [![Prettier](https://img.shields.io/badge/prettier-1A2C34?style=for-the-badge&logo=prettier&logoColor=F7BA3E)](https://prettier.io)
 [![Stack Overflow](https://img.shields.io/badge/-Stack_Overflow-FE7A16?style=for-the-badge&logo=stack-overflow&logoColor=white)](https://www.stackoverflow.com)
+[![Medium.com](https://img.shields.io/badge/Medium.com-12100E?style=for-the-badge&logo=medium&logoColor=white)](https://medium.com/)
+[![Dev Community](https://img.shields.io/badge/Dev_Community-0A0A0A?style=for-the-badge&logo=dev.to&logoColor=white)](https://dev.to/)
 [![Youtube](https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com)
 
 ## Motivation
@@ -38,7 +49,17 @@ The system has three user types: **_Employee_**, **_Manager_**, and **_Super Man
 
  <summary> Employee features </summary>
 
+- **Schedule Management:**
+  - View personal work schedule with details of days in the office and work-from-home days.
+  - Submit/Cancel schedule change requests between a day in office and a day in home.
+  - Receive notifications about the status of schedule change requests.
 
+- **NLP Chatbot Interaction:**
+  - Use the chatbot to handle schedule change requests in natural language.
+  - Get automated responses to common scheduling questions.
+
+- **Notification Management:**
+  - Receive personalized notifications when schedule change requests are accepted or rejected.
 
 </details>
 
@@ -46,7 +67,28 @@ The system has three user types: **_Employee_**, **_Manager_**, and **_Super Man
 
  <summary> Manager features </summary>
 
+- **Personal Schedule Management:**
+  - View personal work schedule with details of days in the office and work-from-home days.
+  - Submit/Cancel schedule change requests between a day in office and a day in home.
+  - Receive notifications about the status of schedule change requests.
 
+- **Team Schedule Management:**
+  - View and manage the schedules of team members.
+  - Adjust team members' schedules as needed.
+
+- **Request Management:**
+  - Approve or reject schedule change requests from employees within the team.
+  - Submit personal schedule change requests that can be approved or rejected by the Super Manager.
+
+- **NLP Chatbot Interaction:**
+  - Use the chatbot to handle personal chedule change requests.
+  - Get automated responses to common scheduling questions.
+
+- **Notification Management:**
+  - Receive personalized notifications when schedule change requests are accepted or rejected.
+
+- **Dashboard:**
+  - Access a dashboard to view team schedules and manage requests efficiently.
 
 </details>
 
@@ -54,6 +96,60 @@ The system has three user types: **_Employee_**, **_Manager_**, and **_Super Man
 
  <summary> Super Manager features </summary>
 
+- **Personal Schedule Management:**
+  - View personal work schedule with details of days in the office and work-from-home days.
+  - Submit/Cancel schedule change requests between a day in office and a day in home.
+  - Receive notifications about the status of schedule change requests.
 
+- **Global Schedule Management:**
+  - View and manage schedules for all employees and managers in the company.
+  - Adjust company-wide work-from-home and office-day patterns.
+
+- **Request Management:**
+  - Approve or reject schedule change requests from both employees and managers.
+  - Submit personal schedule change requests.
+
+- **NLP Chatbot Interaction:**
+  - Use the chatbot to handle personal schedule change requests.
+  - Get automated responses to common scheduling questions.
+
+- **Sentiment Analysis and Feedback:**
+  - Analyze feedback to improve scheduling processes.
+  - Access analytics on the number of accepted, rejected, and pending requests, as well as the current office occupancy.
+
+- **Dashboard:**
+  - Access a comprehensive dashboard to manage schedules and requests across the entire organization.
+  - View detailed analytics and reports.
 
 </details>
+
+## Installation & Running
+
+To install the project with `npm`, run the following commands in order.
+
+```bash
+> git clone https://github.com/advanced-computer-lab-2023/Code-of-Duty2-Clinic.git
+> cd Backend
+> cd src
+> npm i
+```
+To run the backebnd, run the following command:
+
+```bash
+> node app.js
+```
+
+or this command:
+
+```bash
+> npm run dev
+```
+To run the frontend, you can use android studio UI (run button).
+
+## Authors
+
+- [@OmarAhmedAdel](https://github.com/OmarAhmedAdel)
+- [@eliamamdouh](https://github.com/eliamamdouh)
+- [@sama241](https://github.com/sama241)
+- [@rawanelashmawy](https://github.com/rawanelashmawy)
+- [@Engy13](https://github.com/Engy13)
