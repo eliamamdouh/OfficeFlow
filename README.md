@@ -188,7 +188,7 @@ The system has three user types: **_Employee_**, **_Manager_**, and **_Super Man
 
 </details>
 
-## Installation & Running
+## Installation & Running the App
 
 To install the project with `npm`, run the following commands in order.
 
