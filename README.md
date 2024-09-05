@@ -1,12 +1,16 @@
 # OfficeFlow
 
 <p align="center">
-   <img height="150" src="/Docs/Images/Office Flow.png" align="right">
+   <img height="150" src="/Docs/Images/Deloitte.jpg" align="right">
    <span style="display: inline-block; margin: 0 20px; vertical-align: middle; font-size: 24px;">A service provided by</span>
-   <img height="150" src="/Docs/Images/Deloitte.jpg" align="left">
+   <img height="150" src="/Docs/Images/Office Flow.png" align="left">
 </p>
 
-A mobile application that automates work schedules, sends reminders, handles schedule change requests, and leverages generative AI for enhanced functionality.
+<br> <!-- This adds a line break after the images -->
+
+   A mobile application that automates work schedules, sends notifications, handles schedule change requests, and leverages generative AI for enhanced functionality.
+
+<br>
 
 ## Badges
 
