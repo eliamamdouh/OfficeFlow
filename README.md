@@ -1,5 +1,11 @@
 # OfficeFlow
 
+<p align="center">
+   <img height="150" src="/Docs/Images/Office Flow.png" align="right">
+   <span style="display: inline-block; margin: 0 20px; vertical-align: middle; font-size: 24px;">A service provided by</span>
+   <img height="150" src="/Docs/Images/Deloitte.jpg" align="left">
+</p>
+
 A mobile application that automates work schedules, sends reminders, handles schedule change requests, and leverages generative AI for enhanced functionality.
 
 ## Badges
@@ -18,7 +24,7 @@ A mobile application that automates work schedules, sends reminders, handles sch
 [![NPM](https://img.shields.io/badge/NPM-%23CB3837.svg?style=for-the-badge&logo=npm&logoColor=white)](https://www.npmjs.com/)
 [![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)](https://expressjs.com/)
 [![Nodemon](https://img.shields.io/badge/NODEMON-%23323330.svg?style=for-the-badge&logo=nodemon&logoColor=%BBDEAD)](https://nodemon.io/)
-[![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)]([https://prettier.io](https://flask.palletsprojects.com/))
+[![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)](<[https://prettier.io](https://flask.palletsprojects.com/)>)
 [![VSCode](https://custom-icon-badges.demolab.com/badge/-VSCode-blue?style=for-the-badge&logo=vscode-alt&logoColor=white)](https://code.visualstudio.com/)
 [![Android Studio](https://img.shields.io/badge/android%20studio-346ac1?style=for-the-badge&logo=android%20studio&logoColor=white)](https://developer.android.com/studio)
 [![Postman](https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white)](https://www.postman.com/)
@@ -115,11 +121,13 @@ The system has three user types: **_Employee_**, **_Manager_**, and **_Super Man
  <summary> Employee features </summary>
 
 - **Schedule Management:**
+
   - View personal work schedule with details of days in the office and work-from-home days.
   - Submit/Cancel schedule change requests between a day in office and a day in home.
   - Receive notifications about the status of schedule change requests.
 
 - **NLP Chatbot Interaction:**
+
   - Use the chatbot to handle schedule change requests in natural language.
   - Get automated responses to common scheduling questions.
 
@@ -133,23 +141,28 @@ The system has three user types: **_Employee_**, **_Manager_**, and **_Super Man
  <summary> Manager features </summary>
 
 - **Personal Schedule Management:**
+
   - View personal work schedule with details of days in the office and work-from-home days.
   - Submit/Cancel schedule change requests between a day in office and a day in home.
   - Receive notifications about the status of schedule change requests.
 
 - **Team Schedule Management:**
+
   - View and manage the schedules of team members.
   - Adjust team members' schedules as needed.
 
 - **Request Management:**
+
   - Approve or reject schedule change requests from employees within the team.
   - Submit personal schedule change requests that can be approved or rejected by the Super Manager.
 
 - **NLP Chatbot Interaction:**
+
   - Use the chatbot to handle personal chedule change requests.
   - Get automated responses to common scheduling questions.
 
 - **Notification Management:**
+
   - Receive personalized notifications when schedule change requests are accepted or rejected.
 
 - **Dashboard:**
@@ -162,23 +175,28 @@ The system has three user types: **_Employee_**, **_Manager_**, and **_Super Man
  <summary> Super Manager features </summary>
 
 - **Personal Schedule Management:**
+
   - View personal work schedule with details of days in the office and work-from-home days.
   - Submit/Cancel schedule change requests between a day in office and a day in home.
   - Receive notifications about the status of schedule change requests.
 
 - **Global Schedule Management:**
+
   - View and manage schedules for all employees and managers in the company.
   - Adjust company-wide work-from-home and office-day patterns.
 
 - **Request Management:**
+
   - Approve or reject schedule change requests from both employees and managers.
   - Submit personal schedule change requests.
 
 - **NLP Chatbot Interaction:**
+
   - Use the chatbot to handle personal schedule change requests.
   - Get automated responses to common scheduling questions.
 
 - **Sentiment Analysis and Feedback:**
+
   - Analyze feedback to improve scheduling processes.
   - Access analytics on the number of accepted, rejected, and pending requests, as well as the current office occupancy.
 
@@ -199,6 +217,7 @@ To install the project with `npm`, run the following commands in order.
 > npm i package.json
 > npm i
 ```
+
 To run the backebnd, run the following command:
 
 ```bash
@@ -210,6 +229,7 @@ or this command:
 ```bash
 > npm run dev
 ```
+
 To run the frontend, you can use android studio UI (run button).
 
 ## Authors
