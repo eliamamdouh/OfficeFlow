@@ -1,10 +1,14 @@
 # OfficeFlow
 
-<div align="center">
-   <img height="150" src="/Docs/Images/Office Flow.png" style="float:left; margin-right: 20px;">
-   <span style="display: inline-block; vertical-align: middle; font-size: 24px;">A service provided by</span>
-   <img height="150" src="/Docs/Images/Deloitte.jpg" style="float:right; margin-left: 20px;">
-</div>
+<p align="Center">
+  <img height="400" src="/Docs/Images/Office Flow.png">
+</p>
+
+<p align="center">
+A service Provided by Deloitte Innovation Hub.
+</p>
+
+
 
 <div style="clear:both; padding-top: 20px;" align="center">
    A mobile application that automates work schedules, sends notifications, handles schedule change requests, and leverages generative AI for enhanced functionality.
